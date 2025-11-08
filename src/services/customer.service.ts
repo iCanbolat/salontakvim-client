@@ -1,0 +1,98 @@
+/**
+ * Customer Service
+ * API calls for customer management
+ */
+
+import { axiosInstance } from "./api-client";
+import type {
+  CustomerWithStats,
+  CustomerProfile,
+  CustomerFilters,
+  UpdateCustomerDto,
+} from "@/types";
+
+/**
+ * Get all customers for a store
+ * Since there's no dedicated customer endpoint, we'll get customers from appointments
+ */
+export const customerService = {
+  /**
+   * Get customers list with statistics
+   * Note: This is a simplified version. In production, backend should provide a dedicated endpoint.
+   */
+  async getCustomers(
+    storeId: number,
+    filters?: CustomerFilters
+  ): Promise<CustomerWithStats[]> {
+    const params = new URLSearchParams();
+
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+    if (filters?.sortBy) params.append("sortBy", filters.sortBy);
+    if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
+
+    const response = await axiosInstance.get<CustomerWithStats[]>(
+      `/stores/${storeId}/customers?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Get customer profile with appointment history
+   */
+  async getCustomerProfile(
+    storeId: number,
+    customerId: number
+  ): Promise<CustomerProfile> {
+    const response = await axiosInstance.get<CustomerProfile>(
+      `/stores/${storeId}/customers/${customerId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Update customer information
+   */
+  async updateCustomer(
+    storeId: number,
+    customerId: number,
+    data: UpdateCustomerDto
+  ): Promise<CustomerWithStats> {
+    const response = await axiosInstance.patch<CustomerWithStats>(
+      `/stores/${storeId}/customers/${customerId}`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Delete customer (soft delete - deactivate)
+   */
+  async deleteCustomer(storeId: number, customerId: number): Promise<void> {
+    await axiosInstance.delete(`/stores/${storeId}/customers/${customerId}`);
+  },
+
+  /**
+   * Get customer appointments
+   */
+  async getCustomerAppointments(storeId: number, customerId: number) {
+    const response = await axiosInstance.get(
+      `/stores/${storeId}/appointments?customerId=${customerId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Search customers by name, email, or phone
+   */
+  async searchCustomers(
+    storeId: number,
+    query: string
+  ): Promise<CustomerWithStats[]> {
+    const response = await axiosInstance.get<CustomerWithStats[]>(
+      `/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`
+    );
+    return response.data;
+  },
+};
