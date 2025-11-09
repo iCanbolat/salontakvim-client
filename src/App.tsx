@@ -5,7 +5,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
-import { AuthProvider } from "./contexts";
+import { AuthProvider, useAuth } from "./contexts";
 import { MainLayout } from "./components/layout";
 import { LoginPage, RegisterPage } from "./pages/auth";
 import {
@@ -93,8 +93,8 @@ function App() {
               />
             </Route>
 
-            {/* Default redirect */}
-            <Route path="/" element={<Navigate to="/login" replace />} />
+            {/* Root redirect based on auth */}
+            <Route path="/" element={<RootRedirect />} />
 
             {/* 404 */}
             <Route
@@ -113,6 +113,24 @@ function App() {
       </BrowserRouter>
     </QueryClientProvider>
   );
+}
+
+// Root redirect component to handle dashboard routing
+function RootRedirect() {
+  const { user, isAuthenticated } = useAuth();
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect to appropriate dashboard based on role
+  if (user.role === "admin") {
+    return <Navigate to="/admin/dashboard" replace />;
+  } else if (user.role === "staff") {
+    return <Navigate to="/staff/dashboard" replace />;
+  }
+
+  return <Navigate to="/login" replace />;
 }
 
 export default App;
