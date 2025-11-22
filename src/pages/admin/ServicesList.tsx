@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, Search } from "lucide-react";
-import { useRequireRole } from "@/hooks";
+import { useRequireRole, usePagination } from "@/hooks";
 import { storeService, serviceService } from "@/services";
 import {
   Card,
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ServiceCard, ServiceFormDialog } from "@/components/services";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 import type { Service } from "@/types";
 
 export function ServicesList() {
@@ -52,6 +53,21 @@ export function ServicesList() {
       service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       service.description?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Pagination
+  const {
+    paginatedItems,
+    currentPage,
+    totalPages,
+    goToPage,
+    canGoNext,
+    canGoPrevious,
+    startIndex,
+    endIndex,
+  } = usePagination({
+    items: filteredServices || [],
+    itemsPerPage: 6,
+  });
 
   const handleEdit = (service: Service) => {
     setEditingService(service);
@@ -136,15 +152,33 @@ export function ServicesList() {
         </CardHeader>
         <CardContent>
           {filteredServices && filteredServices.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-              {filteredServices.map((service) => (
-                <ServiceCard
-                  key={service.id}
-                  service={service}
-                  storeId={store.id}
-                  onEdit={handleEdit}
+            <div
+              className={`flex flex-col ${
+                paginatedItems.length < 7 ? "" : "min-h-[600px]"
+              }`}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+                {paginatedItems.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    storeId={store.id}
+                    onEdit={handleEdit}
+                  />
+                ))}
+              </div>
+              <div className="mt-auto">
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                  canGoPrevious={canGoPrevious}
+                  canGoNext={canGoNext}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalItems={filteredServices.length}
                 />
-              ))}
+              </div>
             </div>
           ) : searchQuery ? (
             <div className="text-center py-12">

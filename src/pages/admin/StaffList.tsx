@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, Users as UsersIcon } from "lucide-react";
-import { useRequireRole } from "@/hooks";
+import { useRequireRole, usePagination } from "@/hooks";
 import { storeService, staffService } from "@/services";
 import {
   Card,
@@ -31,6 +31,7 @@ import { StaffProfileDialog } from "@/components/staff/StaffProfileDialog";
 import { ServiceAssignmentDialog } from "@/components/staff/ServiceAssignmentDialog";
 import { WorkingHoursDialog } from "@/components/staff/WorkingHoursDialog";
 import { TimeOffList } from "@/components/staff/TimeOffList";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 import type { StaffMember } from "@/types";
 
 export function StaffList() {
@@ -100,6 +101,36 @@ export function StaffList() {
   const pendingInvitations =
     invitations?.filter((inv) => inv.status === "pending") || [];
 
+  // Pagination for staff members
+  const {
+    paginatedItems: paginatedStaff,
+    currentPage: staffPage,
+    totalPages: staffTotalPages,
+    goToPage: goToStaffPage,
+    canGoNext: canGoNextStaff,
+    canGoPrevious: canGoPreviousStaff,
+    startIndex: staffStartIndex,
+    endIndex: staffEndIndex,
+  } = usePagination({
+    items: staffMembers || [],
+    itemsPerPage: 12,
+  });
+
+  // Pagination for invitations
+  const {
+    paginatedItems: paginatedInvitations,
+    currentPage: invitationsPage,
+    totalPages: invitationsTotalPages,
+    goToPage: goToInvitationsPage,
+    canGoNext: canGoNextInvitations,
+    canGoPrevious: canGoPreviousInvitations,
+    startIndex: invitationsStartIndex,
+    endIndex: invitationsEndIndex,
+  } = usePagination({
+    items: pendingInvitations,
+    itemsPerPage: 12,
+  });
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -168,18 +199,36 @@ export function StaffList() {
             </CardHeader>
             <CardContent>
               {staffMembers && staffMembers.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {staffMembers.map((staff) => (
-                    <StaffCard
-                      key={staff.id}
-                      staff={staff}
-                      storeId={store.id}
-                      onEdit={handleEdit}
-                      onAssignServices={handleAssignServices}
-                      onManageSchedule={handleManageSchedule}
-                      onManageTimeOff={handleManageTimeOff}
+                <div
+                  className={`flex flex-col ${
+                    paginatedStaff.length < 13 ? "" : "min-h-[600px]"
+                  }`}
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
+                    {paginatedStaff.map((staff) => (
+                      <StaffCard
+                        key={staff.id}
+                        staff={staff}
+                        storeId={store.id}
+                        onEdit={handleEdit}
+                        onAssignServices={handleAssignServices}
+                        onManageSchedule={handleManageSchedule}
+                        onManageTimeOff={handleManageTimeOff}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-auto">
+                    <PaginationControls
+                      currentPage={staffPage}
+                      totalPages={staffTotalPages}
+                      onPageChange={goToStaffPage}
+                      canGoPrevious={canGoPreviousStaff}
+                      canGoNext={canGoNextStaff}
+                      startIndex={staffStartIndex}
+                      endIndex={staffEndIndex}
+                      totalItems={staffMembers.length}
                     />
-                  ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">
@@ -211,14 +260,32 @@ export function StaffList() {
             </CardHeader>
             <CardContent>
               {pendingInvitations.length > 0 ? (
-                <div className="space-y-3">
-                  {pendingInvitations.map((invitation) => (
-                    <InvitationCard
-                      key={invitation.id}
-                      invitation={invitation}
-                      storeId={store.id}
+                <div
+                  className={`flex flex-col ${
+                    paginatedInvitations.length < 13 ? "" : "min-h-[600px]"
+                  }`}
+                >
+                  <div className="space-y-3 pb-4">
+                    {paginatedInvitations.map((invitation) => (
+                      <InvitationCard
+                        key={invitation.id}
+                        invitation={invitation}
+                        storeId={store.id}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-auto">
+                    <PaginationControls
+                      currentPage={invitationsPage}
+                      totalPages={invitationsTotalPages}
+                      onPageChange={goToInvitationsPage}
+                      canGoPrevious={canGoPreviousInvitations}
+                      canGoNext={canGoNextInvitations}
+                      startIndex={invitationsStartIndex}
+                      endIndex={invitationsEndIndex}
+                      totalItems={pendingInvitations.length}
                     />
-                  ))}
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12">

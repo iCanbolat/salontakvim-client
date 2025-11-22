@@ -15,6 +15,7 @@ import {
   Edit,
   Trash2,
   MessageSquare,
+  Banknote,
 } from "lucide-react";
 import { appointmentService } from "@/services";
 import type { Appointment } from "@/types";
@@ -35,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
+import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -56,7 +58,7 @@ export function AppointmentCard({
     mutationFn: () =>
       appointmentService.deleteAppointment(storeId, appointment.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
+      invalidateAfterAppointmentChange(queryClient, storeId);
     },
   });
 
@@ -71,9 +73,32 @@ export function AppointmentCard({
   };
 
   // Customer name
-  const customerName = appointment.guestInfo
-    ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-    : "Customer";
+  const guestName = appointment.guestInfo
+    ? `${appointment.guestInfo.firstName || ""} ${
+        appointment.guestInfo.lastName || ""
+      }`.trim()
+    : "";
+
+  const customerDisplayName =
+    appointment.customerName ||
+    guestName ||
+    (appointment.customerId
+      ? `Customer #${appointment.customerId}`
+      : "Customer");
+
+  const serviceDisplayName =
+    appointment.serviceName ||
+    (appointment.serviceId ? `Service #${appointment.serviceId}` : undefined);
+
+  const staffDisplayName =
+    appointment.staffName ||
+    (appointment.staffId ? `Staff #${appointment.staffId}` : undefined);
+
+  const locationDisplayName =
+    appointment.locationName ||
+    (appointment.locationId
+      ? `Location #${appointment.locationId}`
+      : undefined);
 
   // Format date and time
   const appointmentDate = format(
@@ -87,14 +112,16 @@ export function AppointmentCard({
 
   return (
     <Card>
-      <CardHeader className="pb-3">
+      <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-lg">{customerName}</CardTitle>
-              <AppointmentStatusBadge status={appointment.status} />
+              <CardTitle className="text-lg">{customerDisplayName}</CardTitle>
             </div>
-            <CardDescription>Appointment #{appointment.id}</CardDescription>
+            <CardDescription className="mb-2">
+              Appointment #{appointment.id}
+            </CardDescription>
+            <AppointmentStatusBadge status={appointment.status} />
           </div>
 
           <DropdownMenu>
@@ -129,42 +156,44 @@ export function AppointmentCard({
       </CardHeader>
       <CardContent className="space-y-2">
         {/* Date & Time */}
-        <div className="flex items-center gap-2 text-sm">
-          <Calendar className="h-4 w-4 text-gray-500" />
-          <span>{appointmentDate}</span>
-        </div>
-        <div className="flex items-center gap-2 text-sm">
-          <Clock className="h-4 w-4 text-gray-500" />
-          <span>{appointmentTime}</span>
+        <div className="flex flex-row justify-between">
+          <div className="flex items-center gap-2 text-sm">
+            <Calendar className="h-4 w-4 text-gray-500" />
+            <span>{appointmentDate}</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="h-4 w-4 text-gray-500" />
+            <span>{appointmentTime}</span>
+          </div>
         </div>
 
         {/* Service */}
-        {appointment.serviceId && (
+        {serviceDisplayName && (
           <div className="flex items-center gap-2 text-sm">
             <Briefcase className="h-4 w-4 text-gray-500" />
-            <span>Service ID: {appointment.serviceId}</span>
+            <span>{serviceDisplayName}</span>
           </div>
         )}
 
         {/* Staff */}
-        {appointment.staffId && (
+        {staffDisplayName && (
           <div className="flex items-center gap-2 text-sm">
             <User className="h-4 w-4 text-gray-500" />
-            <span>Staff ID: {appointment.staffId}</span>
+            <span>{staffDisplayName}</span>
           </div>
         )}
 
         {/* Location */}
-        {appointment.locationId && (
+        {locationDisplayName && (
           <div className="flex items-center gap-2 text-sm">
             <MapPin className="h-4 w-4 text-gray-500" />
-            <span>Location ID: {appointment.locationId}</span>
+            <span>{locationDisplayName}</span>
           </div>
         )}
 
         {/* Price */}
         <div className="flex items-center gap-2 text-sm font-medium">
-          <DollarSign className="h-4 w-4 text-gray-500" />
+          <Banknote className="h-4 w-4 text-gray-500" />
           <span>${appointment.totalPrice}</span>
           {appointment.isPaid && (
             <span className="text-xs text-green-600 ml-2">(Paid)</span>

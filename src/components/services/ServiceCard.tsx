@@ -21,6 +21,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -63,8 +64,8 @@ export function ServiceCard({ service, storeId, onEdit }: ServiceCardProps) {
   const currency = "USD"; // TODO: Get from store settings
 
   return (
-    <Card className={!service.isVisible ? "opacity-60" : ""}>
-      <CardHeader className="pb-3">
+    <Card className={`flex flex-col ${!service.isVisible ? "opacity-60" : ""}`}>
+      <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -90,7 +91,7 @@ export function ServiceCard({ service, storeId, onEdit }: ServiceCardProps) {
           )}
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-1">
         {/* Service Details */}
         <div className="grid grid-cols-3 gap-2 text-sm">
           <div className="flex items-center gap-1.5 text-gray-600">
@@ -104,7 +105,7 @@ export function ServiceCard({ service, storeId, onEdit }: ServiceCardProps) {
             </span>
           </div>
           <div className="flex items-center gap-1.5 text-gray-600">
-            <DollarSign className="h-4 w-4" />
+            {/* <DollarSign className="h-4 w-4" /> */}
             <span className="font-medium">
               {price.toFixed(2)} {currency}
             </span>
@@ -131,41 +132,41 @@ export function ServiceCard({ service, storeId, onEdit }: ServiceCardProps) {
             {service.extras.length !== 1 ? "s" : ""} available
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onEdit(service)}
-            className="flex-1"
-          >
-            <Edit className="h-3.5 w-3.5 mr-1.5" />
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toggleVisibilityMutation.mutate()}
-            disabled={toggleVisibilityMutation.isPending}
-          >
-            {service.isVisible ? (
-              <EyeOff className="h-3.5 w-3.5" />
-            ) : (
-              <Eye className="h-3.5 w-3.5" />
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
       </CardContent>
+
+      {/* Action Buttons */}
+      <CardFooter className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit(service)}
+          className="flex-1"
+        >
+          <Edit className="h-3.5 w-3.5 mr-1.5" />
+          Edit
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => toggleVisibilityMutation.mutate()}
+          disabled={toggleVisibilityMutation.isPending}
+        >
+          {service.isVisible ? (
+            <EyeOff className="h-3.5 w-3.5" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          disabled={deleteMutation.isPending}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

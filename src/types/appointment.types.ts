@@ -29,9 +29,13 @@ export interface Appointment {
   id: number;
   storeId: number;
   customerId?: number;
+  customerName?: string;
   serviceId?: number;
+  serviceName?: string;
   staffId?: number;
+  staffName?: string;
   locationId?: number;
+  locationName?: string;
   guestInfo?: GuestInfo;
   startDateTime: string;
   endDateTime: string;

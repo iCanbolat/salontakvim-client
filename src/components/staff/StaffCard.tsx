@@ -14,7 +14,12 @@ import {
   Calendar,
 } from "lucide-react";
 import { staffService } from "@/services";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,10 +90,10 @@ export function StaffCard({
   }`.toUpperCase();
 
   return (
-    <Card className="relative">
-      <CardHeader className="pb-3">
+    <Card className="flex flex-col relative">
+      <CardHeader>
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-1">
             <Avatar className="h-12 w-12">
               {staff.avatar && (
                 <AvatarImage src={staff.avatar} alt={staff.firstName} />
@@ -104,17 +109,29 @@ export function StaffCard({
               {staff.title && (
                 <p className="text-sm text-gray-600">{staff.title}</p>
               )}
+              {!staff.isVisible && (
+                <Badge variant="secondary" className="text-xs mt-1">
+                  Hidden
+                </Badge>
+              )}
             </div>
           </div>
-          {!staff.isVisible && (
-            <Badge variant="secondary" className="shrink-0">
-              Hidden
-            </Badge>
-          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDelete}
+            disabled={
+              toggleVisibilityMutation.isPending ||
+              deleteStaffMutation.isPending
+            }
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </CardHeader>
 
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-3 flex-1">
         {/* Email */}
         <div className="text-sm">
           <span className="text-gray-600">Email: </span>
@@ -135,97 +152,79 @@ export function StaffCard({
             <span className="text-gray-900">{staff.locationId}</span>
           </div>
         )}
-
-        {/* Actions */}
-        <div className="flex flex-wrap items-center gap-2 pt-2 border-t">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onEdit(staff)}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-          >
-            <Edit className="h-4 w-4 mr-1" />
-            Edit
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onAssignServices(staff)}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-          >
-            <Briefcase className="h-4 w-4 mr-1" />
-            Services
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onManageSchedule(staff)}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-          >
-            <Clock className="h-4 w-4 mr-1" />
-            Schedule
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onManageTimeOff(staff)}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-          >
-            <Calendar className="h-4 w-4 mr-1" />
-            Time Off
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleToggleVisibility}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-          >
-            {staff.isVisible ? (
-              <>
-                <EyeOff className="h-4 w-4 mr-1" />
-                Hide
-              </>
-            ) : (
-              <>
-                <Eye className="h-4 w-4 mr-1" />
-                Show
-              </>
-            )}
-          </Button>
-
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDelete}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-            className="ml-auto text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
       </CardContent>
+
+      {/* Actions */}
+      <CardFooter className="flex flex-wrap items-center gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onEdit(staff)}
+          disabled={
+            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
+          }
+        >
+          <Edit className="h-4 w-4 mr-1" />
+          Edit
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onAssignServices(staff)}
+          disabled={
+            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
+          }
+        >
+          <Briefcase className="h-4 w-4 mr-1" />
+          Services
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onManageSchedule(staff)}
+          disabled={
+            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
+          }
+        >
+          <Clock className="h-4 w-4 mr-1" />
+          Schedule
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onManageTimeOff(staff)}
+          disabled={
+            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
+          }
+        >
+          <Calendar className="h-4 w-4 mr-1" />
+          Time Off
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleToggleVisibility}
+          disabled={
+            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
+          }
+        >
+          {staff.isVisible ? (
+            <>
+              <EyeOff className="h-4 w-4 mr-1" />
+              Hide
+            </>
+          ) : (
+            <>
+              <Eye className="h-4 w-4 mr-1" />
+              Show
+            </>
+          )}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

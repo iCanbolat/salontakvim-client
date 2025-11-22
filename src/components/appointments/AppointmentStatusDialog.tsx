@@ -27,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { appointmentService } from "@/services";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { CheckCircle2, Clock, XCircle, UserX, AlertCircle } from "lucide-react";
+import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 
 interface AppointmentStatusDialogProps {
   appointment: Appointment;
@@ -99,8 +100,7 @@ export function AppointmentStatusDialog({
       );
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
-      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      invalidateAfterAppointmentChange(queryClient, appointment.storeId);
       toast.success("Randevu durumu güncellendi");
       onOpenChange(false);
     },

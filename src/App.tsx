@@ -16,6 +16,7 @@ import {
   StaffList,
   LocationsList,
   AppointmentsList,
+  CustomerDetails,
   CustomersList,
   WidgetSettings,
   Analytics,
@@ -65,6 +66,10 @@ function App() {
               <Route path="/admin/staff" element={<StaffList />} />
               <Route path="/admin/locations" element={<LocationsList />} />
               <Route path="/admin/customers" element={<CustomersList />} />
+              <Route
+                path="/admin/customers/:customerId"
+                element={<CustomerDetails />}
+              />
               <Route path="/admin/widget" element={<WidgetSettings />} />
               <Route path="/admin/analytics" element={<Analytics />} />
               <Route

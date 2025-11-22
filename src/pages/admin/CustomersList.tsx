@@ -5,8 +5,9 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { Search, Loader2, AlertCircle, Users } from "lucide-react";
-import { useRequireRole } from "@/hooks";
+import { useRequireRole, usePagination } from "@/hooks";
 import { storeService, customerService } from "@/services";
 import type { CustomerWithStats } from "@/types";
 import {
@@ -19,14 +20,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CustomerCard } from "@/components/customers/CustomerCard";
-import { CustomerProfile as CustomerProfileDialog } from "@/components/customers/CustomerProfile";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 
 export function CustomersList() {
   useRequireRole("admin");
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(
-    null
-  );
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -48,22 +47,25 @@ export function CustomersList() {
     enabled: !!store?.id,
   });
 
-  // Fetch customer profile
-  const { data: customerProfile, isLoading: profileLoading } = useQuery({
-    queryKey: ["customer-profile", store?.id, selectedCustomerId],
-    queryFn: () =>
-      customerService.getCustomerProfile(store!.id, selectedCustomerId!),
-    enabled: !!store?.id && !!selectedCustomerId,
-  });
-
   const isLoading = storeLoading || customersLoading;
 
-  const handleViewCustomer = (customer: CustomerWithStats) => {
-    setSelectedCustomerId(customer.id);
-  };
+  // Pagination
+  const {
+    paginatedItems,
+    currentPage,
+    totalPages,
+    goToPage,
+    canGoNext,
+    canGoPrevious,
+    startIndex,
+    endIndex,
+  } = usePagination({
+    items: customers,
+    itemsPerPage: 12,
+  });
 
-  const handleCloseProfile = () => {
-    setSelectedCustomerId(null);
+  const handleViewCustomer = (customer: CustomerWithStats) => {
+    navigate(`/admin/customers/${customer.id}`);
   };
 
   if (isLoading) {
@@ -139,14 +141,32 @@ export function CustomersList() {
         </CardHeader>
         <CardContent>
           {customers.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {customers.map((customer) => (
-                <CustomerCard
-                  key={customer.id}
-                  customer={customer}
-                  onView={handleViewCustomer}
+            <div
+              className={`flex flex-col ${
+                paginatedItems.length < 7 ? "" : "min-h-[600px]"
+              }`}
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                {paginatedItems.map((customer) => (
+                  <CustomerCard
+                    key={customer.id}
+                    customer={customer}
+                    onView={handleViewCustomer}
+                  />
+                ))}
+              </div>
+              <div className="mt-auto">
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={goToPage}
+                  canGoPrevious={canGoPrevious}
+                  canGoNext={canGoNext}
+                  startIndex={startIndex}
+                  endIndex={endIndex}
+                  totalItems={customers.length}
                 />
-              ))}
+              </div>
             </div>
           ) : (
             <div className="text-center py-12">
@@ -163,13 +183,6 @@ export function CustomersList() {
           )}
         </CardContent>
       </Card>
-
-      {/* Customer Profile Dialog */}
-      <CustomerProfileDialog
-        profile={customerProfile || null}
-        open={!!selectedCustomerId && !profileLoading}
-        onClose={handleCloseProfile}
-      />
     </div>
   );
 }

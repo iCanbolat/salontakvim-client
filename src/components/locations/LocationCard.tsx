@@ -11,6 +11,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -67,8 +68,10 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
     .join(", ");
 
   return (
-    <Card className={!location.isVisible ? "opacity-60" : ""}>
-      <CardHeader className="pb-3">
+    <Card
+      className={`flex flex-col ${!location.isVisible ? "opacity-60" : ""}`}
+    >
+      <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
@@ -87,15 +90,7 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {/* Address */}
-        {fullAddress && (
-          <div className="flex items-start gap-2 text-sm text-gray-600">
-            <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-            <span className="line-clamp-2">{fullAddress}</span>
-          </div>
-        )}
-
+      <CardContent className="space-y-3 flex-1">
         {/* Phone */}
         {location.phone && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -118,41 +113,41 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
             Coordinates: {location.latitude}, {location.longitude}
           </div>
         )}
-
-        {/* Action Buttons */}
-        <div className="flex items-center gap-2 pt-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onEdit(location)}
-            className="flex-1"
-          >
-            <Edit className="h-3.5 w-3.5 mr-1.5" />
-            Edit
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => toggleVisibilityMutation.mutate()}
-            disabled={toggleVisibilityMutation.isPending}
-          >
-            {location.isVisible ? (
-              <EyeOff className="h-3.5 w-3.5" />
-            ) : (
-              <Eye className="h-3.5 w-3.5" />
-            )}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
-        </div>
       </CardContent>
+
+      {/* Action Buttons */}
+      <CardFooter className="flex items-center gap-2">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onEdit(location)}
+          className="flex-1"
+        >
+          <Edit className="h-3.5 w-3.5 mr-1.5" />
+          Edit
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => toggleVisibilityMutation.mutate()}
+          disabled={toggleVisibilityMutation.isPending}
+        >
+          {location.isVisible ? (
+            <EyeOff className="h-3.5 w-3.5" />
+          ) : (
+            <Eye className="h-3.5 w-3.5" />
+          )}
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleDelete}
+          disabled={deleteMutation.isPending}
+          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

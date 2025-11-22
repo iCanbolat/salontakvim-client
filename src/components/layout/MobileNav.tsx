@@ -156,9 +156,6 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 </p>
               </div>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-5 w-5" />
-            </Button>
           </div>
 
           {/* Navigation */}

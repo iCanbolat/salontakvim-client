@@ -16,6 +16,7 @@ import {
   locationService,
 } from "@/services";
 import type { Appointment, CreateAppointmentDto } from "@/types";
+import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import {
   Dialog,
   DialogContent,
@@ -158,7 +159,7 @@ export function AppointmentFormDialog({
     mutationFn: (data: CreateAppointmentDto) =>
       appointmentService.createAppointment(storeId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
+      invalidateAfterAppointmentChange(queryClient, storeId);
       onClose();
     },
   });
@@ -175,7 +176,7 @@ export function AppointmentFormDialog({
         customerNotes: data.customerNotes,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
+      invalidateAfterAppointmentChange(queryClient, storeId);
       onClose();
     },
   });

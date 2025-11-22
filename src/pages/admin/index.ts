@@ -9,6 +9,7 @@ export * from "./CategoriesList";
 export * from "./StaffList";
 export * from "./LocationsList";
 export * from "./AppointmentsList";
+export * from "./CustomerDetails";
 export * from "./CustomersList";
 export { default as WidgetSettings } from "./WidgetSettings";
 export { default as Analytics } from "./Analytics";

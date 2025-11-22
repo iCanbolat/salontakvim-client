@@ -93,9 +93,9 @@ export function AdminDashboard() {
       </div>
 
       {/* Main Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <MetricCard
-          title="Total Appointments"
+          title="Appointments"
           value={stats.totalAppointments}
           icon={Calendar}
           description="All time"
@@ -103,7 +103,7 @@ export function AdminDashboard() {
           iconBgColor="bg-blue-100"
         />
         <MetricCard
-          title="Total Revenue"
+          title="Revenue"
           value={stats.totalRevenue}
           icon={DollarSign}
           description="All time"
@@ -111,7 +111,7 @@ export function AdminDashboard() {
           iconBgColor="bg-green-100"
         />
         <MetricCard
-          title="Total Customers"
+          title="Customers"
           value={stats.totalCustomers}
           icon={Users}
           description="Registered customers"

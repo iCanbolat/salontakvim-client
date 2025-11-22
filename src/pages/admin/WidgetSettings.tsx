@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { widgetService } from "@/services/widget.service";
@@ -85,6 +85,8 @@ export default function WidgetSettings() {
     },
   });
 
+  const updateSettings = updateMutation.mutate;
+
   // Regenerate key mutation
   const regenerateMutation = useMutation({
     mutationFn: () => widgetService.regenerateWidgetKey(store!.id),
@@ -106,7 +108,7 @@ export default function WidgetSettings() {
     field: keyof UpdateWidgetSettingsDto,
     value: unknown
   ) => {
-    updateMutation.mutate({ [field]: value } as UpdateWidgetSettingsDto);
+    updateSettings({ [field]: value } as UpdateWidgetSettingsDto);
   };
 
   const handleCopyKey = () => {
@@ -146,6 +148,14 @@ export default function WidgetSettings() {
     }
   };
 
+  useEffect(() => {
+    if (!settings) return;
+
+    if (settings.layout !== "steps") {
+      updateSettings({ layout: "steps" } as UpdateWidgetSettingsDto);
+    }
+  }, [settings?.layout, updateSettings]);
+
   if (storeLoading || settingsLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -179,28 +189,30 @@ export default function WidgetSettings() {
         onValueChange={setActiveTab}
         className="space-y-6"
       >
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="layout" className="flex items-center gap-2">
-            <Layout className="h-4 w-4" />
-            Layout
-          </TabsTrigger>
-          <TabsTrigger value="colors" className="flex items-center gap-2">
-            <Palette className="h-4 w-4" />
-            Colors
-          </TabsTrigger>
-          <TabsTrigger value="typography" className="flex items-center gap-2">
-            <Type className="h-4 w-4" />
-            Typography
-          </TabsTrigger>
-          <TabsTrigger value="settings" className="flex items-center gap-2">
-            <Settings className="h-4 w-4" />
-            Settings
-          </TabsTrigger>
-          <TabsTrigger value="embed" className="flex items-center gap-2">
-            <Code className="h-4 w-4" />
-            Embed Code
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto -mx-2 px-2">
+          <TabsList className="inline-flex w-auto min-w-full">
+            <TabsTrigger value="layout" className="flex items-center gap-1.5 whitespace-nowrap">
+              <Layout className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Layout</span>
+            </TabsTrigger>
+            <TabsTrigger value="colors" className="flex items-center gap-1.5 whitespace-nowrap">
+              <Palette className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Colors</span>
+            </TabsTrigger>
+            <TabsTrigger value="typography" className="flex items-center gap-1.5 whitespace-nowrap">
+              <Type className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Typography</span>
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex items-center gap-1.5 whitespace-nowrap">
+              <Settings className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Settings</span>
+            </TabsTrigger>
+            <TabsTrigger value="embed" className="flex items-center gap-1.5 whitespace-nowrap">
+              <Code className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Embed Code</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Layout & Structure Tab */}
         <TabsContent value="layout" className="space-y-6">
@@ -212,28 +224,15 @@ export default function WidgetSettings() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label>Layout</Label>
-                <Select
-                  value={settings.layout}
-                  onValueChange={(value) => handleUpdate("layout", value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="list">List (Single Page)</SelectItem>
-                    <SelectItem value="steps">
-                      Steps (Multi-Step Wizard)
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-sm text-muted-foreground">
-                  {settings.layout === "list"
-                    ? "All selections displayed on one page"
-                    : "Separate steps for each selection"}
-                </p>
-              </div>
+                <div className="rounded-md border bg-muted/50 p-3">
+                  <p className="font-medium">Steps (Multi-Step Wizard)</p>
+                  <p className="text-sm text-muted-foreground">
+                    The widget now always uses the multi-step experience.
+                  </p>
+                </div>
+              </div> */}
 
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">

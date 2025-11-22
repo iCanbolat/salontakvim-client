@@ -49,7 +49,7 @@ export function CustomerCard({
 
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer">
-      <CardHeader className="pb-3">
+      <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1" onClick={() => onView(customer)}>
             <div className="flex items-center gap-2 mb-1">

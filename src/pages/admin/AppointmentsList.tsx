@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Plus, Loader2, AlertCircle, Calendar } from "lucide-react";
-import { useRequireRole } from "@/hooks";
+import { useRequireRole, usePagination } from "@/hooks";
 import { storeService, appointmentService } from "@/services";
 import {
   Card,
@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "@/components/appointments/AppointmentStatusDialog";
+import { PaginationControls } from "@/components/ui/PaginationControls";
 import type { Appointment, AppointmentStatus } from "@/types";
 
 export function AppointmentsList() {
@@ -67,6 +68,21 @@ export function AppointmentsList() {
     activeTab === "all"
       ? appointments
       : appointments?.filter((apt) => apt.status === activeTab);
+
+  // Pagination
+  const {
+    paginatedItems,
+    currentPage,
+    totalPages,
+    goToPage,
+    canGoNext,
+    canGoPrevious,
+    startIndex,
+    endIndex,
+  } = usePagination({
+    items: filteredAppointments || [],
+    itemsPerPage: 12,
+  });
 
   // Count appointments by status
   const statusCounts = {
@@ -116,14 +132,14 @@ export function AppointmentsList() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-600 mt-1">
             Manage customer appointments and bookings
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 mt-4 md:mt-0">
           <Button
             variant="outline"
             onClick={() => navigate("/admin/appointments/calendar")}
@@ -152,38 +168,54 @@ export function AppointmentsList() {
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as AppointmentStatus | "all")}
           >
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All ({statusCounts.all})</TabsTrigger>
-              <TabsTrigger value="pending">
-                Pending ({statusCounts.pending})
-              </TabsTrigger>
-              <TabsTrigger value="confirmed">
-                Confirmed ({statusCounts.confirmed})
-              </TabsTrigger>
-              <TabsTrigger value="completed">
-                Completed ({statusCounts.completed})
-              </TabsTrigger>
-              <TabsTrigger value="cancelled">
-                Cancelled ({statusCounts.cancelled})
-              </TabsTrigger>
-              <TabsTrigger value="no_show">
-                No Show ({statusCounts.no_show})
-              </TabsTrigger>
-            </TabsList>
+            <div className="overflow-x-auto -mx-2 px-2 mb-4">
+              <TabsList className="inline-flex w-auto min-w-full">
+                <TabsTrigger value="all" className="whitespace-nowrap">
+                  All ({statusCounts.all})
+                </TabsTrigger>
+                <TabsTrigger value="pending" className="whitespace-nowrap">
+                  Pending ({statusCounts.pending})
+                </TabsTrigger>
+                <TabsTrigger value="confirmed" className="whitespace-nowrap">
+                  Confirmed ({statusCounts.confirmed})
+                </TabsTrigger>
+                <TabsTrigger value="completed" className="whitespace-nowrap">
+                  Completed ({statusCounts.completed})
+                </TabsTrigger>
+                <TabsTrigger value="cancelled" className="whitespace-nowrap">
+                  Cancelled ({statusCounts.cancelled})
+                </TabsTrigger>
+                <TabsTrigger value="no_show" className="whitespace-nowrap">
+                  No Show ({statusCounts.no_show})
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
             <TabsContent value={activeTab}>
               {filteredAppointments && filteredAppointments.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredAppointments.map((appointment) => (
-                    <AppointmentCard
-                      key={appointment.id}
-                      appointment={appointment}
-                      storeId={store.id}
-                      onEdit={handleEdit}
-                      onChangeStatus={setStatusUpdateAppointment}
-                    />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {paginatedItems.map((appointment) => (
+                      <AppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        storeId={store.id}
+                        onEdit={handleEdit}
+                        onChangeStatus={setStatusUpdateAppointment}
+                      />
+                    ))}
+                  </div>
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={goToPage}
+                    canGoPrevious={canGoPrevious}
+                    canGoNext={canGoNext}
+                    startIndex={startIndex}
+                    endIndex={endIndex}
+                    totalItems={filteredAppointments.length}
+                  />
+                </>
               ) : (
                 <div className="text-center py-12">
                   <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
