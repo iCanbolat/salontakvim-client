@@ -6,6 +6,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, CheckCircle2, Circle } from "lucide-react";
+import { toast } from "sonner";
 import { staffService, serviceService } from "@/services";
 import {
   Dialog,
@@ -16,7 +17,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { StaffMember, Service } from "@/types";
@@ -72,6 +72,15 @@ export function ServiceAssignmentDialog({
       });
       queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
       refetchStaffServices();
+      toast.success("Services assigned successfully!", {
+        description: `${selectedServiceIds.length} service(s) assigned to ${staff.firstName} ${staff.lastName}`,
+      });
+    },
+    onError: (error) => {
+      toast.error("Failed to assign services", {
+        description:
+          error instanceof Error ? error.message : "Please try again later.",
+      });
     },
   });
 
@@ -83,8 +92,9 @@ export function ServiceAssignmentDialog({
     );
   };
 
-  const handleSave = () => {
-    assignServicesMutation.mutate(selectedServiceIds);
+  const handleSave = async () => {
+    await assignServicesMutation.mutateAsync(selectedServiceIds);
+    onClose();
   };
 
   const handleClose = () => {
@@ -234,24 +244,6 @@ export function ServiceAssignmentDialog({
                 </p>
                 {hasChanges && <Badge variant="default">Unsaved changes</Badge>}
               </div>
-            )}
-
-            {/* Error Alert */}
-            {assignServicesMutation.isError && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  Failed to assign services. Please try again.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {/* Success Message */}
-            {assignServicesMutation.isSuccess && (
-              <Alert>
-                <AlertDescription>
-                  Services assigned successfully!
-                </AlertDescription>
-              </Alert>
             )}
           </>
         )}

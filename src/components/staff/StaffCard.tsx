@@ -4,15 +4,8 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Briefcase,
-  Clock,
-  Calendar,
-} from "lucide-react";
+import { Trash2, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
 import { staffService } from "@/services";
 import {
   Card,
@@ -28,20 +21,9 @@ import type { StaffMember } from "@/types";
 interface StaffCardProps {
   staff: StaffMember;
   storeId: number;
-  onEdit: (staff: StaffMember) => void;
-  onAssignServices: (staff: StaffMember) => void;
-  onManageSchedule: (staff: StaffMember) => void;
-  onManageTimeOff: (staff: StaffMember) => void;
 }
 
-export function StaffCard({
-  staff,
-  storeId,
-  onEdit,
-  onAssignServices,
-  onManageSchedule,
-  onManageTimeOff,
-}: StaffCardProps) {
+export function StaffCard({ staff, storeId }: StaffCardProps) {
   const queryClient = useQueryClient();
 
   // Toggle visibility mutation
@@ -89,6 +71,14 @@ export function StaffCard({
     staff.lastName?.[0] || ""
   }`.toUpperCase();
 
+  const displayName =
+    staff.fullName?.trim() ||
+    `${staff.firstName ?? ""} ${staff.lastName ?? ""}`.trim() ||
+    staff.email ||
+    "Name not set";
+
+  const headingText = staff.title || displayName;
+
   return (
     <Card className="flex flex-col relative">
       <CardHeader>
@@ -103,12 +93,8 @@ export function StaffCard({
               </AvatarFallback>
             </Avatar>
             <div>
-              <h3 className="font-semibold text-gray-900">
-                {staff.firstName} {staff.lastName}
-              </h3>
-              {staff.title && (
-                <p className="text-sm text-gray-600">{staff.title}</p>
-              )}
+              <h3 className="font-semibold text-gray-900">{headingText}</h3>
+              <p className="text-sm text-gray-600">{displayName}</p>
               {!staff.isVisible && (
                 <Badge variant="secondary" className="text-xs mt-1">
                   Hidden
@@ -146,10 +132,12 @@ export function StaffCard({
         )}
 
         {/* Location */}
-        {staff.locationId && (
+        {(staff.locationName || staff.locationId != null) && (
           <div className="text-sm">
-            <span className="text-gray-600">Location ID: </span>
-            <span className="text-gray-900">{staff.locationId}</span>
+            <span className="text-gray-600">Location: </span>
+            <span className="text-gray-900">
+              {staff.locationName || `ID ${staff.locationId}`}
+            </span>
           </div>
         )}
       </CardContent>
@@ -157,53 +145,16 @@ export function StaffCard({
       {/* Actions */}
       <CardFooter className="flex flex-wrap items-center gap-2">
         <Button
-          variant="outline"
+          asChild
           size="sm"
-          onClick={() => onEdit(staff)}
+          variant={'outline'}
           disabled={
             toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
           }
+          className="flex-1"
         >
-          <Edit className="h-4 w-4 mr-1" />
-          Edit
+          <Link to={`/admin/staff/${staff.id}`}>View Details</Link>
         </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onAssignServices(staff)}
-          disabled={
-            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
-          }
-        >
-          <Briefcase className="h-4 w-4 mr-1" />
-          Services
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onManageSchedule(staff)}
-          disabled={
-            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
-          }
-        >
-          <Clock className="h-4 w-4 mr-1" />
-          Schedule
-        </Button>
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onManageTimeOff(staff)}
-          disabled={
-            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
-          }
-        >
-          <Calendar className="h-4 w-4 mr-1" />
-          Time Off
-        </Button>
-
         <Button
           variant="outline"
           size="sm"

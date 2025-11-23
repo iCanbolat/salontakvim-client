@@ -14,6 +14,7 @@ import {
   ServicesList,
   CategoriesList,
   StaffList,
+  StaffDetails,
   LocationsList,
   AppointmentsList,
   CustomerDetails,
@@ -64,6 +65,7 @@ function App() {
               <Route path="/admin/services" element={<ServicesList />} />
               <Route path="/admin/categories" element={<CategoriesList />} />
               <Route path="/admin/staff" element={<StaffList />} />
+              <Route path="/admin/staff/:staffId" element={<StaffDetails />} />
               <Route path="/admin/locations" element={<LocationsList />} />
               <Route path="/admin/customers" element={<CustomersList />} />
               <Route

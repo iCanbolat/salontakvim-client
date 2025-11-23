@@ -105,7 +105,7 @@ export function CustomerProfileContent({
       </Card>
 
       {/* Statistics */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-gray-600">
@@ -181,14 +181,17 @@ export function CustomerProfileContent({
                         </span>
                         <AppointmentStatusBadge status={appointment.status} />
                       </div>
-                      {appointment.serviceId && (
+                      {(appointment.serviceName || appointment.serviceId) && (
                         <div className="text-sm text-gray-600">
-                          Service ID: {appointment.serviceId}
+                          Service:{" "}
+                          {appointment.serviceName ??
+                            `#${appointment.serviceId}`}
                         </div>
                       )}
-                      {appointment.staffId && (
+                      {(appointment.staffName || appointment.staffId) && (
                         <div className="text-sm text-gray-600">
-                          Staff ID: {appointment.staffId}
+                          Staff:{" "}
+                          {appointment.staffName ?? `#${appointment.staffId}`}
                         </div>
                       )}
                       {appointment.customerNotes && (

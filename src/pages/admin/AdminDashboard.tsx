@@ -138,7 +138,7 @@ export function AdminDashboard() {
       <QuickActions />
 
       {/* Fourth Row - Recent & Upcoming Appointments */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <RecentAppointments />
         <UpcomingAppointments />
       </div>

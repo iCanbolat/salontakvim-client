@@ -8,8 +8,10 @@ export interface StaffMember {
   userId: number;
   storeId: number;
   locationId?: number;
+  locationName?: string | null;
   bio?: string;
   title?: string;
+  fullName?: string | null;
   isVisible: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,6 +21,15 @@ export interface StaffMember {
   lastName?: string;
   avatar?: string;
 }
+
+export type DayOfWeek =
+  | "monday"
+  | "tuesday"
+  | "wednesday"
+  | "thursday"
+  | "friday"
+  | "saturday"
+  | "sunday";
 
 export interface StaffInvitation {
   id: number;
@@ -50,7 +61,7 @@ export interface AssignServicesDto {
 export interface WorkingHours {
   id: number;
   staffId: number;
-  dayOfWeek: number; // 0-6 (Sunday-Saturday)
+  dayOfWeek: DayOfWeek;
   startTime: string; // HH:mm format
   endTime: string; // HH:mm format
   isActive: boolean;
@@ -59,14 +70,14 @@ export interface WorkingHours {
 }
 
 export interface CreateWorkingHoursDto {
-  dayOfWeek: number;
+  dayOfWeek: DayOfWeek;
   startTime: string;
   endTime: string;
   isActive?: boolean;
 }
 
 export interface UpdateWorkingHoursDto {
-  dayOfWeek?: number;
+  dayOfWeek?: DayOfWeek;
   startTime?: string;
   endTime?: string;
   isActive?: boolean;

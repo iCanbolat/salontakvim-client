@@ -6,6 +6,7 @@
 import { Fragment } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { ChevronRight, Home } from "lucide-react";
+import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
 interface BreadcrumbItem {
   label: string;
@@ -21,6 +22,7 @@ const routeLabels: Record<string, string> = {
   categories: "Categories",
   locations: "Locations",
   customers: "Customers",
+  "staff-members": "Staff",
   widget: "Widget Settings",
   analytics: "Analytics",
   notifications: "Notifications",
@@ -32,6 +34,7 @@ const routeLabels: Record<string, string> = {
 
 export function Breadcrumbs() {
   const location = useLocation();
+  const { overrides } = useBreadcrumb();
   const pathSegments = location.pathname.split("/").filter(Boolean);
 
   // Don't show breadcrumbs on login/register pages
@@ -39,23 +42,29 @@ export function Breadcrumbs() {
     return null;
   }
 
-  // Filter out 'admin' and 'staff' segments
-  const filteredSegments = pathSegments.filter(
-    (segment) => segment !== "admin" && segment !== "staff"
-  );
+  // Filter out only the first segment if it's 'admin' or 'staff' (role prefix)
+  const filteredSegments = pathSegments.filter((segment, index) => {
+    // Remove 'admin' or 'staff' only if it's the first segment (role prefix)
+    if (index === 0 && (segment === "admin" || segment === "staff")) {
+      return false;
+    }
+    return true;
+  });
 
   // Generate breadcrumb items from filtered segments
-  const breadcrumbs: BreadcrumbItem[] = filteredSegments.map(
-    (segment, index) => {
-      // Reconstruct href with original path structure
-      const originalIndex = pathSegments.indexOf(segment);
-      const href = "/" + pathSegments.slice(0, originalIndex + 1).join("/");
-      const label =
-        routeLabels[segment] ||
-        segment.charAt(0).toUpperCase() + segment.slice(1);
-      return { label, href };
-    }
-  );
+  const breadcrumbs: BreadcrumbItem[] = filteredSegments.map((segment) => {
+    // Reconstruct href with original path structure
+    const originalIndex = pathSegments.indexOf(segment);
+    const href = "/" + pathSegments.slice(0, originalIndex + 1).join("/");
+
+    // Check if there's a dynamic override for this path
+    const overrideLabel = overrides[href];
+    const label =
+      overrideLabel ||
+      routeLabels[segment] ||
+      segment.charAt(0).toUpperCase() + segment.slice(1);
+    return { label, href };
+  });
 
   // Check if current page is dashboard
   const isDashboardPage = pathSegments[pathSegments.length - 1] === "dashboard";

@@ -15,35 +15,17 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StaffCard } from "@/components/staff/StaffCard";
 import { InvitationCard } from "@/components/staff/InvitationCard";
 import { InviteStaffDialog } from "@/components/staff/InviteStaffDialog";
-import { StaffProfileDialog } from "@/components/staff/StaffProfileDialog";
-import { ServiceAssignmentDialog } from "@/components/staff/ServiceAssignmentDialog";
-import { WorkingHoursDialog } from "@/components/staff/WorkingHoursDialog";
-import { TimeOffList } from "@/components/staff/TimeOffList";
 import { PaginationControls } from "@/components/ui/PaginationControls";
-import type { StaffMember } from "@/types";
 
 export function StaffList() {
   useRequireRole("admin");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [editingStaff, setEditingStaff] = useState<StaffMember | null>(null);
-  const [assigningServicesStaff, setAssigningServicesStaff] =
-    useState<StaffMember | null>(null);
-  const [managingScheduleStaff, setManagingScheduleStaff] =
-    useState<StaffMember | null>(null);
-  const [managingTimeOffStaff, setManagingTimeOffStaff] =
-    useState<StaffMember | null>(null);
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -75,27 +57,8 @@ export function StaffList() {
 
   const isLoading = storeLoading || staffLoading || invitationsLoading;
 
-  const handleEdit = (staff: StaffMember) => {
-    setEditingStaff(staff);
-  };
-
-  const handleAssignServices = (staff: StaffMember) => {
-    setAssigningServicesStaff(staff);
-  };
-
-  const handleManageSchedule = (staff: StaffMember) => {
-    setManagingScheduleStaff(staff);
-  };
-
-  const handleManageTimeOff = (staff: StaffMember) => {
-    setManagingTimeOffStaff(staff);
-  };
-
-  const handleCloseDialog = () => {
+  const handleCloseInvite = () => {
     setIsInviteDialogOpen(false);
-    setEditingStaff(null);
-    setAssigningServicesStaff(null);
-    setManagingScheduleStaff(null);
   };
 
   const pendingInvitations =
@@ -210,10 +173,6 @@ export function StaffList() {
                         key={staff.id}
                         staff={staff}
                         storeId={store.id}
-                        onEdit={handleEdit}
-                        onAssignServices={handleAssignServices}
-                        onManageSchedule={handleManageSchedule}
-                        onManageTimeOff={handleManageTimeOff}
                       />
                     ))}
                   </div>
@@ -307,60 +266,8 @@ export function StaffList() {
       <InviteStaffDialog
         storeId={store.id}
         open={isInviteDialogOpen}
-        onClose={handleCloseDialog}
+        onClose={handleCloseInvite}
       />
-
-      {/* Edit Staff Profile Dialog */}
-      {editingStaff && (
-        <StaffProfileDialog
-          storeId={store.id}
-          staff={editingStaff}
-          open={!!editingStaff}
-          onClose={handleCloseDialog}
-        />
-      )}
-
-      {/* Service Assignment Dialog */}
-      {assigningServicesStaff && (
-        <ServiceAssignmentDialog
-          storeId={store.id}
-          staff={assigningServicesStaff}
-          open={!!assigningServicesStaff}
-          onClose={handleCloseDialog}
-        />
-      )}
-
-      {/* Working Hours Dialog */}
-      {managingScheduleStaff && (
-        <WorkingHoursDialog
-          storeId={store.id}
-          staff={managingScheduleStaff}
-          open={!!managingScheduleStaff}
-          onClose={handleCloseDialog}
-        />
-      )}
-
-      {/* Time Off Management Dialog */}
-      {managingTimeOffStaff && (
-        <Dialog
-          open={!!managingTimeOffStaff}
-          onOpenChange={(open) => !open && setManagingTimeOffStaff(null)}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>
-                İzinler - {managingTimeOffStaff.firstName}{" "}
-                {managingTimeOffStaff.lastName}
-              </DialogTitle>
-            </DialogHeader>
-            <TimeOffList
-              storeId={store.id}
-              staffId={managingTimeOffStaff.id}
-              staffName={`${managingTimeOffStaff.firstName} ${managingTimeOffStaff.lastName}`}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }

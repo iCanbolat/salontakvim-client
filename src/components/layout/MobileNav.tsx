@@ -4,7 +4,6 @@
  */
 
 import { NavLink } from "react-router-dom";
-import { X } from "lucide-react";
 import {
   LayoutDashboard,
   Calendar,
@@ -21,7 +20,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";

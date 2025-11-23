@@ -6,9 +6,9 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { staffService } from "@/services";
+import { staffService, locationService } from "@/services";
 import {
   Dialog,
   DialogContent,
@@ -22,6 +22,13 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { StaffMember, UpdateStaffProfileDto } from "@/types";
 
 const profileSchema = z.object({
@@ -66,6 +73,14 @@ export function StaffProfileDialog({
   });
 
   const isVisible = watch("isVisible");
+  const selectedLocationId = watch("locationId");
+
+  const { data: locations, isLoading: locationsLoading } = useQuery({
+    queryKey: ["locations", storeId],
+    queryFn: () => locationService.getLocations(storeId),
+    enabled: open,
+    staleTime: 1000 * 60 * 5,
+  });
 
   // Update profile mutation
   const updateMutation = useMutation({
@@ -73,6 +88,9 @@ export function StaffProfileDialog({
       staffService.updateStaffProfile(storeId, staff.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-member", storeId, staff.id],
+      });
       onClose();
     },
   });
@@ -149,16 +167,37 @@ export function StaffProfileDialog({
             )}
           </div>
 
-          {/* Location ID */}
+          {/* Location Selection */}
           <div className="space-y-2">
-            <Label htmlFor="locationId">Location ID (Optional)</Label>
-            <Input
-              id="locationId"
-              type="number"
-              placeholder="Enter location ID"
-              {...register("locationId", { valueAsNumber: true })}
-              disabled={updateMutation.isPending}
-            />
+            <Label htmlFor="locationId">Location (Optional)</Label>
+            <Select
+              value={
+                selectedLocationId === null || selectedLocationId === undefined
+                  ? "none"
+                  : selectedLocationId.toString()
+              }
+              onValueChange={(value) => {
+                const parsedValue =
+                  value === "none" ? undefined : parseInt(value, 10);
+                setValue("locationId", parsedValue, { shouldDirty: true });
+              }}
+              disabled={updateMutation.isPending || locationsLoading}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Select a location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">No location</SelectItem>
+                {locations?.map((location) => (
+                  <SelectItem key={location.id} value={location.id.toString()}>
+                    {location.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">
+              Choose which branch this staff member belongs to.
+            </p>
             {errors.locationId && (
               <p className="text-sm text-red-600">
                 {errors.locationId.message}

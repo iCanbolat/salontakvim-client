@@ -154,7 +154,7 @@ export function ServicesList() {
           {filteredServices && filteredServices.length > 0 ? (
             <div
               className={`flex flex-col ${
-                paginatedItems.length < 7 ? "" : "min-h-[600px]"
+                paginatedItems.length < 4 ? "" : "min-h-[600px]"
               }`}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">

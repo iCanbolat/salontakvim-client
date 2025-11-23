@@ -7,6 +7,7 @@ export * from "./StoreSettings";
 export * from "./ServicesList";
 export * from "./CategoriesList";
 export * from "./StaffList";
+export * from "./StaffDetails";
 export * from "./LocationsList";
 export * from "./AppointmentsList";
 export * from "./CustomerDetails";

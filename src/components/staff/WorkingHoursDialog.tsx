@@ -22,7 +22,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { StaffMember, CreateWorkingHoursDto } from "@/types";
+import type { StaffMember, CreateWorkingHoursDto, DayOfWeek } from "@/types";
 
 interface WorkingHoursDialogProps {
   storeId: number;
@@ -31,15 +31,24 @@ interface WorkingHoursDialogProps {
   onClose: () => void;
 }
 
-const DAYS_OF_WEEK = [
-  { value: 0, label: "Sunday" },
-  { value: 1, label: "Monday" },
-  { value: 2, label: "Tuesday" },
-  { value: 3, label: "Wednesday" },
-  { value: 4, label: "Thursday" },
-  { value: 5, label: "Friday" },
-  { value: 6, label: "Saturday" },
+type WorkingHoursFormValue = CreateWorkingHoursDto & { isActive: boolean };
+
+const DAYS_OF_WEEK: { value: DayOfWeek; label: string }[] = [
+  { value: "monday", label: "Monday" },
+  { value: "tuesday", label: "Tuesday" },
+  { value: "wednesday", label: "Wednesday" },
+  { value: "thursday", label: "Thursday" },
+  { value: "friday", label: "Friday" },
+  { value: "saturday", label: "Saturday" },
+  { value: "sunday", label: "Sunday" },
 ];
+
+const normalizeTime = (value: string) => {
+  if (!value) {
+    return "";
+  }
+  return value.length > 5 ? value.slice(0, 5) : value;
+};
 
 export function WorkingHoursDialog({
   storeId,
@@ -49,10 +58,9 @@ export function WorkingHoursDialog({
 }: WorkingHoursDialogProps) {
   const queryClient = useQueryClient();
   const [editingHours, setEditingHours] = useState<
-    Record<number, CreateWorkingHoursDto>
+    Partial<Record<DayOfWeek, WorkingHoursFormValue>>
   >({});
 
-  // Fetch working hours
   const {
     data: workingHours,
     isLoading,
@@ -63,15 +71,14 @@ export function WorkingHoursDialog({
     enabled: open,
   });
 
-  // Initialize editing state when data loads
   useEffect(() => {
     if (workingHours) {
-      const hoursMap: Record<number, CreateWorkingHoursDto> = {};
+      const hoursMap: Partial<Record<DayOfWeek, WorkingHoursFormValue>> = {};
       workingHours.forEach((hour) => {
         hoursMap[hour.dayOfWeek] = {
           dayOfWeek: hour.dayOfWeek,
-          startTime: hour.startTime,
-          endTime: hour.endTime,
+          startTime: normalizeTime(hour.startTime),
+          endTime: normalizeTime(hour.endTime),
           isActive: hour.isActive,
         };
       });
@@ -79,7 +86,6 @@ export function WorkingHoursDialog({
     }
   }, [workingHours]);
 
-  // Create working hour mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreateWorkingHoursDto) =>
       staffService.createWorkingHours(storeId, staff.id, data),
@@ -91,7 +97,6 @@ export function WorkingHoursDialog({
     },
   });
 
-  // Update working hour mutation
   const updateMutation = useMutation({
     mutationFn: async ({
       id,
@@ -108,7 +113,6 @@ export function WorkingHoursDialog({
     },
   });
 
-  // Delete working hour mutation
   const deleteMutation = useMutation({
     mutationFn: async (id: number) =>
       staffService.deleteWorkingHours(storeId, staff.id, id),
@@ -120,15 +124,21 @@ export function WorkingHoursDialog({
     },
   });
 
-  const handleToggleDay = (dayOfWeek: number) => {
-    const current = editingHours[dayOfWeek];
-    if (current) {
-      setEditingHours((prev) => ({
-        ...prev,
-        [dayOfWeek]: { ...current, isActive: !current.isActive },
-      }));
-    } else {
-      setEditingHours((prev) => ({
+  const handleToggleDay = (dayOfWeek: DayOfWeek, checked: boolean) => {
+    setEditingHours((prev) => {
+      const current = prev[dayOfWeek];
+      if (current) {
+        return {
+          ...prev,
+          [dayOfWeek]: { ...current, isActive: checked },
+        };
+      }
+
+      if (!checked) {
+        return prev;
+      }
+
+      return {
         ...prev,
         [dayOfWeek]: {
           dayOfWeek,
@@ -136,12 +146,12 @@ export function WorkingHoursDialog({
           endTime: "18:00",
           isActive: true,
         },
-      }));
-    }
+      };
+    });
   };
 
   const handleTimeChange = (
-    dayOfWeek: number,
+    dayOfWeek: DayOfWeek,
     field: "startTime" | "endTime",
     value: string
   ) => {
@@ -154,24 +164,11 @@ export function WorkingHoursDialog({
     }));
   };
 
-  const handleSaveDay = (dayOfWeek: number) => {
-    const data = editingHours[dayOfWeek];
-    if (!data) return;
-
+  const handleDeleteDay = (dayOfWeek: DayOfWeek) => {
     const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
-    if (existing) {
-      updateMutation.mutate({ id: existing.id, data });
-    } else {
-      createMutation.mutate(data);
-    }
-  };
-
-  const handleDeleteDay = (dayOfWeek: number) => {
-    const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
-    if (
-      existing &&
-      confirm(`Remove ${DAYS_OF_WEEK[dayOfWeek].label} from schedule?`)
-    ) {
+    const dayLabel =
+      DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.label || dayOfWeek;
+    if (existing && confirm(`Remove ${dayLabel} from schedule?`)) {
       deleteMutation.mutate(existing.id);
       setEditingHours((prev) => {
         const newState = { ...prev };
@@ -184,11 +181,13 @@ export function WorkingHoursDialog({
   const handleCopyToAll = () => {
     if (Object.keys(editingHours).length === 0) return;
 
-    const firstDay = Object.values(editingHours)[0];
+    const firstDay = Object.values(editingHours).find(
+      (value): value is WorkingHoursFormValue => Boolean(value)
+    );
     if (!firstDay) return;
 
     if (confirm("Copy this schedule to all days of the week?")) {
-      const newHours: Record<number, CreateWorkingHoursDto> = {};
+      const newHours: Partial<Record<DayOfWeek, WorkingHoursFormValue>> = {};
       DAYS_OF_WEEK.forEach((day) => {
         newHours[day.value] = {
           dayOfWeek: day.value,
@@ -202,22 +201,23 @@ export function WorkingHoursDialog({
   };
 
   const handleSaveAll = async () => {
-    const promises = Object.entries(editingHours).map(([dayOfWeek, data]) => {
-      const existing = workingHours?.find(
-        (h) => h.dayOfWeek === Number(dayOfWeek)
-      );
+    const entries = Object.entries(editingHours).filter(
+      (entry): entry is [DayOfWeek, WorkingHoursFormValue] => Boolean(entry[1])
+    );
+
+    const promises = entries.map(([dayOfWeek, data]) => {
+      const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
       if (existing) {
         return updateMutation.mutateAsync({ id: existing.id, data });
-      } else {
-        return createMutation.mutateAsync(data);
       }
+      return createMutation.mutateAsync(data);
     });
 
     try {
       await Promise.all(promises);
       onClose();
     } catch (error) {
-      // Error handled by mutations
+      // handled via individual mutation states
     }
   };
 
@@ -249,12 +249,15 @@ export function WorkingHoursDialog({
               <div className="space-y-3">
                 {DAYS_OF_WEEK.map((day) => {
                   const hours = editingHours[day.value];
+                  const existing = workingHours?.find(
+                    (h) => h.dayOfWeek === day.value
+                  );
                   const hasChanges =
                     hours &&
-                    JSON.stringify(hours) !==
-                      JSON.stringify(
-                        workingHours?.find((h) => h.dayOfWeek === day.value)
-                      );
+                    (!existing ||
+                      hours.startTime !== normalizeTime(existing.startTime) ||
+                      hours.endTime !== normalizeTime(existing.endTime) ||
+                      hours.isActive !== existing.isActive);
 
                   return (
                     <div
@@ -266,24 +269,24 @@ export function WorkingHoursDialog({
                       }`}
                     >
                       <div className="flex items-start justify-between gap-4">
-                        {/* Day Name & Toggle */}
                         <div className="flex items-center gap-3 min-w-[140px]">
                           <Switch
-                            checked={hours?.isActive || false}
-                            onCheckedChange={() => handleToggleDay(day.value)}
+                            checked={Boolean(hours?.isActive)}
+                            onCheckedChange={(checked) =>
+                              handleToggleDay(day.value, checked)
+                            }
                             disabled={isPending}
                           />
                           <div>
                             <Label className="font-semibold text-gray-900">
                               {day.label}
                             </Label>
-                            {!hours?.isActive && (
+                            {hours && !hours.isActive && (
                               <p className="text-xs text-gray-500">Closed</p>
                             )}
                           </div>
                         </div>
 
-                        {/* Time Inputs */}
                         {hours?.isActive && (
                           <div className="flex items-center gap-3 flex-1">
                             <div className="flex-1">
@@ -340,7 +343,6 @@ export function WorkingHoursDialog({
                           </div>
                         )}
 
-                        {/* Actions */}
                         <div className="flex items-center gap-2">
                           {hasChanges && (
                             <Badge variant="default" className="shrink-0">
@@ -366,7 +368,6 @@ export function WorkingHoursDialog({
               </div>
             </ScrollArea>
 
-            {/* Quick Actions */}
             {Object.keys(editingHours).length > 0 && (
               <div className="flex items-center gap-2 pt-2 border-t">
                 <Button
@@ -380,7 +381,6 @@ export function WorkingHoursDialog({
               </div>
             )}
 
-            {/* Error Alert */}
             {(createMutation.isError ||
               updateMutation.isError ||
               deleteMutation.isError) && (
@@ -393,7 +393,6 @@ export function WorkingHoursDialog({
           </>
         )}
 
-        {/* Actions */}
         <DialogFooter>
           <Button
             type="button"
