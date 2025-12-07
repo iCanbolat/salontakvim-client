@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, Search } from "lucide-react";
-import { useRequireRole, usePagination } from "@/hooks";
+import { usePagination } from "@/hooks";
 import { storeService, serviceService } from "@/services";
 import {
   Card,
@@ -23,7 +23,6 @@ import { PaginationControls } from "@/components/ui/PaginationControls";
 import type { Service } from "@/types";
 
 export function ServicesList() {
-  useRequireRole("admin");
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -154,7 +153,7 @@ export function ServicesList() {
           {filteredServices && filteredServices.length > 0 ? (
             <div
               className={`flex flex-col ${
-                paginatedItems.length < 4 ? "" : "min-h-[600px]"
+                totalPages > 1 ? "min-h-[600px]" : ""
               }`}
             >
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">

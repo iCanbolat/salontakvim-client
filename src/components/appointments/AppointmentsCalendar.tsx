@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Calendar as CalendarIcon,
-  List,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { appointmentService } from "@/services";
@@ -39,7 +38,6 @@ import {
   getTimeSlots,
 } from "@/utils/calendar.utils";
 import { cn } from "@/lib/utils";
-import { useNavigate } from "react-router-dom";
 
 interface AppointmentsCalendarProps {
   storeId: number;
@@ -48,7 +46,6 @@ interface AppointmentsCalendarProps {
 type CalendarView = "month" | "week" | "day";
 
 export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
-  const navigate = useNavigate();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>("month");
   const [selectedAppointment, setSelectedAppointment] =
@@ -68,7 +65,7 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
   }, [currentDate, view]);
 
   // Fetch appointments for the current view
-  const { data: appointments = [], isLoading } = useQuery({
+  const { data: appointmentsData, isLoading } = useQuery({
     queryKey: [
       "appointments",
       storeId,
@@ -79,8 +76,11 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
       appointmentService.getAppointments(storeId, {
         startDate: format(dateRange.start, "yyyy-MM-dd"),
         endDate: format(dateRange.end, "yyyy-MM-dd"),
+        limit: 500,
       }),
   });
+
+  const appointments = appointmentsData?.data ?? [];
 
   // Get days to display based on view
   const displayDays = useMemo(() => {
@@ -136,7 +136,7 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
     const weekDays = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
     return (
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-4 xl:grid-cols-7 gap-1">
         {/* Week day headers */}
         {weekDays.map((day) => (
           <div
@@ -312,26 +312,6 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
 
   return (
     <div className="space-y-4">
-      {/* Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <CalendarIcon className="h-5 w-5" />
-              Appointments Calendar
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/admin/appointments")}
-            >
-              <List className="h-4 w-4 mr-2" />
-              List View
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
-
       {/* Controls */}
       <Card>
         <CardContent className="pt-6">

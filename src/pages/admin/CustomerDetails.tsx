@@ -2,7 +2,6 @@ import { useMemo, useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { storeService, customerService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -10,7 +9,6 @@ import { CustomerProfileContent } from "@/components/customers";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
 export function CustomerDetails() {
-  useRequireRole("admin");
   const navigate = useNavigate();
   const location = useLocation();
   const { customerId } = useParams<{ customerId: string }>();

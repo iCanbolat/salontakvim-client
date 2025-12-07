@@ -11,7 +11,6 @@ import {
   User,
   Briefcase,
   MapPin,
-  DollarSign,
   Edit,
   Trash2,
   MessageSquare,

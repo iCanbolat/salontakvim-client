@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, Users as UsersIcon } from "lucide-react";
-import { useRequireRole, usePagination } from "@/hooks";
+import { usePagination } from "@/hooks";
 import { storeService, staffService } from "@/services";
 import {
   Card,
@@ -24,7 +24,6 @@ import { InviteStaffDialog } from "@/components/staff/InviteStaffDialog";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 
 export function StaffList() {
-  useRequireRole("admin");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
 
   // Fetch user's store
@@ -79,6 +78,11 @@ export function StaffList() {
     itemsPerPage: 12,
   });
 
+  const handleStaffPageChange = (page: number) => {
+    goToStaffPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // Pagination for invitations
   const {
     paginatedItems: paginatedInvitations,
@@ -93,6 +97,11 @@ export function StaffList() {
     items: pendingInvitations,
     itemsPerPage: 12,
   });
+
+  const handleInvitationsPageChange = (page: number) => {
+    goToInvitationsPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (isLoading) {
     return (
@@ -164,7 +173,7 @@ export function StaffList() {
               {staffMembers && staffMembers.length > 0 ? (
                 <div
                   className={`flex flex-col ${
-                    paginatedStaff.length < 13 ? "" : "min-h-[600px]"
+                    staffTotalPages > 1 ? "min-h-[600px]" : ""
                   }`}
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 pb-4">
@@ -180,7 +189,7 @@ export function StaffList() {
                     <PaginationControls
                       currentPage={staffPage}
                       totalPages={staffTotalPages}
-                      onPageChange={goToStaffPage}
+                      onPageChange={handleStaffPageChange}
                       canGoPrevious={canGoPreviousStaff}
                       canGoNext={canGoNextStaff}
                       startIndex={staffStartIndex}
@@ -237,7 +246,7 @@ export function StaffList() {
                     <PaginationControls
                       currentPage={invitationsPage}
                       totalPages={invitationsTotalPages}
-                      onPageChange={goToInvitationsPage}
+                      onPageChange={handleInvitationsPageChange}
                       canGoPrevious={canGoPreviousInvitations}
                       canGoNext={canGoNextInvitations}
                       startIndex={invitationsStartIndex}

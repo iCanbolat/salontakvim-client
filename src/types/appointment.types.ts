@@ -103,4 +103,23 @@ export interface AppointmentFilters {
   customerId?: number;
   page?: number;
   limit?: number;
+  search?: string;
+}
+
+export interface AppointmentStatusCounts {
+  all: number;
+  pending: number;
+  confirmed: number;
+  completed: number;
+  cancelled: number;
+  no_show: number;
+}
+
+export interface PaginatedAppointmentsResponse {
+  data: Appointment[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  statusCounts: AppointmentStatusCounts;
 }

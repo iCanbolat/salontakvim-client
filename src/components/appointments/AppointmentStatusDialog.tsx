@@ -8,6 +8,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -154,129 +155,131 @@ export function AppointmentStatusDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Current Status */}
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            {currentStatusOption && (
-              <>
-                <currentStatusOption.icon className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <p className="text-sm font-medium">Mevcut Durum</p>
-                  <p className="text-sm text-muted-foreground">
-                    {currentStatusOption.label}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
+        <DialogBody>
+          <div className="space-y-4">
+            {/* Current Status */}
+            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+              {currentStatusOption && (
+                <>
+                  <currentStatusOption.icon className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <p className="text-sm font-medium">Mevcut Durum</p>
+                    <p className="text-sm text-muted-foreground">
+                      {currentStatusOption.label}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
 
-          {/* Status Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="status">Yeni Durum</Label>
-            <Select
-              value={selectedStatus}
-              onValueChange={(value) =>
-                setSelectedStatus(value as AppointmentStatus)
-              }
-            >
-              <SelectTrigger id="status">
-                <SelectValue placeholder="Durum seçin" />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_OPTIONS.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    <div className="flex items-center gap-2">
-                      <option.icon className="h-4 w-4" />
-                      <div>
-                        <p className="font-medium">{option.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {option.description}
-                        </p>
-                      </div>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Cancellation Reason (conditionally shown) */}
-          {requiresCancellationReason && (
+            {/* Status Selection */}
             <div className="space-y-2">
-              <Label
-                htmlFor="cancellation-reason"
-                className="flex items-center gap-2"
+              <Label htmlFor="status">Yeni Durum</Label>
+              <Select
+                value={selectedStatus}
+                onValueChange={(value) =>
+                  setSelectedStatus(value as AppointmentStatus)
+                }
               >
-                <AlertCircle className="h-4 w-4" />
-                {selectedStatus === "cancelled"
-                  ? "İptal Nedeni"
-                  : "Gelmeme Nedeni"}
-                <span className="text-xs text-muted-foreground">
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="Durum seçin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      <div className="flex items-center gap-2">
+                        <option.icon className="h-4 w-4" />
+                        <div>
+                          <p className="font-medium">{option.label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {option.description}
+                          </p>
+                        </div>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Cancellation Reason (conditionally shown) */}
+            {requiresCancellationReason && (
+              <div className="space-y-2">
+                <Label
+                  htmlFor="cancellation-reason"
+                  className="flex items-center gap-2"
+                >
+                  <AlertCircle className="h-4 w-4" />
+                  {selectedStatus === "cancelled"
+                    ? "İptal Nedeni"
+                    : "Gelmeme Nedeni"}
+                  <span className="text-xs text-muted-foreground">
+                    (Opsiyonel)
+                  </span>
+                </Label>
+                <Textarea
+                  id="cancellation-reason"
+                  placeholder={
+                    selectedStatus === "cancelled"
+                      ? "İptal nedenini belirtin..."
+                      : "Gelmeme nedenini belirtin..."
+                  }
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                />
+                <p className="text-xs text-muted-foreground text-right">
+                  {cancellationReason.length}/500
+                </p>
+              </div>
+            )}
+
+            {/* Internal Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="internal-notes">
+                Dahili Notlar
+                <span className="text-xs text-muted-foreground ml-2">
                   (Opsiyonel)
                 </span>
               </Label>
               <Textarea
-                id="cancellation-reason"
-                placeholder={
-                  selectedStatus === "cancelled"
-                    ? "İptal nedenini belirtin..."
-                    : "Gelmeme nedenini belirtin..."
-                }
-                value={cancellationReason}
-                onChange={(e) => setCancellationReason(e.target.value)}
+                id="internal-notes"
+                placeholder="Randevu hakkında notlar ekleyin (sadece personel görebilir)..."
+                value={internalNotes}
+                onChange={(e) => setInternalNotes(e.target.value)}
                 rows={3}
-                maxLength={500}
+                maxLength={1000}
               />
               <p className="text-xs text-muted-foreground text-right">
-                {cancellationReason.length}/500
+                {internalNotes.length}/1000
               </p>
             </div>
-          )}
 
-          {/* Internal Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="internal-notes">
-              Dahili Notlar
-              <span className="text-xs text-muted-foreground ml-2">
-                (Opsiyonel)
-              </span>
-            </Label>
-            <Textarea
-              id="internal-notes"
-              placeholder="Randevu hakkında notlar ekleyin (sadece personel görebilir)..."
-              value={internalNotes}
-              onChange={(e) => setInternalNotes(e.target.value)}
-              rows={3}
-              maxLength={1000}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {internalNotes.length}/1000
-            </p>
-          </div>
-
-          {/* Status Change Preview */}
-          {selectedStatus !== appointment.status && selectedStatusOption && (
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium text-blue-900">
-                    Durum değiştirilecek
-                  </p>
-                  <p className="text-blue-700 mt-1">
-                    <span className="font-medium">
-                      {currentStatusOption?.label}
-                    </span>
-                    {" → "}
-                    <span className="font-medium">
-                      {selectedStatusOption.label}
-                    </span>
-                  </p>
+            {/* Status Change Preview */}
+            {selectedStatus !== appointment.status && selectedStatusOption && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-medium text-blue-900">
+                      Durum değiştirilecek
+                    </p>
+                    <p className="text-blue-700 mt-1">
+                      <span className="font-medium">
+                        {currentStatusOption?.label}
+                      </span>
+                      {" → "}
+                      <span className="font-medium">
+                        {selectedStatusOption.label}
+                      </span>
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </DialogBody>
 
         <DialogFooter>
           <Button

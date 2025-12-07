@@ -13,3 +13,4 @@ export * from "./staff.service";
 export * from "./location.service";
 export * from "./break.service";
 export * from "./customer.service";
+export * from "./notification.service";

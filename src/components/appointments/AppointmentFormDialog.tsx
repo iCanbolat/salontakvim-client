@@ -24,6 +24,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -209,7 +210,7 @@ export function AppointmentFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Appointment" : "Create New Appointment"}
@@ -221,197 +222,206 @@ export function AppointmentFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Service Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="serviceId">
-              Service <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={watchServiceId?.toString()}
-              onValueChange={(value) =>
-                setValue("serviceId", parseInt(value), { shouldDirty: true })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a service" />
-              </SelectTrigger>
-              <SelectContent>
-                {services?.map((service) => (
-                  <SelectItem key={service.id} value={service.id.toString()}>
-                    {service.name} - ${service.price} ({service.duration} min)
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.serviceId && (
-              <p className="text-sm text-red-600">{errors.serviceId.message}</p>
-            )}
-          </div>
-
-          {/* Staff Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="staffId">
-              Staff Member <span className="text-red-500">*</span>
-            </Label>
-            <Select
-              value={watchStaffId?.toString()}
-              onValueChange={(value) =>
-                setValue("staffId", parseInt(value), { shouldDirty: true })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a staff member" />
-              </SelectTrigger>
-              <SelectContent>
-                {staff?.map((member) => (
-                  <SelectItem key={member.id} value={member.id.toString()}>
-                    {member.firstName} {member.lastName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {errors.staffId && (
-              <p className="text-sm text-red-600">{errors.staffId.message}</p>
-            )}
-          </div>
-
-          {/* Location Selection (Optional) */}
-          <div className="space-y-2">
-            <Label htmlFor="locationId">Location (optional)</Label>
-            <Select
-              value={watchLocationId?.toString() || ""}
-              onValueChange={(value) =>
-                setValue("locationId", value ? parseInt(value) : undefined, {
-                  shouldDirty: true,
-                })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                {locations?.map((location) => (
-                  <SelectItem key={location.id} value={location.id.toString()}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Customer Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <DialogBody className="space-y-4">
+            {/* Service Selection */}
             <div className="space-y-2">
-              <Label htmlFor="guestFirstName">
-                First Name <span className="text-red-500">*</span>
+              <Label htmlFor="serviceId">
+                Service <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="guestFirstName"
-                {...register("guestFirstName")}
-                placeholder="John"
-              />
-              {errors.guestFirstName && (
+              <Select
+                value={watchServiceId?.toString()}
+                onValueChange={(value) =>
+                  setValue("serviceId", parseInt(value), { shouldDirty: true })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a service" />
+                </SelectTrigger>
+                <SelectContent>
+                  {services?.map((service) => (
+                    <SelectItem key={service.id} value={service.id.toString()}>
+                      {service.name} - ${service.price} ({service.duration} min)
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.serviceId && (
                 <p className="text-sm text-red-600">
-                  {errors.guestFirstName.message}
+                  {errors.serviceId.message}
                 </p>
               )}
             </div>
 
+            {/* Staff Selection */}
             <div className="space-y-2">
-              <Label htmlFor="guestLastName">
-                Last Name <span className="text-red-500">*</span>
+              <Label htmlFor="staffId">
+                Staff Member <span className="text-red-500">*</span>
               </Label>
-              <Input
-                id="guestLastName"
-                {...register("guestLastName")}
-                placeholder="Doe"
+              <Select
+                value={watchStaffId?.toString()}
+                onValueChange={(value) =>
+                  setValue("staffId", parseInt(value), { shouldDirty: true })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a staff member" />
+                </SelectTrigger>
+                <SelectContent>
+                  {staff?.map((member) => (
+                    <SelectItem key={member.id} value={member.id.toString()}>
+                      {member.firstName} {member.lastName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.staffId && (
+                <p className="text-sm text-red-600">{errors.staffId.message}</p>
+              )}
+            </div>
+
+            {/* Location Selection (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="locationId">Location (optional)</Label>
+              <Select
+                value={watchLocationId?.toString() || ""}
+                onValueChange={(value) =>
+                  setValue("locationId", value ? parseInt(value) : undefined, {
+                    shouldDirty: true,
+                  })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {locations?.map((location) => (
+                    <SelectItem
+                      key={location.id}
+                      value={location.id.toString()}
+                    >
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Customer Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="guestFirstName">
+                  First Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="guestFirstName"
+                  {...register("guestFirstName")}
+                  placeholder="John"
+                />
+                {errors.guestFirstName && (
+                  <p className="text-sm text-red-600">
+                    {errors.guestFirstName.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="guestLastName">
+                  Last Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="guestLastName"
+                  {...register("guestLastName")}
+                  placeholder="Doe"
+                />
+                {errors.guestLastName && (
+                  <p className="text-sm text-red-600">
+                    {errors.guestLastName.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="guestEmail">
+                  Email <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="guestEmail"
+                  type="email"
+                  {...register("guestEmail")}
+                  placeholder="john@example.com"
+                />
+                {errors.guestEmail && (
+                  <p className="text-sm text-red-600">
+                    {errors.guestEmail.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="guestPhone">Phone (optional)</Label>
+                <Input
+                  id="guestPhone"
+                  {...register("guestPhone")}
+                  placeholder="+1 (555) 123-4567"
+                />
+              </div>
+            </div>
+
+            {/* Date & Time */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">
+                  Date <span className="text-red-500">*</span>
+                </Label>
+                <Input id="date" type="date" {...register("date")} />
+                {errors.date && (
+                  <p className="text-sm text-red-600">{errors.date.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="time">
+                  Time <span className="text-red-500">*</span>
+                </Label>
+                <Input id="time" type="time" {...register("time")} />
+                {errors.time && (
+                  <p className="text-sm text-red-600">{errors.time.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="numberOfPeople">Number of People</Label>
+                <Input
+                  id="numberOfPeople"
+                  type="number"
+                  min="1"
+                  max="10"
+                  {...register("numberOfPeople", { valueAsNumber: true })}
+                />
+                {errors.numberOfPeople && (
+                  <p className="text-sm text-red-600">
+                    {errors.numberOfPeople.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            {/* Customer Notes */}
+            <div className="space-y-2">
+              <Label htmlFor="customerNotes">Customer Notes</Label>
+              <Textarea
+                id="customerNotes"
+                {...register("customerNotes")}
+                placeholder="Any special requests or notes..."
+                rows={3}
               />
-              {errors.guestLastName && (
-                <p className="text-sm text-red-600">
-                  {errors.guestLastName.message}
-                </p>
-              )}
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="guestEmail">
-                Email <span className="text-red-500">*</span>
-              </Label>
-              <Input
-                id="guestEmail"
-                type="email"
-                {...register("guestEmail")}
-                placeholder="john@example.com"
-              />
-              {errors.guestEmail && (
-                <p className="text-sm text-red-600">
-                  {errors.guestEmail.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="guestPhone">Phone (optional)</Label>
-              <Input
-                id="guestPhone"
-                {...register("guestPhone")}
-                placeholder="+1 (555) 123-4567"
-              />
-            </div>
-          </div>
-
-          {/* Date & Time */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="date">
-                Date <span className="text-red-500">*</span>
-              </Label>
-              <Input id="date" type="date" {...register("date")} />
-              {errors.date && (
-                <p className="text-sm text-red-600">{errors.date.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="time">
-                Time <span className="text-red-500">*</span>
-              </Label>
-              <Input id="time" type="time" {...register("time")} />
-              {errors.time && (
-                <p className="text-sm text-red-600">{errors.time.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="numberOfPeople">Number of People</Label>
-              <Input
-                id="numberOfPeople"
-                type="number"
-                min="1"
-                max="10"
-                {...register("numberOfPeople", { valueAsNumber: true })}
-              />
-              {errors.numberOfPeople && (
-                <p className="text-sm text-red-600">
-                  {errors.numberOfPeople.message}
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Customer Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="customerNotes">Customer Notes</Label>
-            <Textarea
-              id="customerNotes"
-              {...register("customerNotes")}
-              placeholder="Any special requests or notes..."
-              rows={3}
-            />
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

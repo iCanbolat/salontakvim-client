@@ -9,6 +9,7 @@ import type {
   UpdateAppointmentDto,
   UpdateAppointmentStatusDto,
   AppointmentFilters,
+  PaginatedAppointmentsResponse,
 } from "@/types";
 
 export class AppointmentService {
@@ -18,8 +19,8 @@ export class AppointmentService {
   async getAppointments(
     storeId: number,
     filters?: AppointmentFilters
-  ): Promise<Appointment[]> {
-    const response = await axiosInstance.get<Appointment[]>(
+  ): Promise<PaginatedAppointmentsResponse> {
+    const response = await axiosInstance.get<PaginatedAppointmentsResponse>(
       `/stores/${storeId}/appointments`,
       { params: filters }
     );

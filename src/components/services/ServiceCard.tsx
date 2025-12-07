@@ -11,7 +11,6 @@ import {
   EyeOff,
   Clock,
   Users,
-  DollarSign,
 } from "lucide-react";
 import { serviceService } from "@/services";
 import type { Service } from "@/types";

@@ -7,7 +7,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Search, Loader2, AlertCircle, Users } from "lucide-react";
-import { useRequireRole, usePagination } from "@/hooks";
+import { usePagination } from "@/hooks";
 import { storeService, customerService } from "@/services";
 import type { CustomerWithStats } from "@/types";
 import {
@@ -23,7 +23,6 @@ import { CustomerCard } from "@/components/customers/CustomerCard";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 
 export function CustomersList() {
-  useRequireRole("admin");
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
 

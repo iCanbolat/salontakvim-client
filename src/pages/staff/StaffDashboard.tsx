@@ -12,14 +12,12 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
-import { useRequireRole } from "@/hooks";
 import { appointmentService, storeService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TodaysSchedule } from "@/components/staff/TodaysSchedule";
 import { UpcomingAppointments } from "@/components/staff/UpcomingAppointments";
 
 export function StaffDashboard() {
-  useRequireRole("staff");
   const { user } = useAuth();
 
   // Fetch user's store
@@ -29,22 +27,33 @@ export function StaffDashboard() {
   });
 
   // Fetch staff's appointments
-  const { data: appointments = [], isLoading: appointmentsLoading } = useQuery({
+  const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
     queryKey: ["staff-appointments", store?.id, user?.id],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
         staffId: user!.id,
+        limit: 100,
       }),
     enabled: !!store?.id && !!user?.id,
   });
+
+  const appointments = appointmentsData?.data ?? [];
+  const statusCounts = appointmentsData?.statusCounts ?? {
+    all: 0,
+    pending: 0,
+    confirmed: 0,
+    completed: 0,
+    cancelled: 0,
+    no_show: 0,
+  };
 
   const isLoading = storeLoading || appointmentsLoading;
 
   // Calculate stats
   const stats = {
-    total: appointments.length,
-    completed: appointments.filter((a) => a.status === "completed").length,
-    pending: appointments.filter((a) => a.status === "pending").length,
+    total: statusCounts.all,
+    completed: statusCounts.completed,
+    pending: statusCounts.pending,
     totalEarned: appointments
       .filter((a) => a.status === "completed")
       .reduce((sum, a) => sum + parseFloat(a.totalPrice), 0)

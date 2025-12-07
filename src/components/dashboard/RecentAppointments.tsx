@@ -35,7 +35,7 @@ export function RecentAppointments() {
   });
 
   // Fetch recent appointments
-  const { data: appointments, isLoading } = useQuery({
+  const { data: appointmentsData, isLoading } = useQuery({
     queryKey: ["recent-appointments", store?.id],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
@@ -43,6 +43,8 @@ export function RecentAppointments() {
       }),
     enabled: !!store?.id,
   });
+
+  const appointments = appointmentsData?.data ?? [];
 
   if (isLoading) {
     return (
@@ -67,7 +69,7 @@ export function RecentAppointments() {
     );
   }
 
-  if (!appointments || appointments.length === 0) {
+  if (appointments.length === 0) {
     return (
       <Card>
         <CardHeader>

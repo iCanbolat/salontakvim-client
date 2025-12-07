@@ -9,7 +9,6 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, AlertCircle, Building2, Save, X } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { storeService } from "@/services";
 import type { UpdateStoreDto } from "@/types";
 import {
@@ -46,7 +45,6 @@ const storeSettingsSchema = z.object({
 type StoreSettingsFormData = z.infer<typeof storeSettingsSchema>;
 
 export function StoreSettings() {
-  useRequireRole("admin");
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
 

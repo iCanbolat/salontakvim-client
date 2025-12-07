@@ -32,15 +32,18 @@ export function UpcomingAppointments() {
   const endDate = endOfDay(tomorrow).toISOString();
 
   // Fetch tomorrow's appointments
-  const { data: appointments, isLoading } = useQuery({
+  const { data: appointmentsData, isLoading } = useQuery({
     queryKey: ["upcoming-appointments", store?.id, startDate],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
         startDate,
         endDate,
+        limit: 100,
       }),
     enabled: !!store?.id,
   });
+
+  const appointments = appointmentsData?.data ?? [];
 
   if (isLoading) {
     return (
@@ -61,7 +64,7 @@ export function UpcomingAppointments() {
     );
   }
 
-  if (!appointments || appointments.length === 0) {
+  if (appointments.length === 0) {
     return (
       <Card>
         <CardHeader>

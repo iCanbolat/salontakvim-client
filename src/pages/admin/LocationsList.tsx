@@ -6,7 +6,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, MapPin } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { storeService, locationService } from "@/services";
 import {
   Card,
@@ -22,7 +21,6 @@ import { LocationFormDialog } from "@/components/locations/LocationFormDialog";
 import type { Location } from "@/types";
 
 export function LocationsList() {
-  useRequireRole("admin");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
 

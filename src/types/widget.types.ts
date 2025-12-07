@@ -29,7 +29,6 @@ export interface WidgetSettings {
   textColor: string;
   headingColor: string;
   fontFamily: string;
-  fontSize: number;
   buttonBorderRadius: number;
   showProgressBar: boolean;
   allowGuestBooking: boolean;
@@ -56,7 +55,6 @@ export interface UpdateWidgetSettingsDto {
   textColor?: string;
   headingColor?: string;
   fontFamily?: string;
-  fontSize?: number;
   buttonBorderRadius?: number;
   showProgressBar?: boolean;
   allowGuestBooking?: boolean;

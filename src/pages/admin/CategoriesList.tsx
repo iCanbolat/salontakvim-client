@@ -6,7 +6,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, FolderOpen } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { storeService, categoryService } from "@/services";
 import {
   Card,
@@ -22,7 +21,6 @@ import { CategoryFormDialog } from "@/components/categories/CategoryFormDialog";
 import type { Category } from "@/types";
 
 export function CategoriesList() {
-  useRequireRole("admin");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 

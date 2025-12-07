@@ -3,6 +3,7 @@ import type {
   NotificationSettings,
   UpdateNotificationSettingsDto,
 } from "@/types/notification.types";
+import type { Notification } from "@/contexts/NotificationContext";
 
 export const notificationService = {
   /**
@@ -29,5 +30,18 @@ export const notificationService = {
       data
     );
     return response.data;
+  },
+
+  async getUserNotifications(): Promise<Notification[]> {
+    const response = await axiosInstance.get<Notification[]>(`/notifications`);
+    return response.data;
+  },
+
+  async markAsRead(id: number): Promise<void> {
+    await axiosInstance.patch(`/notifications/${id}/read`);
+  },
+
+  async markAllAsRead(): Promise<void> {
+    await axiosInstance.patch(`/notifications/read-all`);
   },
 };

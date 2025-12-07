@@ -11,7 +11,6 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { analyticsService, storeService } from "@/services";
 import {
   MetricCard,
@@ -25,8 +24,6 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function AdminDashboard() {
-  useRequireRole("admin");
-
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["my-store"],

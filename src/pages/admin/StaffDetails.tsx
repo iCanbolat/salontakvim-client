@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Mail, MapPin, CalendarDays } from "lucide-react";
-import { useRequireRole } from "@/hooks";
 import { staffService, storeService, categoryService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 import {
@@ -37,7 +36,6 @@ const DAY_LABELS: { value: DayOfWeek; label: string }[] = [
 ];
 
 export function StaffDetails() {
-  useRequireRole("admin");
   const { staffId } = useParams<{ staffId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
