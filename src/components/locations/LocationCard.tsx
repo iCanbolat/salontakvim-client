@@ -4,7 +4,7 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Edit, Trash2, Eye, EyeOff, MapPin, Phone, Mail } from "lucide-react";
+import { Edit, Trash2, Eye, EyeOff, Phone, Mail } from "lucide-react";
 import { locationService } from "@/services";
 import type { Location } from "@/types";
 import {

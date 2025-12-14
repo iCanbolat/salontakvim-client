@@ -53,7 +53,7 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
               const Icon = activityIcons[activity.type];
               const colorClass = activityColors[activity.type];
               const timeAgo = formatDistanceToNow(
-                new Date(activity.timestamp),
+                new Date(activity.createdAt),
                 {
                   addSuffix: true,
                 }

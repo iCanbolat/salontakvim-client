@@ -10,6 +10,7 @@ import type {
   UpdateAppointmentStatusDto,
   AppointmentFilters,
   PaginatedAppointmentsResponse,
+  AvailabilityResponse,
 } from "@/types";
 
 export class AppointmentService {
@@ -86,6 +87,29 @@ export class AppointmentService {
    */
   async deleteAppointment(storeId: number, id: number): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/appointments/${id}`);
+  }
+
+  /**
+   * Get availability time slots for a staff/service/date
+   */
+  async getAvailability(params: {
+    storeId: number;
+    serviceId: number;
+    staffId: number;
+    date: string;
+    locationId?: number;
+    excludeAppointmentId?: number;
+  }): Promise<AvailabilityResponse> {
+    const { storeId, ...query } = params;
+
+    const response = await axiosInstance.get<AvailabilityResponse>(
+      `/stores/${storeId}/availability`,
+      {
+        params: query,
+      }
+    );
+
+    return response.data;
   }
 }
 

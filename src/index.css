@@ -191,3 +191,13 @@
     letter-spacing: var(--tracking-normal);
   }
 }
+
+[data-responsive-range="true"] .rdp-month:nth-of-type(n + 2) {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  [data-responsive-range="true"] .rdp-month:nth-of-type(n + 2) {
+    display: flex;
+  }
+}

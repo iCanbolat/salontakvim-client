@@ -18,15 +18,10 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
+import { useSearchParams } from "react-router-dom";
 import { useDebouncedSearch } from "@/hooks";
 import { storeService, appointmentService } from "@/services";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
 import { Calendar } from "@/components/ui/calendar";
@@ -53,6 +48,7 @@ import { useNotifications } from "@/contexts";
 export function AppointmentsList() {
   const queryClient = useQueryClient();
   const { latestNotification } = useNotifications();
+  const [searchParams] = useSearchParams();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
@@ -63,11 +59,54 @@ export function AppointmentsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"list" | "calendar">("list");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [pendingDateRange, setPendingDateRange] = useState<
+    DateRange | undefined
+  >();
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const itemsPerPage = 6;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 3,
     delay: 400,
   });
+
+  // If navigated with startDate/endDate query params, initialize date filter.
+  useEffect(() => {
+    const startDateParam = searchParams.get("startDate");
+    const endDateParam = searchParams.get("endDate");
+    if (!startDateParam && !endDateParam) return;
+
+    const from = startDateParam
+      ? new Date(`${startDateParam}T00:00:00`)
+      : undefined;
+    const to = endDateParam ? new Date(`${endDateParam}T00:00:00`) : undefined;
+
+    if (from && Number.isNaN(from.getTime())) return;
+    if (to && Number.isNaN(to.getTime())) return;
+
+    setDateRange({
+      from,
+      to: to ?? from,
+    });
+  }, [searchParams]);
+
+  const handleDatePopoverChange = (open: boolean) => {
+    setIsDatePopoverOpen(open);
+    if (open) {
+      setPendingDateRange(dateRange);
+    } else {
+      setPendingDateRange(undefined);
+    }
+  };
+
+  const handleApplyDateRange = () => {
+    setDateRange(pendingDateRange);
+    setIsDatePopoverOpen(false);
+  };
+
+  const handleClearDateRange = () => {
+    setDateRange(undefined);
+    setPendingDateRange(undefined);
+  };
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -243,7 +282,10 @@ export function AppointmentsList() {
             />
           </div>
           <div className="flex w-full md:w-auto">
-            <Popover>
+            <Popover
+              open={isDatePopoverOpen}
+              onOpenChange={handleDatePopoverChange}
+            >
               <PopoverTrigger asChild>
                 <Button
                   variant={dateRange?.from ? "secondary" : "outline"}
@@ -270,7 +312,7 @@ export function AppointmentsList() {
                   {dateRange?.from && (
                     <Button
                       variant={dateRange?.from ? "secondary" : "ghost"}
-                      onClick={() => setDateRange(undefined)}
+                      onClick={handleClearDateRange}
                       className="absolute right-1 top-1 border-none border-b w-6 h-6 "
                     >
                       <X className="h-2 w-2" />
@@ -281,11 +323,20 @@ export function AppointmentsList() {
               <PopoverContent className="w-auto p-0" align="end">
                 <Calendar
                   mode="range"
-                  defaultMonth={dateRange?.from}
-                  selected={dateRange}
-                  onSelect={setDateRange}
-                  numberOfMonths={2}
+                  defaultMonth={(pendingDateRange ?? dateRange)?.from}
+                  selected={pendingDateRange ?? dateRange}
+                  onSelect={setPendingDateRange}
                 />
+                <div className="flex items-center gap-2 border-t p-3">
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={handleApplyDateRange}
+                    disabled={!pendingDateRange?.from && !dateRange?.from}
+                  >
+                    Apply
+                  </Button>
+                </div>
               </PopoverContent>
             </Popover>
           </div>

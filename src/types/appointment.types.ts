@@ -123,3 +123,18 @@ export interface PaginatedAppointmentsResponse {
   totalPages: number;
   statusCounts: AppointmentStatusCounts;
 }
+
+export interface AvailabilityTimeSlot {
+  startTime: string;
+  endTime: string;
+  available: boolean;
+  reason?: string;
+}
+
+export interface AvailabilityResponse {
+  date: string;
+  serviceId: number;
+  staffId: number;
+  locationId?: number;
+  slots: AvailabilityTimeSlot[];
+}

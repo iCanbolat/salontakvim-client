@@ -10,6 +10,7 @@ import { Calendar, Clock } from "lucide-react";
 import { appointmentService, storeService } from "@/services";
 import { format, addDays, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
+import { Link } from "react-router-dom";
 
 const statusColors = {
   pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
@@ -30,6 +31,7 @@ export function UpcomingAppointments() {
   const tomorrow = addDays(new Date(), 1);
   const startDate = startOfDay(tomorrow).toISOString();
   const endDate = endOfDay(tomorrow).toISOString();
+  const tomorrowDateOnly = format(tomorrow, "yyyy-MM-dd");
 
   // Fetch tomorrow's appointments
   const { data: appointmentsData, isLoading } = useQuery({
@@ -38,7 +40,7 @@ export function UpcomingAppointments() {
       appointmentService.getAppointments(store!.id, {
         startDate,
         endDate,
-        limit: 100,
+        limit: 5,
       }),
     enabled: !!store?.id,
   });
@@ -80,6 +82,8 @@ export function UpcomingAppointments() {
     );
   }
 
+  console.log("appointmens", appointments.map(a => new Date(a.startDateTime).getTime()));
+
   // Sort by start time
   const sortedAppointments = [...appointments].sort(
     (a, b) =>
@@ -91,9 +95,13 @@ export function UpcomingAppointments() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>Tomorrow's Schedule</CardTitle>
-          <Badge variant="secondary" className="text-xs">
-            {appointments.length}{" "}
-            {appointments.length === 1 ? "appointment" : "appointments"}
+          <Badge asChild variant="secondary" className="text-xs">
+            <Link
+              to={`/admin/appointments?startDate=${tomorrowDateOnly}&endDate=${tomorrowDateOnly}`}
+              className="hover:underline"
+            >
+              View All
+            </Link>
           </Badge>
         </div>
       </CardHeader>

@@ -22,10 +22,12 @@ export interface DashboardStats {
 }
 
 export interface RecentActivity {
+  id: number;
+  storeId: number;
   type: "appointment" | "customer" | "staff";
   message: string;
-  timestamp: string;
   metadata?: any;
+  createdAt: string;
 }
 
 export interface DashboardResponse {

@@ -11,14 +11,13 @@ import {
   Loader2,
   AlertCircle,
 } from "lucide-react";
-import { analyticsService, storeService } from "@/services";
+import { analyticsService, activityService, storeService } from "@/services";
 import {
   MetricCard,
   AppointmentStatusBreakdown,
   RecentActivityList,
   QuickStats,
   RecentAppointments,
-  UpcomingAppointments,
   QuickActions,
 } from "@/components/dashboard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -41,7 +40,13 @@ export function AdminDashboard() {
     enabled: !!store?.id,
   });
 
-  const isLoading = storeLoading || dashboardLoading;
+  const { data: activities = [], isLoading: activitiesLoading } = useQuery({
+    queryKey: ["activities", store?.id],
+    queryFn: () => activityService.getRecentActivities(store!.id),
+    enabled: !!store?.id,
+  });
+
+  const isLoading = storeLoading || dashboardLoading || activitiesLoading;
 
   if (isLoading) {
     return (
@@ -75,7 +80,7 @@ export function AdminDashboard() {
     return null;
   }
 
-  const { stats, recentActivity } = dashboard;
+  const { stats } = dashboard;
 
   return (
     <div className="space-y-6">
@@ -134,15 +139,10 @@ export function AdminDashboard() {
       {/* Third Row - Quick Actions */}
       <QuickActions />
 
-      {/* Fourth Row - Recent & Upcoming Appointments */}
+      {/* Fourth Row - Appointments & Activity */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         <RecentAppointments />
-        <UpcomingAppointments />
-      </div>
-
-      {/* Fifth Row - Recent Activity */}
-      <div className="grid grid-cols-1 gap-6">
-        <RecentActivityList activities={recentActivity} />
+        <RecentActivityList activities={activities} />
       </div>
     </div>
   );

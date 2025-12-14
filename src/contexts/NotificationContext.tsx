@@ -11,6 +11,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useAuth } from "./AuthContext";
 import { notificationService } from "@/services/notification.service";
+import type { RecentActivity } from "@/types";
 
 export interface Notification {
   id: number;
@@ -23,6 +24,8 @@ export interface Notification {
   createdAt: string;
   metadata?: Record<string, any> | null;
 }
+
+type ToastVariant = "success" | "error" | "warning" | "info" | "default";
 
 interface NotificationContextValue {
   notifications: Notification[];
@@ -67,6 +70,39 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [latestNotification, setLatestNotification] =
     useState<Notification | null>(null);
+  
+  const resolveToastVariant = (type: string): ToastVariant => {
+    if (type === "appointment_cancelled") return "error";
+    if (type === "appointment_created") return "success";
+    if (type === "appointment_status_changed") return "info";
+    if (type === "staff_invitation") return "info";
+    if (type === "staff_invitation_accepted") return "success";
+    return "default";
+  };
+
+  const showNotificationToast = (notification: Notification) => {
+    const variant = resolveToastVariant(notification.type);
+    const options = {
+      description: notification.message,
+    };
+
+    switch (variant) {
+      case "success":
+        toast.success(notification.title, options);
+        break;
+      case "error":
+        toast.error(notification.title, options);
+        break;
+      case "warning":
+        toast.warning(notification.title, options);
+        break;
+      case "info":
+        toast.info(notification.title, options);
+        break;
+      default:
+        toast(notification.title, options);
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("accessToken");
@@ -109,9 +145,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     newSocket.on("notification", (notification: Notification) => {
       setNotifications((prev) => [notification, ...prev]);
       setLatestNotification(notification);
-      toast(notification.title, {
-        description: notification.message,
-      });
+      showNotificationToast(notification);
 
       if (
         [
@@ -131,6 +165,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
             query.queryKey[0] === "dashboard-stats",
         });
       }
+    });
+
+    newSocket.on("activity", (activity: RecentActivity) => {
+      queryClient.setQueryData<RecentActivity[]>(
+        ["activities", activity.storeId],
+        (prev) => {
+          const existing = Array.isArray(prev) ? prev : [];
+          return [activity, ...existing].slice(0, 50);
+        }
+      );
     });
 
     setSocket(newSocket);

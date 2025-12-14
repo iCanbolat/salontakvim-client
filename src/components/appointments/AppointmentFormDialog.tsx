@@ -3,19 +3,25 @@
  * Create or edit an appointment
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2 } from "lucide-react";
+import { format } from "date-fns";
+import { Loader2, Calendar as CalendarIcon } from "lucide-react";
 import {
   appointmentService,
   serviceService,
   staffService,
   locationService,
 } from "@/services";
-import type { Appointment, CreateAppointmentDto } from "@/types";
+import type {
+  Appointment,
+  CreateAppointmentDto,
+  AvailabilityTimeSlot,
+  AvailabilityResponse,
+} from "@/types";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import {
   Dialog,
@@ -30,6 +36,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -69,18 +81,12 @@ export function AppointmentFormDialog({
 }: AppointmentFormDialogProps) {
   const queryClient = useQueryClient();
   const isEditing = !!appointment;
+  const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
 
   // Fetch services
   const { data: services } = useQuery({
     queryKey: ["services", storeId],
     queryFn: () => serviceService.getServices(storeId),
-    enabled: open,
-  });
-
-  // Fetch staff
-  const { data: staff } = useQuery({
-    queryKey: ["staff", storeId],
-    queryFn: () => staffService.getStaffMembers(storeId),
     enabled: open,
   });
 
@@ -118,8 +124,61 @@ export function AppointmentFormDialog({
 
   // Watch form values for controlled components
   const watchServiceId = watch("serviceId");
-  const watchStaffId = watch("staffId");
   const watchLocationId = watch("locationId");
+  const watchStaffId = watch("staffId");
+  const watchDate = watch("date");
+  const watchTime = watch("time");
+
+  // Fetch staff (filtered server-side by service/location)
+  const { data: staff } = useQuery({
+    queryKey: ["staff", storeId, watchServiceId, watchLocationId],
+    queryFn: () =>
+      staffService.getStaffMembers(storeId, {
+        includeHidden: false,
+        serviceId: watchServiceId > 0 ? watchServiceId : undefined,
+        locationId: watchLocationId,
+      }),
+    enabled: open,
+  });
+
+  const selectedService = services?.find((s) => s.id === watchServiceId);
+
+  const filteredStaff = staff;
+
+  const {
+    data: availability,
+    isFetching: isAvailabilityLoading,
+    isError: isAvailabilityError,
+  } = useQuery<AvailabilityResponse>({
+    queryKey: [
+      "availability",
+      storeId,
+      watchServiceId,
+      watchStaffId,
+      watchLocationId,
+      watchDate,
+      appointment?.id ?? null,
+    ],
+    queryFn: () =>
+      appointmentService.getAvailability({
+        storeId,
+        serviceId: watchServiceId,
+        staffId: watchStaffId,
+        date: watchDate,
+        locationId: watchLocationId,
+        excludeAppointmentId: appointment?.id,
+      }),
+    enabled:
+      open &&
+      Boolean(watchDate) &&
+      watchServiceId > 0 &&
+      watchStaffId > 0 &&
+      Boolean(selectedService),
+  });
+
+  const availableSlots: AvailabilityTimeSlot[] =
+    availability?.slots?.filter((slot) => slot.available) ?? [];
+  const availableTimes = availableSlots.map((slot) => slot.startTime);
 
   // Reset form when appointment changes
   useEffect(() => {
@@ -154,6 +213,48 @@ export function AppointmentFormDialog({
       });
     }
   }, [appointment, reset]);
+
+  // If a location is selected, ensure staff belongs to that location; otherwise reset staff.
+  useEffect(() => {
+    if (!open) return;
+    if (!watchLocationId) return; // no filter when location not chosen
+
+    const staffMatchesLocation = filteredStaff?.some(
+      (member) => member.id === watchStaffId
+    );
+
+    if (watchStaffId && !staffMatchesLocation) {
+      setValue("staffId", 0, { shouldDirty: true });
+    }
+  }, [filteredStaff, open, setValue, watchLocationId, watchStaffId]);
+
+  // Ensure selected time is always one of the available times
+  useEffect(() => {
+    if (!open) return;
+    if (watchServiceId <= 0 || watchStaffId <= 0) return;
+
+    // If availability not loaded yet, don't touch user selection.
+    if (!availability) return;
+
+    if (availableTimes.length === 0) {
+      if (watchTime) {
+        setValue("time", "", { shouldDirty: true });
+      }
+      return;
+    }
+
+    if (!availableTimes.includes(watchTime)) {
+      setValue("time", availableTimes[0], { shouldDirty: true });
+    }
+  }, [
+    availability,
+    availableTimes,
+    open,
+    setValue,
+    watchServiceId,
+    watchStaffId,
+    watchTime,
+  ]);
 
   // Create mutation
   const createMutation = useMutation({
@@ -256,6 +357,38 @@ export function AppointmentFormDialog({
               )}
             </div>
 
+            {/* Location Selection (Optional) */}
+            <div className="space-y-2">
+              <Label htmlFor="locationId">Location (optional)</Label>
+              <Select
+                value={watchLocationId?.toString() || ""}
+                onValueChange={(value) =>
+                  setValue(
+                    "locationId",
+                    value && value !== "all" ? parseInt(value) : undefined,
+                    {
+                      shouldDirty: true,
+                    }
+                  )
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All locations</SelectItem>
+                  {locations?.map((location) => (
+                    <SelectItem
+                      key={location.id}
+                      value={location.id.toString()}
+                    >
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Staff Selection */}
             <div className="space-y-2">
               <Label htmlFor="staffId">
@@ -271,7 +404,7 @@ export function AppointmentFormDialog({
                   <SelectValue placeholder="Select a staff member" />
                 </SelectTrigger>
                 <SelectContent>
-                  {staff?.map((member) => (
+                  {filteredStaff?.map((member) => (
                     <SelectItem key={member.id} value={member.id.toString()}>
                       {member.firstName} {member.lastName}
                     </SelectItem>
@@ -281,33 +414,6 @@ export function AppointmentFormDialog({
               {errors.staffId && (
                 <p className="text-sm text-red-600">{errors.staffId.message}</p>
               )}
-            </div>
-
-            {/* Location Selection (Optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="locationId">Location (optional)</Label>
-              <Select
-                value={watchLocationId?.toString() || ""}
-                onValueChange={(value) =>
-                  setValue("locationId", value ? parseInt(value) : undefined, {
-                    shouldDirty: true,
-                  })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a location" />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations?.map((location) => (
-                    <SelectItem
-                      key={location.id}
-                      value={location.id.toString()}
-                    >
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
             </div>
 
             {/* Customer Information */}
@@ -379,7 +485,42 @@ export function AppointmentFormDialog({
                 <Label htmlFor="date">
                   Date <span className="text-red-500">*</span>
                 </Label>
-                <Input id="date" type="date" {...register("date")} />
+                <Popover
+                  open={isDatePopoverOpen}
+                  onOpenChange={setIsDatePopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {watchDate ? (
+                        format(new Date(watchDate), "MMM dd")
+                      ) : (
+                        <span>Pick a date</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={watchDate ? new Date(watchDate) : undefined}
+                      disabled={(date) =>
+                        date < new Date(new Date().setHours(0, 0, 0, 0))
+                      }
+                      onSelect={(date) => {
+                        if (date) {
+                          setValue("date", format(date, "yyyy-MM-dd"), {
+                            shouldDirty: true,
+                          });
+                          setIsDatePopoverOpen(false);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
                 {errors.date && (
                   <p className="text-sm text-red-600">{errors.date.message}</p>
                 )}
@@ -389,7 +530,45 @@ export function AppointmentFormDialog({
                 <Label htmlFor="time">
                   Time <span className="text-red-500">*</span>
                 </Label>
-                <Input id="time" type="time" {...register("time")} />
+                <Select
+                  value={watchTime}
+                  onValueChange={(value) =>
+                    setValue("time", value, { shouldDirty: true })
+                  }
+                  disabled={
+                    watchServiceId <= 0 ||
+                    watchStaffId <= 0 ||
+                    !watchDate ||
+                    isAvailabilityLoading ||
+                    availableTimes.length === 0
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue
+                      placeholder={
+                        watchServiceId <= 0 || watchStaffId <= 0
+                          ? "Select service & staff"
+                          : isAvailabilityLoading
+                          ? "Loading..."
+                          : availableTimes.length === 0
+                          ? "No availability"
+                          : "Select time"
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableSlots.map((slot) => (
+                      <SelectItem key={slot.startTime} value={slot.startTime}>
+                        {slot.startTime} – {slot.endTime}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {isAvailabilityError && (
+                  <p className="text-sm text-red-600">
+                    Failed to load availability
+                  </p>
+                )}
                 {errors.time && (
                   <p className="text-sm text-red-600">{errors.time.message}</p>
                 )}

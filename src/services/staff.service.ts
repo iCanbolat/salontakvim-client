@@ -61,12 +61,27 @@ export class StaffService {
    */
   async getStaffMembers(
     storeId: number,
-    includeHidden = false
+    includeHiddenOrOptions:
+      | boolean
+      | {
+          includeHidden?: boolean;
+          serviceId?: number;
+          locationId?: number;
+        } = false
   ): Promise<StaffMember[]> {
+    const options =
+      typeof includeHiddenOrOptions === "boolean"
+        ? { includeHidden: includeHiddenOrOptions }
+        : includeHiddenOrOptions;
+
     const response = await axiosInstance.get<StaffMember[]>(
       `/stores/${storeId}/staff`,
       {
-        params: { includeHidden: includeHidden ? "true" : "false" },
+        params: {
+          includeHidden: options.includeHidden ? "true" : "false",
+          serviceId: options.serviceId,
+          locationId: options.locationId,
+        },
       }
     );
     return response.data;

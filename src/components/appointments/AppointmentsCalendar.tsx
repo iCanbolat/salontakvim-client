@@ -5,16 +5,12 @@
 
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Calendar as CalendarIcon,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { appointmentService } from "@/services";
 import type { Appointment } from "@/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Select,
   SelectContent,

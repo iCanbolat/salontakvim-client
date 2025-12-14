@@ -13,7 +13,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { useNotifications } from "@/contexts/NotificationContext";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "./UserMenu";
@@ -157,7 +156,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                                 {notification.title}
                               </p>
                               {!notification.isRead && (
-                                <span className="flex-shrink-0 h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
+                                <span className="shrink-0 h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
                               )}
                             </div>
                             <p className="text-sm text-gray-600 line-clamp-2">
