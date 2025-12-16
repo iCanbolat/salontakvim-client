@@ -13,8 +13,12 @@ interface QuickStatsProps {
 }
 
 export function QuickStats({ stats }: QuickStatsProps) {
-  const cancellationRate = parseFloat(stats.cancellationRate);
-  const isHighCancellation = cancellationRate > 20;
+  const cancellationRateValue = Number(stats.cancellationRate);
+  const hasCancellationRate = Number.isFinite(cancellationRateValue);
+  const isHighCancellation = hasCancellationRate && cancellationRateValue > 20;
+  const cancellationRateDisplay = hasCancellationRate
+    ? `${cancellationRateValue.toFixed(2)}%`
+    : "—";
 
   return (
     <Card>
@@ -51,16 +55,6 @@ export function QuickStats({ stats }: QuickStatsProps) {
             </p>
           </div>
 
-          {/* Average Appointment Value */}
-          <div className="flex items-center justify-between py-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-600">
-              Avg. Appointment Value
-            </p>
-            <p className="text-lg font-semibold text-gray-900">
-              {stats.averageAppointmentValue}
-            </p>
-          </div>
-
           {/* Cancellation Rate */}
           <div className="flex items-center justify-between py-3 border-b border-gray-100">
             <p className="text-sm font-medium text-gray-600">
@@ -73,18 +67,19 @@ export function QuickStats({ stats }: QuickStatsProps) {
                   isHighCancellation ? "text-red-600" : "text-green-600"
                 )}
               >
-                {stats.cancellationRate}
+                {cancellationRateDisplay}
               </p>
-              {isHighCancellation ? (
-                <TrendingUp className="h-4 w-4 text-red-600" />
-              ) : (
-                <TrendingDown className="h-4 w-4 text-green-600" />
-              )}
+              {hasCancellationRate &&
+                (isHighCancellation ? (
+                  <TrendingUp className="h-4 w-4 text-red-600" />
+                ) : (
+                  <TrendingDown className="h-4 w-4 text-green-600" />
+                ))}
             </div>
           </div>
 
           {/* Popular Time Slot */}
-          {stats.popularTimeSlot && (
+          {stats.popularTimeSlot ? (
             <div className="flex items-center justify-between py-3">
               <p className="text-sm font-medium text-gray-600">
                 Most Popular Time
@@ -92,6 +87,13 @@ export function QuickStats({ stats }: QuickStatsProps) {
               <p className="text-lg font-semibold text-gray-900">
                 {stats.popularTimeSlot}
               </p>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between py-3">
+              <p className="text-sm font-medium text-gray-600">
+                Most Popular Time
+              </p>
+              <p className="text-lg font-semibold text-gray-400">—</p>
             </div>
           )}
         </div>

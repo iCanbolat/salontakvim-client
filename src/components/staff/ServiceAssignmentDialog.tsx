@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -136,117 +137,123 @@ export function ServiceAssignmentDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        ) : (
-          <>
-            {/* Service Selection */}
-            <ScrollArea className="h-[400px] pr-4">
-              <div className="space-y-4">
-                {allServices && allServices.length > 0 ? (
-                  Object.entries(servicesByCategory || {}).map(
-                    ([categoryId, services]) => (
-                      <div key={categoryId} className="space-y-2">
-                        {/* Category Header */}
-                        {categoryId !== "0" && services.length > 0 && (
-                          <h3 className="font-semibold text-sm text-gray-700">
-                            Category {categoryId}
-                          </h3>
-                        )}
+        <DialogBody>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <>
+              {/* Service Selection */}
+              <ScrollArea className="h-[400px] pr-4">
+                <div className="space-y-4">
+                  {allServices && allServices.length > 0 ? (
+                    Object.entries(servicesByCategory || {}).map(
+                      ([categoryId, services]) => (
+                        <div key={categoryId} className="space-y-2">
+                          {/* Category Header */}
+                          {categoryId !== "0" && services.length > 0 && (
+                            <h3 className="font-semibold text-sm text-gray-700">
+                              Category {categoryId}
+                            </h3>
+                          )}
 
-                        {/* Services */}
-                        <div className="space-y-2">
-                          {services.map((service) => {
-                            const isSelected = selectedServiceIds.includes(
-                              service.id
-                            );
-                            return (
-                              <button
-                                key={service.id}
-                                type="button"
-                                onClick={() => handleToggleService(service.id)}
-                                className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-colors ${
-                                  isSelected
-                                    ? "border-blue-500 bg-blue-50"
-                                    : "border-gray-200 hover:border-gray-300 bg-white"
-                                }`}
-                                disabled={assignServicesMutation.isPending}
-                              >
-                                {/* Checkbox Icon */}
-                                <div className="shrink-0 mt-0.5">
-                                  {isSelected ? (
-                                    <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                                  ) : (
-                                    <Circle className="h-5 w-5 text-gray-400" />
-                                  )}
-                                </div>
-
-                                {/* Service Info */}
-                                <div className="flex-1 text-left">
-                                  <div className="flex items-center gap-2">
-                                    <p className="font-medium text-gray-900">
-                                      {service.name}
-                                    </p>
-                                    {service.color && (
-                                      <div
-                                        className="w-3 h-3 rounded-full border border-gray-300"
-                                        style={{
-                                          backgroundColor: service.color,
-                                        }}
-                                      />
+                          {/* Services */}
+                          <div className="space-y-2">
+                            {services.map((service) => {
+                              const isSelected = selectedServiceIds.includes(
+                                service.id
+                              );
+                              return (
+                                <button
+                                  key={service.id}
+                                  type="button"
+                                  onClick={() =>
+                                    handleToggleService(service.id)
+                                  }
+                                  className={`w-full flex items-start gap-3 p-3 rounded-lg border-2 transition-colors ${
+                                    isSelected
+                                      ? "border-blue-500 bg-blue-50"
+                                      : "border-gray-200 hover:border-gray-300 bg-white"
+                                  }`}
+                                  disabled={assignServicesMutation.isPending}
+                                >
+                                  {/* Checkbox Icon */}
+                                  <div className="shrink-0 mt-0.5">
+                                    {isSelected ? (
+                                      <CheckCircle2 className="h-5 w-5 text-blue-600" />
+                                    ) : (
+                                      <Circle className="h-5 w-5 text-gray-400" />
                                     )}
                                   </div>
-                                  {service.description && (
-                                    <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">
-                                      {service.description}
-                                    </p>
-                                  )}
-                                  <div className="flex items-center gap-3 mt-1.5">
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      {service.duration} min
-                                    </Badge>
-                                    <Badge
-                                      variant="secondary"
-                                      className="text-xs"
-                                    >
-                                      ${service.price}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )
-                  )
-                ) : (
-                  <div className="text-center py-12">
-                    <p className="text-gray-600">
-                      No services available. Create services first.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
 
-            {/* Selection Summary */}
-            {allServices && allServices.length > 0 && (
-              <div className="flex items-center justify-between pt-2 border-t">
-                <p className="text-sm text-gray-600">
-                  {selectedServiceIds.length} of {allServices.length} services
-                  selected
-                </p>
-                {hasChanges && <Badge variant="default">Unsaved changes</Badge>}
-              </div>
-            )}
-          </>
-        )}
+                                  {/* Service Info */}
+                                  <div className="flex-1 text-left">
+                                    <div className="flex items-center gap-2">
+                                      <p className="font-medium text-gray-900">
+                                        {service.name}
+                                      </p>
+                                      {service.color && (
+                                        <div
+                                          className="w-3 h-3 rounded-full border border-gray-300"
+                                          style={{
+                                            backgroundColor: service.color,
+                                          }}
+                                        />
+                                      )}
+                                    </div>
+                                    {service.description && (
+                                      <p className="text-sm text-gray-600 mt-0.5 line-clamp-1">
+                                        {service.description}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-3 mt-1.5">
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        {service.duration} min
+                                      </Badge>
+                                      <Badge
+                                        variant="secondary"
+                                        className="text-xs"
+                                      >
+                                        ${service.price}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <div className="text-center py-12">
+                      <p className="text-gray-600">
+                        No services available. Create services first.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+
+              {/* Selection Summary */}
+              {allServices && allServices.length > 0 && (
+                <div className="flex items-center justify-between pt-2 border-t">
+                  <p className="text-sm text-gray-600">
+                    {selectedServiceIds.length} of {allServices.length} services
+                    selected
+                  </p>
+                  {hasChanges && (
+                    <Badge variant="default">Unsaved changes</Badge>
+                  )}
+                </div>
+              )}
+            </>
+          )}
+        </DialogBody>
 
         {/* Actions */}
         <DialogFooter>

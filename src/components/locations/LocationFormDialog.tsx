@@ -18,6 +18,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,7 +169,7 @@ export function LocationFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? "Edit Location" : "Create New Location"}
@@ -180,160 +181,171 @@ export function LocationFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              Location Name <span className="text-red-500">*</span>
-            </Label>
-            <Input
-              id="name"
-              {...register("name")}
-              placeholder="e.g., Downtown Branch, Main Office"
-            />
-            {errors.name && (
-              <p className="text-sm text-red-600">{errors.name.message}</p>
-            )}
-          </div>
-
-          {/* Address */}
-          <div className="space-y-2">
-            <Label htmlFor="address">Street Address</Label>
-            <Input
-              id="address"
-              {...register("address")}
-              placeholder="e.g., 123 Main Street"
-            />
-            {errors.address && (
-              <p className="text-sm text-red-600">{errors.address.message}</p>
-            )}
-          </div>
-
-          {/* City, State, Zip */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <DialogBody className="space-y-4">
+            {/* Name */}
             <div className="space-y-2">
-              <Label htmlFor="city">City</Label>
+              <Label htmlFor="name">
+                Location Name <span className="text-red-500">*</span>
+              </Label>
               <Input
-                id="city"
-                {...register("city")}
-                placeholder="e.g., New York"
+                id="name"
+                {...register("name")}
+                placeholder="e.g., Downtown Branch, Main Office"
               />
-              {errors.city && (
-                <p className="text-sm text-red-600">{errors.city.message}</p>
+              {errors.name && (
+                <p className="text-sm text-red-600">{errors.name.message}</p>
               )}
             </div>
 
+            {/* Address */}
             <div className="space-y-2">
-              <Label htmlFor="state">State/Province</Label>
-              <Input id="state" {...register("state")} placeholder="e.g., NY" />
-              {errors.state && (
-                <p className="text-sm text-red-600">{errors.state.message}</p>
+              <Label htmlFor="address">Street Address</Label>
+              <Input
+                id="address"
+                {...register("address")}
+                placeholder="e.g., 123 Main Street"
+              />
+              {errors.address && (
+                <p className="text-sm text-red-600">{errors.address.message}</p>
               )}
             </div>
 
+            {/* City, State, Zip */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="city">City</Label>
+                <Input
+                  id="city"
+                  {...register("city")}
+                  placeholder="e.g., New York"
+                />
+                {errors.city && (
+                  <p className="text-sm text-red-600">{errors.city.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="state">State/Province</Label>
+                <Input
+                  id="state"
+                  {...register("state")}
+                  placeholder="e.g., NY"
+                />
+                {errors.state && (
+                  <p className="text-sm text-red-600">{errors.state.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="zipCode">Zip Code</Label>
+                <Input
+                  id="zipCode"
+                  {...register("zipCode")}
+                  placeholder="e.g., 10001"
+                />
+                {errors.zipCode && (
+                  <p className="text-sm text-red-600">
+                    {errors.zipCode.message}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Country */}
             <div className="space-y-2">
-              <Label htmlFor="zipCode">Zip Code</Label>
+              <Label htmlFor="country">Country</Label>
               <Input
-                id="zipCode"
-                {...register("zipCode")}
-                placeholder="e.g., 10001"
+                id="country"
+                {...register("country")}
+                placeholder="e.g., United States"
               />
-              {errors.zipCode && (
-                <p className="text-sm text-red-600">{errors.zipCode.message}</p>
+              {errors.country && (
+                <p className="text-sm text-red-600">{errors.country.message}</p>
               )}
             </div>
-          </div>
 
-          {/* Country */}
-          <div className="space-y-2">
-            <Label htmlFor="country">Country</Label>
-            <Input
-              id="country"
-              {...register("country")}
-              placeholder="e.g., United States"
-            />
-            {errors.country && (
-              <p className="text-sm text-red-600">{errors.country.message}</p>
-            )}
-          </div>
+            {/* Contact Information */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  {...register("phone")}
+                  placeholder="e.g., +1 (555) 123-4567"
+                />
+                {errors.phone && (
+                  <p className="text-sm text-red-600">{errors.phone.message}</p>
+                )}
+              </div>
 
-          {/* Contact Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                {...register("phone")}
-                placeholder="e.g., +1 (555) 123-4567"
-              />
-              {errors.phone && (
-                <p className="text-sm text-red-600">{errors.phone.message}</p>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  {...register("email")}
+                  placeholder="e.g., contact@location.com"
+                />
+                {errors.email && (
+                  <p className="text-sm text-red-600">{errors.email.message}</p>
+                )}
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                {...register("email")}
-                placeholder="e.g., contact@location.com"
-              />
-              {errors.email && (
-                <p className="text-sm text-red-600">{errors.email.message}</p>
-              )}
-            </div>
-          </div>
+            {/* Coordinates (Optional) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="latitude">Latitude (optional)</Label>
+                <Input
+                  id="latitude"
+                  {...register("latitude")}
+                  placeholder="e.g., 40.7128"
+                />
+                {errors.latitude && (
+                  <p className="text-sm text-red-600">
+                    {errors.latitude.message}
+                  </p>
+                )}
+              </div>
 
-          {/* Coordinates (Optional) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="latitude">Latitude (optional)</Label>
-              <Input
-                id="latitude"
-                {...register("latitude")}
-                placeholder="e.g., 40.7128"
-              />
-              {errors.latitude && (
-                <p className="text-sm text-red-600">
-                  {errors.latitude.message}
+              <div className="space-y-2">
+                <Label htmlFor="longitude">Longitude (optional)</Label>
+                <Input
+                  id="longitude"
+                  {...register("longitude")}
+                  placeholder="e.g., -74.0060"
+                />
+                {errors.longitude && (
+                  <p className="text-sm text-red-600">
+                    {errors.longitude.message}
+                  </p>
+                )}
+              </div>
+            </div>
+            <p className="text-xs text-gray-500">
+              Coordinates are used for map integration (if applicable)
+            </p>
+
+            {/* Visibility */}
+            <div className="flex items-center justify-between">
+              <div>
+                <Label>Visible to customers</Label>
+                <p className="text-sm text-gray-500">
+                  Show this location in the booking widget
                 </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="longitude">Longitude (optional)</Label>
-              <Input
-                id="longitude"
-                {...register("longitude")}
-                placeholder="e.g., -74.0060"
+              </div>
+              <Switch
+                checked={isVisible}
+                onCheckedChange={(checked) =>
+                  setValue("isVisible", checked, { shouldDirty: true })
+                }
               />
-              {errors.longitude && (
-                <p className="text-sm text-red-600">
-                  {errors.longitude.message}
-                </p>
-              )}
             </div>
-          </div>
-          <p className="text-xs text-gray-500">
-            Coordinates are used for map integration (if applicable)
-          </p>
-
-          {/* Visibility */}
-          <div className="flex items-center justify-between">
-            <div>
-              <Label>Visible to customers</Label>
-              <p className="text-sm text-gray-500">
-                Show this location in the booking widget
-              </p>
-            </div>
-            <Switch
-              checked={isVisible}
-              onCheckedChange={(checked) =>
-                setValue("isVisible", checked, { shouldDirty: true })
-              }
-            />
-          </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

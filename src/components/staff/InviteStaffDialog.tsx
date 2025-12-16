@@ -13,8 +13,10 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,46 +89,52 @@ export function InviteStaffDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email Field */}
-          <div className="space-y-2">
-            <Label htmlFor="email">
-              Email Address <span className="text-red-500">*</span>
-            </Label>
-            <div className="relative">
-              <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                id="email"
-                type="email"
-                placeholder="staff@example.com"
-                className="pl-9"
-                {...register("email")}
-                disabled={inviteMutation.isPending}
-              />
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <DialogBody className="space-y-4">
+            {/* Email Field */}
+            <div className="space-y-2">
+              <Label htmlFor="email">
+                Email Address <span className="text-red-500">*</span>
+              </Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="staff@example.com"
+                  className="pl-9"
+                  {...register("email")}
+                  disabled={inviteMutation.isPending}
+                />
+              </div>
+              {errors.email && (
+                <p className="text-sm text-red-600">{errors.email.message}</p>
+              )}
             </div>
-            {errors.email && (
-              <p className="text-sm text-red-600">{errors.email.message}</p>
+
+            {/* Error Alert */}
+            {inviteMutation.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Failed to send invitation. Please try again.
+                </AlertDescription>
+              </Alert>
             )}
-          </div>
 
-          {/* Error Alert */}
-          {inviteMutation.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Failed to send invitation. Please try again.
-              </AlertDescription>
-            </Alert>
-          )}
+            {/* Success Message */}
+            {inviteMutation.isSuccess && (
+              <Alert>
+                <AlertDescription>
+                  Invitation sent successfully!
+                </AlertDescription>
+              </Alert>
+            )}
+          </DialogBody>
 
-          {/* Success Message */}
-          {inviteMutation.isSuccess && (
-            <Alert>
-              <AlertDescription>Invitation sent successfully!</AlertDescription>
-            </Alert>
-          )}
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3">
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -144,7 +152,7 @@ export function InviteStaffDialog({
               )}
               Send Invitation
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

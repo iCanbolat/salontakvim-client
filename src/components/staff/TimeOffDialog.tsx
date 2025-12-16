@@ -14,6 +14,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -161,124 +162,131 @@ export function TimeOffDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {/* Date Range */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start-date" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Başlangıç Tarihi
-              </Label>
-              <Input
-                id="start-date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="end-date" className="flex items-center gap-2">
-                <CalendarIcon className="h-4 w-4" />
-                Bitiş Tarihi
-              </Label>
-              <Input
-                id="end-date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-                required
-              />
-            </div>
-          </div>
-
-          {/* Partial Day Toggle */}
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="partial-day" className="text-sm font-medium">
-                Kısmi Gün İzni
-              </Label>
-              <p className="text-xs text-muted-foreground">
-                Sadece belirli saatler için izin
-              </p>
-            </div>
-            <Switch
-              id="partial-day"
-              checked={isPartialDay}
-              onCheckedChange={setIsPartialDay}
-            />
-          </div>
-
-          {/* Time Range (if partial day) */}
-          {isPartialDay && (
+        <form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0">
+          <DialogBody className="space-y-4">
+            {/* Date Range */}
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="start-time" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Başlangıç Saati
+                <Label htmlFor="start-date" className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Başlangıç Tarihi
                 </Label>
                 <Input
-                  id="start-time"
-                  type="time"
-                  value={startTime}
-                  onChange={(e) => setStartTime(e.target.value)}
-                  required={isPartialDay}
+                  id="start-date"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  required
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="end-time" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Bitiş Saati
+                <Label htmlFor="end-date" className="flex items-center gap-2">
+                  <CalendarIcon className="h-4 w-4" />
+                  Bitiş Tarihi
                 </Label>
                 <Input
-                  id="end-time"
-                  type="time"
-                  value={endTime}
-                  onChange={(e) => setEndTime(e.target.value)}
-                  required={isPartialDay}
+                  id="end-date"
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  min={startDate}
+                  required
                 />
               </div>
             </div>
-          )}
 
-          {/* Reason */}
-          <div className="space-y-2">
-            <Label htmlFor="reason">
-              Neden{" "}
-              <span className="text-xs text-muted-foreground">(Opsiyonel)</span>
-            </Label>
-            <Textarea
-              id="reason"
-              placeholder="İzin nedeni belirtin..."
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              rows={3}
-              maxLength={500}
-            />
-            <p className="text-xs text-muted-foreground text-right">
-              {reason.length}/500
-            </p>
-          </div>
+            {/* Partial Day Toggle */}
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="partial-day" className="text-sm font-medium">
+                  Kısmi Gün İzni
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Sadece belirli saatler için izin
+                </p>
+              </div>
+              <Switch
+                id="partial-day"
+                checked={isPartialDay}
+                onCheckedChange={setIsPartialDay}
+              />
+            </div>
 
-          {/* Recurring Toggle */}
-          <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="recurring" className="text-sm font-medium">
-                Tekrarlayan İzin
+            {/* Time Range (if partial day) */}
+            {isPartialDay && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="start-time"
+                    className="flex items-center gap-2"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Başlangıç Saati
+                  </Label>
+                  <Input
+                    id="start-time"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    required={isPartialDay}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="end-time" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Bitiş Saati
+                  </Label>
+                  <Input
+                    id="end-time"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    required={isPartialDay}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Reason */}
+            <div className="space-y-2">
+              <Label htmlFor="reason">
+                Neden{" "}
+                <span className="text-xs text-muted-foreground">
+                  (Opsiyonel)
+                </span>
               </Label>
-              <p className="text-xs text-muted-foreground">
-                Bu izin her yıl tekrarlanacak
+              <Textarea
+                id="reason"
+                placeholder="İzin nedeni belirtin..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                rows={3}
+                maxLength={500}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {reason.length}/500
               </p>
             </div>
-            <Switch
-              id="recurring"
-              checked={isRecurring}
-              onCheckedChange={setIsRecurring}
-            />
-          </div>
+
+            {/* Recurring Toggle */}
+            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="recurring" className="text-sm font-medium">
+                  Tekrarlayan İzin
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Bu izin her yıl tekrarlanacak
+                </p>
+              </div>
+              <Switch
+                id="recurring"
+                checked={isRecurring}
+                onCheckedChange={setIsRecurring}
+              />
+            </div>
+          </DialogBody>
 
           <DialogFooter>
             <Button

@@ -15,6 +15,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,116 +125,125 @@ export function StaffProfileDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {/* Email (Read-only) */}
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={staff.email}
-              disabled
-              className="bg-gray-50"
-            />
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <Label htmlFor="title">Job Title</Label>
-            <Input
-              id="title"
-              type="text"
-              placeholder="e.g. Senior Stylist, Nail Technician"
-              {...register("title")}
-              disabled={updateMutation.isPending}
-            />
-            {errors.title && (
-              <p className="text-sm text-red-600">{errors.title.message}</p>
-            )}
-          </div>
-
-          {/* Bio */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              placeholder="Tell customers about this staff member's experience and specialties..."
-              rows={4}
-              {...register("bio")}
-              disabled={updateMutation.isPending}
-            />
-            {errors.bio && (
-              <p className="text-sm text-red-600">{errors.bio.message}</p>
-            )}
-          </div>
-
-          {/* Location Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="locationId">Location (Optional)</Label>
-            <Select
-              value={
-                selectedLocationId === null || selectedLocationId === undefined
-                  ? "none"
-                  : selectedLocationId.toString()
-              }
-              onValueChange={(value) => {
-                const parsedValue =
-                  value === "none" ? undefined : parseInt(value, 10);
-                setValue("locationId", parsedValue, { shouldDirty: true });
-              }}
-              disabled={updateMutation.isPending || locationsLoading}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Select a location" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">No location</SelectItem>
-                {locations?.map((location) => (
-                  <SelectItem key={location.id} value={location.id.toString()}>
-                    {location.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-500">
-              Choose which branch this staff member belongs to.
-            </p>
-            {errors.locationId && (
-              <p className="text-sm text-red-600">
-                {errors.locationId.message}
-              </p>
-            )}
-          </div>
-
-          {/* Visibility Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-            <div className="space-y-0.5">
-              <Label htmlFor="visibility">Visible in Booking Widget</Label>
-              <p className="text-sm text-gray-600">
-                Show this staff member to customers when booking
-              </p>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <DialogBody className="space-y-4">
+            {/* Email (Read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={staff.email}
+                disabled
+                className="bg-gray-50"
+              />
             </div>
-            <Switch
-              id="visibility"
-              checked={isVisible}
-              onCheckedChange={(checked: boolean) =>
-                setValue("isVisible", checked, { shouldDirty: true })
-              }
-              disabled={updateMutation.isPending}
-            />
-          </div>
 
-          {/* Error Alert */}
-          {updateMutation.isError && (
-            <Alert variant="destructive">
-              <AlertDescription>
-                Failed to update profile. Please try again.
-              </AlertDescription>
-            </Alert>
-          )}
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Job Title</Label>
+              <Input
+                id="title"
+                type="text"
+                placeholder="e.g. Senior Stylist, Nail Technician"
+                {...register("title")}
+                disabled={updateMutation.isPending}
+              />
+              {errors.title && (
+                <p className="text-sm text-red-600">{errors.title.message}</p>
+              )}
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                placeholder="Tell customers about this staff member's experience and specialties..."
+                rows={4}
+                {...register("bio")}
+                disabled={updateMutation.isPending}
+              />
+              {errors.bio && (
+                <p className="text-sm text-red-600">{errors.bio.message}</p>
+              )}
+            </div>
+
+            {/* Location Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="locationId">Location (Optional)</Label>
+              <Select
+                value={
+                  selectedLocationId === null ||
+                  selectedLocationId === undefined
+                    ? "none"
+                    : selectedLocationId.toString()
+                }
+                onValueChange={(value) => {
+                  const parsedValue =
+                    value === "none" ? undefined : parseInt(value, 10);
+                  setValue("locationId", parsedValue, { shouldDirty: true });
+                }}
+                disabled={updateMutation.isPending || locationsLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No location</SelectItem>
+                  {locations?.map((location) => (
+                    <SelectItem
+                      key={location.id}
+                      value={location.id.toString()}
+                    >
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Choose which branch this staff member belongs to.
+              </p>
+              {errors.locationId && (
+                <p className="text-sm text-red-600">
+                  {errors.locationId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Visibility Toggle */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="visibility">Visible in Booking Widget</Label>
+                <p className="text-sm text-gray-600">
+                  Show this staff member to customers when booking
+                </p>
+              </div>
+              <Switch
+                id="visibility"
+                checked={isVisible}
+                onCheckedChange={(checked: boolean) =>
+                  setValue("isVisible", checked, { shouldDirty: true })
+                }
+                disabled={updateMutation.isPending}
+              />
+            </div>
+
+            {/* Error Alert */}
+            {updateMutation.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Failed to update profile. Please try again.
+                </AlertDescription>
+              </Alert>
+            )}
+          </DialogBody>
 
           {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="flex justify-end gap-3 pt-2 px-6 pb-4">
             <Button
               type="button"
               variant="outline"

@@ -14,6 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogBody,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -239,159 +240,161 @@ export function WorkingHoursDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-          </div>
-        ) : (
-          <>
-            <ScrollArea className="h-[450px] pr-4">
-              <div className="space-y-3">
-                {DAYS_OF_WEEK.map((day) => {
-                  const hours = editingHours[day.value];
-                  const existing = workingHours?.find(
-                    (h) => h.dayOfWeek === day.value
-                  );
-                  const hasChanges =
-                    hours &&
-                    (!existing ||
-                      hours.startTime !== normalizeTime(existing.startTime) ||
-                      hours.endTime !== normalizeTime(existing.endTime) ||
-                      hours.isActive !== existing.isActive);
+        <DialogBody>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+            </div>
+          ) : (
+            <>
+              <ScrollArea className="h-[450px] pr-4">
+                <div className="space-y-3">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const hours = editingHours[day.value];
+                    const existing = workingHours?.find(
+                      (h) => h.dayOfWeek === day.value
+                    );
+                    const hasChanges =
+                      hours &&
+                      (!existing ||
+                        hours.startTime !== normalizeTime(existing.startTime) ||
+                        hours.endTime !== normalizeTime(existing.endTime) ||
+                        hours.isActive !== existing.isActive);
 
-                  return (
-                    <div
-                      key={day.value}
-                      className={`p-4 rounded-lg border-2 transition-colors ${
-                        hours?.isActive
-                          ? "border-blue-200 bg-blue-50"
-                          : "border-gray-200 bg-white"
-                      }`}
-                    >
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex items-center gap-3 min-w-[140px]">
-                          <Switch
-                            checked={Boolean(hours?.isActive)}
-                            onCheckedChange={(checked) =>
-                              handleToggleDay(day.value, checked)
-                            }
-                            disabled={isPending}
-                          />
-                          <div>
-                            <Label className="font-semibold text-gray-900">
-                              {day.label}
-                            </Label>
-                            {hours && !hours.isActive && (
-                              <p className="text-xs text-gray-500">Closed</p>
+                    return (
+                      <div
+                        key={day.value}
+                        className={`p-4 rounded-lg border-2 transition-colors ${
+                          hours?.isActive
+                            ? "border-blue-200 bg-blue-50"
+                            : "border-gray-200 bg-white"
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex items-center gap-3 min-w-[140px]">
+                            <Switch
+                              checked={Boolean(hours?.isActive)}
+                              onCheckedChange={(checked) =>
+                                handleToggleDay(day.value, checked)
+                              }
+                              disabled={isPending}
+                            />
+                            <div>
+                              <Label className="font-semibold text-gray-900">
+                                {day.label}
+                              </Label>
+                              {hours && !hours.isActive && (
+                                <p className="text-xs text-gray-500">Closed</p>
+                              )}
+                            </div>
+                          </div>
+
+                          {hours?.isActive && (
+                            <div className="flex items-center gap-3 flex-1">
+                              <div className="flex-1">
+                                <Label
+                                  htmlFor={`start-${day.value}`}
+                                  className="text-xs"
+                                >
+                                  Start
+                                </Label>
+                                <div className="relative mt-1">
+                                  <Clock className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                  <Input
+                                    id={`start-${day.value}`}
+                                    type="time"
+                                    value={hours.startTime}
+                                    onChange={(e) =>
+                                      handleTimeChange(
+                                        day.value,
+                                        "startTime",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="pl-8"
+                                    disabled={isPending}
+                                  />
+                                </div>
+                              </div>
+
+                              <div className="flex-1">
+                                <Label
+                                  htmlFor={`end-${day.value}`}
+                                  className="text-xs"
+                                >
+                                  End
+                                </Label>
+                                <div className="relative mt-1">
+                                  <Clock className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                  <Input
+                                    id={`end-${day.value}`}
+                                    type="time"
+                                    value={hours.endTime}
+                                    onChange={(e) =>
+                                      handleTimeChange(
+                                        day.value,
+                                        "endTime",
+                                        e.target.value
+                                      )
+                                    }
+                                    className="pl-8"
+                                    disabled={isPending}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            {hasChanges && (
+                              <Badge variant="default" className="shrink-0">
+                                Modified
+                              </Badge>
+                            )}
+                            {hours && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteDay(day.value)}
+                                disabled={isPending}
+                                className="shrink-0"
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
                             )}
                           </div>
                         </div>
-
-                        {hours?.isActive && (
-                          <div className="flex items-center gap-3 flex-1">
-                            <div className="flex-1">
-                              <Label
-                                htmlFor={`start-${day.value}`}
-                                className="text-xs"
-                              >
-                                Start
-                              </Label>
-                              <div className="relative mt-1">
-                                <Clock className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <Input
-                                  id={`start-${day.value}`}
-                                  type="time"
-                                  value={hours.startTime}
-                                  onChange={(e) =>
-                                    handleTimeChange(
-                                      day.value,
-                                      "startTime",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="pl-8"
-                                  disabled={isPending}
-                                />
-                              </div>
-                            </div>
-
-                            <div className="flex-1">
-                              <Label
-                                htmlFor={`end-${day.value}`}
-                                className="text-xs"
-                              >
-                                End
-                              </Label>
-                              <div className="relative mt-1">
-                                <Clock className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <Input
-                                  id={`end-${day.value}`}
-                                  type="time"
-                                  value={hours.endTime}
-                                  onChange={(e) =>
-                                    handleTimeChange(
-                                      day.value,
-                                      "endTime",
-                                      e.target.value
-                                    )
-                                  }
-                                  className="pl-8"
-                                  disabled={isPending}
-                                />
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex items-center gap-2">
-                          {hasChanges && (
-                            <Badge variant="default" className="shrink-0">
-                              Modified
-                            </Badge>
-                          )}
-                          {hours && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteDay(day.value)}
-                              disabled={isPending}
-                              className="shrink-0"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          )}
-                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </ScrollArea>
+                    );
+                  })}
+                </div>
+              </ScrollArea>
 
-            {Object.keys(editingHours).length > 0 && (
-              <div className="flex items-center gap-2 pt-2 border-t">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleCopyToAll}
-                  disabled={isPending}
-                >
-                  Copy to All Days
-                </Button>
-              </div>
-            )}
+              {Object.keys(editingHours).length > 0 && (
+                <div className="flex items-center gap-2 pt-2 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyToAll}
+                    disabled={isPending}
+                  >
+                    Copy to All Days
+                  </Button>
+                </div>
+              )}
 
-            {(createMutation.isError ||
-              updateMutation.isError ||
-              deleteMutation.isError) && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  Failed to update working hours. Please try again.
-                </AlertDescription>
-              </Alert>
-            )}
-          </>
-        )}
+              {(createMutation.isError ||
+                updateMutation.isError ||
+                deleteMutation.isError) && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Failed to update working hours. Please try again.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </>
+          )}
+        </DialogBody>
 
         <DialogFooter>
           <Button
