@@ -49,9 +49,12 @@ export function UpcomingAppointments({
         {upcomingAppointments.length > 0 ? (
           <div className="space-y-3">
             {upcomingAppointments.map((appointment) => {
-              const customerName = appointment.guestInfo
-                ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-                : "Customer";
+              const customerName =
+                appointment.customerName ||
+                (appointment.guestInfo
+                  ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`.trim()
+                  : undefined) ||
+                "Customer";
 
               return (
                 <div
@@ -69,9 +72,10 @@ export function UpcomingAppointments({
                         "MMM d, yyyy 'at' HH:mm"
                       )}
                     </div>
-                    {appointment.serviceId && (
+                    {(appointment.serviceName || appointment.serviceId) && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Service ID: {appointment.serviceId}
+                        {appointment.serviceName ||
+                          `Service ID: ${appointment.serviceId}`}
                       </div>
                     )}
                   </div>

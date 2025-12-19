@@ -2,7 +2,10 @@ import { useEffect, useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { widgetService } from "@/services/widget.service";
-import type { UpdateWidgetSettingsDto, WidgetSettings as WidgetSettingsType } from "@/types/widget.types";
+import type {
+  UpdateWidgetSettingsDto,
+  WidgetSettings as WidgetSettingsType,
+} from "@/types/widget.types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -48,7 +51,9 @@ export default function WidgetSettings() {
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
   const [copiedIframe, setCopiedIframe] = useState(false);
-  const [pendingChanges, setPendingChanges] = useState<UpdateWidgetSettingsDto>({});
+  const [pendingChanges, setPendingChanges] = useState<UpdateWidgetSettingsDto>(
+    {}
+  );
   const queryClient = useQueryClient();
 
   // Get current store
@@ -142,16 +147,25 @@ export default function WidgetSettings() {
   }, [settings, pendingChanges]);
 
   // Helper to get current value (pending or original)
-  const getCurrentValue = <K extends keyof WidgetSettingsType>(key: K): WidgetSettingsType[K] => {
+  const getCurrentValue = <K extends keyof WidgetSettingsType>(
+    key: K
+  ): WidgetSettingsType[K] => {
     if (key in pendingChanges) {
-      return pendingChanges[key as keyof UpdateWidgetSettingsDto] as WidgetSettingsType[K];
+      return pendingChanges[
+        key as keyof UpdateWidgetSettingsDto
+      ] as WidgetSettingsType[K];
     }
     return settings![key];
   };
 
   // Helper to get current sidebarMenuItems value
-  const getCurrentSidebarItem = (key: keyof WidgetSettingsType["sidebarMenuItems"]): boolean => {
-    if (pendingChanges.sidebarMenuItems && key in pendingChanges.sidebarMenuItems) {
+  const getCurrentSidebarItem = (
+    key: keyof WidgetSettingsType["sidebarMenuItems"]
+  ): boolean => {
+    if (
+      pendingChanges.sidebarMenuItems &&
+      key in pendingChanges.sidebarMenuItems
+    ) {
       return pendingChanges.sidebarMenuItems[key]!;
     }
     return settings!.sidebarMenuItems[key];
@@ -252,7 +266,10 @@ export default function WidgetSettings() {
             )}
             Save Changes
             {hasUnsavedChanges && (
-              <Badge variant="secondary" className="ml-2 bg-primary-foreground/20">
+              <Badge
+                variant="secondary"
+                className="ml-2 bg-primary-foreground/20"
+              >
                 {Object.keys(pendingChanges).length}
               </Badge>
             )}
@@ -426,7 +443,9 @@ export default function WidgetSettings() {
                       <Label>{item.label}</Label>
                       <Switch
                         checked={
-                          getCurrentValue(item.key as keyof WidgetSettingsType) as boolean
+                          getCurrentValue(
+                            item.key as keyof WidgetSettingsType
+                          ) as boolean
                         }
                         onCheckedChange={(checked) =>
                           handleUpdate(
@@ -574,7 +593,7 @@ export default function WidgetSettings() {
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <Label>Button Border Radius</Label>
+                      <Label>Border Radius</Label>
                       <span className="text-sm text-muted-foreground">
                         {getCurrentValue("buttonBorderRadius")}px
                       </span>

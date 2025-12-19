@@ -59,6 +59,7 @@ const STEP_ORDER: BookingStep[] = [
 export function WidgetPreview({ settings }: WidgetPreviewProps) {
   const {
     primaryColor,
+    secondaryColor,
     sidebarBackgroundColor,
     contentBackgroundColor,
     textColor,
@@ -67,6 +68,9 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
     buttonBorderRadius,
     sidebarMenuItems,
   } = settings;
+
+  const containerRadius = buttonBorderRadius ?? 12;
+  const cardRadius = buttonBorderRadius ?? 12;
 
   // Load Google Font dynamically when fontFamily changes
   useEffect(() => {
@@ -107,8 +111,7 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
     const brightness = (r * 299 + g * 587 + b * 114) / 1000;
     return brightness > 128 ? "#000000" : "#ffffff";
   };
-
-  const buttonTextColor = getContrastColor(primaryColor);
+  const buttonTextColor = secondaryColor || getContrastColor(primaryColor);
 
   // Mock services data
   const mockServices = [
@@ -119,9 +122,10 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
 
   return (
     <div
-      className="rounded-xl border shadow-lg overflow-hidden"
+      className="border shadow-lg overflow-hidden"
       style={{
         fontFamily: `${fontFamily}, sans-serif`,
+        borderRadius: `${containerRadius}px`,
       }}
     >
       {/* Widget Container - Desktop layout with sidebar */}
@@ -187,6 +191,7 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
                     borderColor: isCurrent
                       ? `${primaryColor}30`
                       : "transparent",
+                    borderRadius: `${cardRadius}px`,
                   }}
                 >
                   {/* Step indicator */}
@@ -263,6 +268,7 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
                       backgroundColor: isSelected
                         ? `${primaryColor}08`
                         : "transparent",
+                      borderRadius: `${cardRadius}px`,
                     }}
                   >
                     <div className="space-y-2">
@@ -308,7 +314,7 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
           {/* Navigation Buttons - Fixed at bottom */}
           <div
             className="absolute bottom-0 left-0 right-0 border-t p-4"
-            style={{ backgroundColor: `${contentBackgroundColor}F5` }}
+            style={{ backgroundColor: `${sidebarBackgroundColor}F5` }}
           >
             <div className="flex items-center justify-between gap-3">
               <button

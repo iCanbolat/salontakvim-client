@@ -52,9 +52,12 @@ export function TodaysSchedule({ appointments }: TodaysScheduleProps) {
                 parseISO(appointment.endDateTime),
                 "HH:mm"
               );
-              const customerName = appointment.guestInfo
-                ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-                : "Customer";
+              const customerName =
+                appointment.customerName ||
+                (appointment.guestInfo
+                  ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`.trim()
+                  : undefined) ||
+                "Customer";
 
               return (
                 <div
@@ -79,17 +82,23 @@ export function TodaysSchedule({ appointments }: TodaysScheduleProps) {
                       <AppointmentStatusBadge status={appointment.status} />
                     </div>
 
-                    {appointment.serviceId && (
+                    {(appointment.serviceName || appointment.serviceId) && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <Briefcase className="h-4 w-4" />
-                        <span>Service ID: {appointment.serviceId}</span>
+                        <span>
+                          {appointment.serviceName ||
+                            `Service ID: ${appointment.serviceId}`}
+                        </span>
                       </div>
                     )}
 
-                    {appointment.locationId && (
+                    {(appointment.locationName || appointment.locationId) && (
                       <div className="flex items-center gap-2 text-sm text-gray-600">
                         <MapPin className="h-4 w-4" />
-                        <span>Location ID: {appointment.locationId}</span>
+                        <span>
+                          {appointment.locationName ||
+                            `Location ID: ${appointment.locationId}`}
+                        </span>
                       </div>
                     )}
 

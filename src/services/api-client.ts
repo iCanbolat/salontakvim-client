@@ -49,6 +49,20 @@ class ApiClient {
           _retry?: boolean;
         };
 
+        const requestUrl = originalRequest?.url || "";
+        const skipAuthHandling = [
+          "/auth/login",
+          "/auth/register",
+          "/auth/refresh",
+        ].some(
+          (path) => requestUrl.startsWith(path) || requestUrl.includes(path)
+        );
+
+        // Do not try to refresh or redirect when auth endpoints intentionally return 4xx
+        if (skipAuthHandling) {
+          return Promise.reject(error);
+        }
+
         // If 401 and not already retried, try to refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
