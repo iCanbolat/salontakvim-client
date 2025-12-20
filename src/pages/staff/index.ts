@@ -3,3 +3,4 @@
  */
 
 export * from "./StaffDashboard";
+export * from "./AcceptInvitationPage";

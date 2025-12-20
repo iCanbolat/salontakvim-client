@@ -2,8 +2,6 @@ export type WidgetLayout = "list" | "steps";
 
 export interface SidebarMenuItems {
   service: boolean;
-  employee: boolean;
-  location: boolean;
   extras: boolean;
   dateTime: boolean;
   customerInfo: boolean;
@@ -17,8 +15,6 @@ export interface WidgetSettings {
   showCompanyEmail: boolean;
   companyEmail?: string;
   sidebarMenuItems: SidebarMenuItems;
-  employeeRequired: boolean;
-  locationRequired: boolean;
   lastNameRequired: boolean;
   emailRequired: boolean;
   phoneRequired: boolean;
@@ -43,8 +39,6 @@ export interface UpdateWidgetSettingsDto {
   showCompanyEmail?: boolean;
   companyEmail?: string;
   sidebarMenuItems?: SidebarMenuItems;
-  employeeRequired?: boolean;
-  locationRequired?: boolean;
   lastNameRequired?: boolean;
   emailRequired?: boolean;
   phoneRequired?: boolean;

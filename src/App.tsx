@@ -24,7 +24,7 @@ import {
   Analytics,
   NotificationSettings,
 } from "./pages/admin";
-import { StaffDashboard } from "./pages/staff";
+import { StaffDashboard, AcceptInvitationPage } from "./pages/staff";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -50,6 +50,10 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route
+                path="/staff/invitations/accept"
+                element={<AcceptInvitationPage />}
+              />
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>

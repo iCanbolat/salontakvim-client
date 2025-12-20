@@ -153,50 +153,94 @@ export function AppointmentCard({
           </DropdownMenu>
         </div>
       </CardHeader>
-      <CardContent className="space-y-2">
-        {/* Date & Time */}
-        <div className="flex flex-row justify-between">
-          <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-4 w-4 text-gray-500" />
-            <span>{appointmentDate}</span>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+          {/* Date  */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Calendar className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider">
+                Date
+              </span>
+            </div>
+            <span className="text-sm font-medium">{appointmentDate}</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-gray-500" />
-            <span>{appointmentTime}</span>
-          </div>
-        </div>
 
-        {/* Service */}
-        {serviceDisplayName && (
-          <div className="flex items-center gap-2 text-sm">
-            <Briefcase className="h-4 w-4 text-gray-500" />
-            <span>{serviceDisplayName}</span>
+          {/* Appointment Time */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Clock className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider">
+                Time
+              </span>
+            </div>
+            <span className="text-sm font-medium">{appointmentTime}</span>
           </div>
-        )}
 
-        {/* Staff */}
-        {staffDisplayName && (
-          <div className="flex items-center gap-2 text-sm">
-            <User className="h-4 w-4 text-gray-500" />
-            <span>{staffDisplayName}</span>
-          </div>
-        )}
-
-        {/* Location */}
-        {locationDisplayName && (
-          <div className="flex items-center gap-2 text-sm">
-            <MapPin className="h-4 w-4 text-gray-500" />
-            <span>{locationDisplayName}</span>
-          </div>
-        )}
-
-        {/* Price */}
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Banknote className="h-4 w-4 text-gray-500" />
-          <span>${appointment.totalPrice}</span>
-          {appointment.isPaid && (
-            <span className="text-xs text-green-600 ml-2">(Paid)</span>
+          {/* Service */}
+          {serviceDisplayName && (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <Briefcase className="h-3.5 w-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  Service
+                </span>
+              </div>
+              <span className="text-sm font-medium truncate">
+                {serviceDisplayName}
+              </span>
+            </div>
           )}
+
+          {/* Staff */}
+          {staffDisplayName && (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <User className="h-3.5 w-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  Staff
+                </span>
+              </div>
+              <span className="text-sm font-medium truncate">
+                {staffDisplayName}
+              </span>
+            </div>
+          )}
+
+          {/* Location */}
+          {locationDisplayName && (
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-1.5 text-gray-500">
+                <MapPin className="h-3.5 w-3.5" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider">
+                  Location
+                </span>
+              </div>
+              <span className="text-sm font-medium truncate">
+                {locationDisplayName}
+              </span>
+            </div>
+          )}
+
+          {/* Price */}
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-1.5 text-gray-500">
+              <Banknote className="h-3.5 w-3.5" />
+              <span className="text-[10px] font-semibold uppercase tracking-wider">
+                Price
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-bold text-blue-700">
+                ${appointment.totalPrice}
+              </span>
+              {appointment.isPaid && (
+                <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">
+                  Paid
+                </span>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Customer Notes */}

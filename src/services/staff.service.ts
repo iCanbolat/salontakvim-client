@@ -7,6 +7,8 @@ import type {
   StaffMember,
   StaffInvitation,
   InviteStaffDto,
+  AcceptStaffInvitationDto,
+  StaffInvitationDetails,
   UpdateStaffProfileDto,
   AssignServicesDto,
   WorkingHours,
@@ -41,6 +43,30 @@ export class StaffService {
   async getInvitations(storeId: number): Promise<StaffInvitation[]> {
     const response = await axiosInstance.get<StaffInvitation[]>(
       `/stores/${storeId}/staff/invitations`
+    );
+    return response.data;
+  }
+
+  /**
+   * Get invitation details by token (public)
+   */
+  async getInvitationByToken(token: string): Promise<StaffInvitationDetails> {
+    const response = await axiosInstance.get<StaffInvitationDetails>(
+      `/staff/invitations/${token}`
+    );
+    return response.data;
+  }
+
+  /**
+   * Accept staff invitation (public)
+   */
+  async acceptInvitation(
+    token: string,
+    data: AcceptStaffInvitationDto
+  ): Promise<{ user: { email: string } }> {
+    const response = await axiosInstance.post<{ user: { email: string } }>(
+      `/staff/invitations/${token}/accept`,
+      data
     );
     return response.data;
   }

@@ -277,7 +277,34 @@ export default function WidgetSettings() {
         </div>
       </div>
 
-      <div className={`grid gap-6 ${showPreview ? "xl:grid-cols-2" : ""}`}>
+      <div
+        className={`grid gap-6 ${
+          showPreview ? "min-[1400px]:grid-cols-2" : ""
+        }`}
+      >  {/* Preview Panel */}
+        {showPreview && previewSettings && (
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Eye className="h-5 w-5" />
+                  Live Preview
+                  {hasUnsavedChanges && (
+                    <Badge variant="outline" className="ml-2 text-xs">
+                      Unsaved changes
+                    </Badge>
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  See how your widget will look to customers
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <WidgetPreview settings={previewSettings} />
+              </CardContent>
+            </Card>
+          </div>
+        )}
         {/* Settings Panel */}
         <div className="space-y-6">
           <Tabs
@@ -349,7 +376,7 @@ export default function WidgetSettings() {
                     <div className="space-y-0.5">
                       <Label>Show Company Email</Label>
                       <p className="text-sm text-muted-foreground">
-                        Display company email in widget header
+                        Display company email in confirmation step
                       </p>
                     </div>
                     <Switch
@@ -386,8 +413,6 @@ export default function WidgetSettings() {
                 <CardContent className="space-y-4">
                   {[
                     { key: "service", label: "Service Selection" },
-                    { key: "employee", label: "Employee Selection" },
-                    { key: "location", label: "Location Selection" },
                     { key: "extras", label: "Extras Selection" },
                     { key: "dateTime", label: "Date & Time Selection" },
                     { key: "customerInfo", label: "Customer Information" },
@@ -424,14 +449,6 @@ export default function WidgetSettings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    {
-                      key: "employeeRequired",
-                      label: "Employee Selection Required",
-                    },
-                    {
-                      key: "locationRequired",
-                      label: "Location Selection Required",
-                    },
                     { key: "lastNameRequired", label: "Last Name Required" },
                     { key: "emailRequired", label: "Email Required" },
                     { key: "phoneRequired", label: "Phone Required" },
@@ -786,30 +803,7 @@ export default function WidgetSettings() {
           </Tabs>
         </div>
 
-        {/* Preview Panel */}
-        {showPreview && previewSettings && (
-          <div className="space-y-4">
-            <Card>
-              <CardHeader className="pb-3">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <Eye className="h-5 w-5" />
-                  Live Preview
-                  {hasUnsavedChanges && (
-                    <Badge variant="outline" className="ml-2 text-xs">
-                      Unsaved changes
-                    </Badge>
-                  )}
-                </CardTitle>
-                <CardDescription>
-                  See how your widget will look to customers
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <WidgetPreview settings={previewSettings} />
-              </CardContent>
-            </Card>
-          </div>
-        )}
+      
       </div>
     </div>
   );

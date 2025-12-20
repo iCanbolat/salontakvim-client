@@ -38,6 +38,9 @@ export interface StaffInvitation {
   token: string;
   status: "pending" | "accepted" | "expired" | "cancelled";
   invitedBy?: number;
+  locationId?: number | null;
+  locationName?: string | null;
+  title?: string | null;
   expiresAt: string;
   acceptedAt?: string;
   createdAt: string;
@@ -45,6 +48,27 @@ export interface StaffInvitation {
 
 export interface InviteStaffDto {
   email: string;
+  title?: string;
+  locationId?: number;
+}
+
+export interface AcceptStaffInvitationDto {
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  password: string;
+}
+
+export interface StaffInvitationDetails {
+  id: number;
+  email: string;
+  storeId: number;
+  storeName: string | null;
+  locationId: number | null;
+  locationName: string | null;
+  title: string | null;
+  status: "pending" | "accepted" | "expired" | "cancelled";
+  expiresAt: string;
 }
 
 export interface UpdateStaffProfileDto {
