@@ -38,6 +38,7 @@ import {
   Settings,
   Code,
   AlertCircle,
+  RotateCcw,
   Loader2,
   Eye,
   Save,
@@ -128,6 +129,11 @@ export default function WidgetSettings() {
       return;
     }
     updateMutation.mutate(pendingChanges);
+  };
+
+  const handleResetChanges = () => {
+    setPendingChanges({});
+    toast.info("Changes reset");
   };
 
   // Check if there are unsaved changes
@@ -254,6 +260,16 @@ export default function WidgetSettings() {
             <Eye className="h-4 w-4 mr-2" />
             {showPreview ? "Hide Preview" : "Show Preview"}
           </Button>
+          {hasUnsavedChanges && (
+            <Button
+              variant="ghost"
+              onClick={handleResetChanges}
+              className="w-fit text-muted-foreground hover:text-foreground"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset
+            </Button>
+          )}
           <Button
             onClick={handleSaveChanges}
             disabled={!hasUnsavedChanges || updateMutation.isPending}
@@ -281,7 +297,9 @@ export default function WidgetSettings() {
         className={`grid gap-6 ${
           showPreview ? "min-[1400px]:grid-cols-2" : ""
         }`}
-      >  {/* Preview Panel */}
+      >
+        {" "}
+        {/* Preview Panel */}
         {showPreview && previewSettings && (
           <div className="space-y-4">
             <Card>
@@ -802,8 +820,6 @@ export default function WidgetSettings() {
             </TabsContent>
           </Tabs>
         </div>
-
-      
       </div>
     </div>
   );
