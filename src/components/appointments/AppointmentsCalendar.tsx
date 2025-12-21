@@ -7,8 +7,9 @@ import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import { appointmentService } from "@/services";
+import { appointmentService, staffService } from "@/services";
 import type { Appointment } from "@/types";
+import { useAuth } from "@/contexts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -42,11 +43,22 @@ interface AppointmentsCalendarProps {
 type CalendarView = "month" | "week" | "day";
 
 export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
+  const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>("month");
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
+
+  // Fetch staff member record if user is staff
+  const { data: staffMember } = useQuery({
+    queryKey: ["my-staff-member", storeId, user?.id],
+    queryFn: async () => {
+      const staffMembers = await staffService.getStaffMembers(storeId);
+      return staffMembers.find((s) => s.userId === user?.id);
+    },
+    enabled: !!storeId && user?.role === "staff",
+  });
 
   // Get date range based on view
   const dateRange = useMemo(() => {
@@ -67,13 +79,16 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
       storeId,
       format(dateRange.start, "yyyy-MM-dd"),
       format(dateRange.end, "yyyy-MM-dd"),
+      staffMember?.id,
     ],
     queryFn: () =>
       appointmentService.getAppointments(storeId, {
         startDate: format(dateRange.start, "yyyy-MM-dd"),
         endDate: format(dateRange.end, "yyyy-MM-dd"),
         limit: 500,
+        staffId: user?.role === "staff" ? staffMember?.id : undefined,
       }),
+    enabled: !!storeId && (user?.role !== "staff" || !!staffMember),
   });
 
   const appointments = appointmentsData?.data ?? [];

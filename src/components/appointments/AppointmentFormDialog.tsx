@@ -10,6 +10,7 @@ import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { useAuth } from "@/contexts";
 import {
   appointmentService,
   serviceService,
@@ -79,9 +80,20 @@ export function AppointmentFormDialog({
   open,
   onClose,
 }: AppointmentFormDialogProps) {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const isEditing = !!appointment;
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+
+  // Fetch staff member record if user is staff
+  const { data: currentStaffMember } = useQuery({
+    queryKey: ["my-staff-member", storeId, user?.id],
+    queryFn: async () => {
+      const staffMembers = await staffService.getStaffMembers(storeId);
+      return staffMembers.find((s) => s.userId === user?.id);
+    },
+    enabled: open && user?.role === "staff",
+  });
 
   // Fetch services
   const { data: services } = useQuery({
@@ -200,7 +212,7 @@ export function AppointmentFormDialog({
     } else {
       reset({
         serviceId: 0,
-        staffId: 0,
+        staffId: currentStaffMember?.id || 0,
         locationId: undefined,
         guestFirstName: "",
         guestLastName: "",
@@ -212,7 +224,7 @@ export function AppointmentFormDialog({
         customerNotes: "",
       });
     }
-  }, [appointment, reset]);
+  }, [appointment, reset, open, currentStaffMember]);
 
   // If a location is selected, ensure staff belongs to that location; otherwise reset staff.
   useEffect(() => {
@@ -399,6 +411,7 @@ export function AppointmentFormDialog({
                 onValueChange={(value) =>
                   setValue("staffId", parseInt(value), { shouldDirty: true })
                 }
+                disabled={user?.role === "staff"}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select a staff member" />

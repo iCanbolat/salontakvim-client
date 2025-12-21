@@ -24,7 +24,11 @@ import {
   Analytics,
   NotificationSettings,
 } from "./pages/admin";
-import { StaffDashboard, AcceptInvitationPage } from "./pages/staff";
+import {
+  StaffDashboard,
+  AcceptInvitationPage,
+  AppointmentsList as StaffAppointmentsList,
+} from "./pages/staff";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -94,7 +98,7 @@ function App() {
                   <Route path="/staff/dashboard" element={<StaffDashboard />} />
                   <Route
                     path="/staff/appointments"
-                    element={<div>My Appointments (Coming Soon)</div>}
+                    element={<StaffAppointmentsList />}
                   />
                   <Route
                     path="/staff/schedule"

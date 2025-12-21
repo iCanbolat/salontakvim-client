@@ -20,7 +20,7 @@ import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useSearchParams } from "react-router-dom";
 import { useDebouncedSearch } from "@/hooks";
-import { storeService, appointmentService } from "@/services";
+import { storeService, appointmentService, staffService } from "@/services";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { SearchInput } from "@/components/ui/search-input";
@@ -43,9 +43,10 @@ import type {
   AppointmentStatusCounts,
   PaginatedAppointmentsResponse,
 } from "@/types";
-import { useNotifications } from "@/contexts";
+import { useNotifications, useAuth } from "@/contexts";
 
 export function AppointmentsList() {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const { latestNotification } = useNotifications();
   const [searchParams] = useSearchParams();
@@ -67,6 +68,22 @@ export function AppointmentsList() {
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 3,
     delay: 400,
+  });
+
+  // Fetch user's store
+  const { data: store, isLoading: storeLoading } = useQuery({
+    queryKey: ["my-store"],
+    queryFn: () => storeService.getMyStore(),
+  });
+
+  // Fetch staff member record if user is staff
+  const { data: staffMember, isLoading: staffLoading } = useQuery({
+    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryFn: async () => {
+      const staffMembers = await staffService.getStaffMembers(store!.id);
+      return staffMembers.find((s) => s.userId === user?.id);
+    },
+    enabled: !!store?.id && user?.role === "staff",
   });
 
   // If navigated with startDate/endDate query params, initialize date filter.
@@ -108,12 +125,6 @@ export function AppointmentsList() {
     setPendingDateRange(undefined);
   };
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
-
   const statusFilter = activeTab === "all" ? undefined : activeTab;
 
   // Fetch appointments
@@ -130,6 +141,7 @@ export function AppointmentsList() {
       debouncedSearch,
       dateRange?.from,
       dateRange?.to,
+      staffMember?.id,
     ],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
@@ -141,8 +153,9 @@ export function AppointmentsList() {
           ? format(dateRange.from, "yyyy-MM-dd")
           : undefined,
         endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
+        staffId: user?.role === "staff" ? staffMember?.id : undefined,
       }),
-    enabled: !!store?.id,
+    enabled: !!store?.id && (user?.role !== "staff" || !!staffMember),
     placeholderData: keepPreviousData,
   });
 
@@ -200,7 +213,8 @@ export function AppointmentsList() {
   const endIndex =
     totalItems === 0 ? 0 : Math.min(page * itemsPerPage, totalItems);
 
-  const isInitialLoading = (storeLoading || isPending) && !appointmentsData;
+  const isInitialLoading =
+    (storeLoading || staffLoading || isPending) && !appointmentsData;
 
   const handlePageChange = (nextPage: number) => {
     setPage(nextPage);
@@ -258,10 +272,12 @@ export function AppointmentsList() {
             <CalendarIcon className="h-4 w-4 mr-2" />
             {view === "list" ? "Calendar View" : "List View"}
           </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Appointment
-          </Button>
+          {user?.role === "admin" && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Appointment
+            </Button>
+          )}
         </div>
       </div>
 
@@ -418,7 +434,7 @@ export function AppointmentsList() {
                       ? "Create your first appointment to get started"
                       : "No appointments match this status filter"}
                   </p>
-                  {activeTab === "all" && (
+                  {activeTab === "all" && user?.role === "admin" && (
                     <Button onClick={() => setIsCreateDialogOpen(true)}>
                       <Plus className="h-4 w-4 mr-2" />
                       New Appointment

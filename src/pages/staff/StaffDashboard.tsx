@@ -12,7 +12,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
-import { appointmentService, storeService } from "@/services";
+import { appointmentService, storeService, staffService } from "@/services";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TodaysSchedule } from "@/components/staff/TodaysSchedule";
 import { UpcomingAppointments } from "@/components/staff/UpcomingAppointments";
@@ -26,15 +26,25 @@ export function StaffDashboard() {
     queryFn: () => storeService.getMyStore(),
   });
 
+  // Fetch staff member record
+  const { data: staffMember, isLoading: staffLoading } = useQuery({
+    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryFn: async () => {
+      const staffMembers = await staffService.getStaffMembers(store!.id);
+      return staffMembers.find((s) => s.userId === user?.id);
+    },
+    enabled: !!store?.id && !!user?.id,
+  });
+
   // Fetch staff's appointments
   const { data: appointmentsData, isLoading: appointmentsLoading } = useQuery({
-    queryKey: ["staff-appointments", store?.id, user?.id],
+    queryKey: ["staff-appointments", store?.id, staffMember?.id],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
-        staffId: user!.id,
+        staffId: staffMember!.id,
         limit: 100,
       }),
-    enabled: !!store?.id && !!user?.id,
+    enabled: !!store?.id && !!staffMember?.id,
   });
 
   const appointments = appointmentsData?.data ?? [];
@@ -47,7 +57,7 @@ export function StaffDashboard() {
     no_show: 0,
   };
 
-  const isLoading = storeLoading || appointmentsLoading;
+  const isLoading = storeLoading || staffLoading || appointmentsLoading;
 
   // Calculate stats
   const stats = {
