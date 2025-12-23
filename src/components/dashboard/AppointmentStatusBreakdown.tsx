@@ -16,6 +16,7 @@ const statusColors = {
   completed: "bg-green-500",
   cancelled: "bg-red-500",
   no_show: "bg-gray-500",
+  expired: "bg-slate-500",
 };
 
 const statusLabels = {
@@ -24,6 +25,7 @@ const statusLabels = {
   completed: "Completed",
   cancelled: "Cancelled",
   no_show: "No Show",
+  expired: "Expired",
 };
 
 export function AppointmentStatusBreakdown({
@@ -35,6 +37,7 @@ export function AppointmentStatusBreakdown({
     { status: "completed", count: stats.completedAppointments },
     { status: "cancelled", count: stats.cancelledAppointments },
     { status: "no_show", count: stats.noShowAppointments },
+    { status: "expired", count: stats.expiredAppointments },
   ] as const;
 
   const total = statusData.reduce((sum, item) => sum + item.count, 0);

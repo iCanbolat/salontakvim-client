@@ -203,6 +203,7 @@ export function AppointmentsList() {
     completed: 0,
     cancelled: 0,
     no_show: 0,
+    expired: 0,
   };
 
   const appointments: Appointment[] = appointmentsData?.data ?? [];
@@ -381,6 +382,9 @@ export function AppointmentsList() {
                 </TabsTrigger>
                 <TabsTrigger value="no_show" className="whitespace-nowrap">
                   No Show ({statusCounts.no_show})
+                </TabsTrigger>
+                <TabsTrigger value="expired" className="whitespace-nowrap">
+                  Expired ({statusCounts.expired})
                 </TabsTrigger>
               </TabsList>
             </div>

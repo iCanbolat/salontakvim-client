@@ -107,15 +107,9 @@ const staffNavItems: NavItem[] = [
     roles: ["staff"],
   },
   {
-    label: "My Schedule",
+    label: "Time Off",
     href: "/staff/schedule",
     icon: Clock,
-    roles: ["staff"],
-  },
-  {
-    label: "Time Off",
-    href: "/staff/time-off",
-    icon: UserCog,
     roles: ["staff"],
   },
   {

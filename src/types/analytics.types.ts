@@ -16,6 +16,7 @@ export interface DashboardStats {
   completedAppointments: number;
   cancelledAppointments: number;
   noShowAppointments: number;
+  expiredAppointments: number;
   cancellationRate: string;
   averageAppointmentValue: string;
   popularTimeSlot: string;

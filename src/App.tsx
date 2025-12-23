@@ -28,6 +28,7 @@ import {
   StaffDashboard,
   AcceptInvitationPage,
   AppointmentsList as StaffAppointmentsList,
+  StaffSchedule,
 } from "./pages/staff";
 
 // Create a client for React Query
@@ -100,13 +101,10 @@ function App() {
                     path="/staff/appointments"
                     element={<StaffAppointmentsList />}
                   />
-                  <Route
-                    path="/staff/schedule"
-                    element={<div>My Schedule (Coming Soon)</div>}
-                  />
+                  <Route path="/staff/schedule" element={<StaffSchedule />} />
                   <Route
                     path="/staff/time-off"
-                    element={<div>Time Off (Coming Soon)</div>}
+                    element={<Navigate to="/staff/schedule" replace />}
                   />
                   <Route
                     path="/staff/profile"

@@ -4,7 +4,7 @@ import type { RecentActivity } from "@/types";
 class ActivityService {
   async getRecentActivities(
     storeId: number,
-    limit = 20
+    limit = 10
   ): Promise<RecentActivity[]> {
     const response = await axiosInstance.get<RecentActivity[]>(
       `/stores/${storeId}/activities`,

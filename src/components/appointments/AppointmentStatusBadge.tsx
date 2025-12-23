@@ -5,7 +5,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import type { AppointmentStatus } from "@/types";
-import { CheckCircle, Clock, XCircle, UserX } from "lucide-react";
+import { CheckCircle, Clock, XCircle, UserX, Ban } from "lucide-react";
 
 interface AppointmentStatusBadgeProps {
   status: AppointmentStatus;
@@ -50,6 +50,12 @@ const statusConfig: Record<
     variant: "outline",
     icon: <UserX className="h-3 w-3" />,
     className: "bg-gray-100 text-gray-800 border-gray-300",
+  },
+  expired: {
+    label: "Expired",
+    variant: "outline",
+    icon: <Ban className="h-3 w-3" />,
+    className: "bg-slate-200 text-slate-700 border-slate-300",
   },
 };
 

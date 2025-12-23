@@ -8,6 +8,7 @@ export type AppointmentStatus =
   | "confirmed"
   | "completed"
   | "cancelled"
+  | "expired"
   | "no_show";
 
 export interface GuestInfo {
@@ -113,6 +114,7 @@ export interface AppointmentStatusCounts {
   completed: number;
   cancelled: number;
   no_show: number;
+  expired: number;
 }
 
 export interface PaginatedAppointmentsResponse {
