@@ -3,11 +3,25 @@
  * Displays staff members and invitations
  */
 
-import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Plus, Loader2, AlertCircle, Users as UsersIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { format, parseISO } from "date-fns";
+import { tr } from "date-fns/locale";
+import { toast } from "sonner";
+import {
+  Plus,
+  Loader2,
+  AlertCircle,
+  Users as UsersIcon,
+  Calendar,
+  Clock,
+  Check,
+  X,
+} from "lucide-react";
 import { usePagination } from "@/hooks";
-import { storeService, staffService } from "@/services";
+import { storeService, staffService, breakService } from "@/services";
+import type { StaffBreakStatus, StaffBreakWithStaff } from "@/types";
 import {
   Card,
   CardContent,
@@ -16,6 +30,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StaffCard } from "@/components/staff/StaffCard";
@@ -23,8 +38,29 @@ import { InvitationCard } from "@/components/staff/InvitationCard";
 import { InviteStaffDialog } from "@/components/staff/InviteStaffDialog";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 
+type TimeOffStatusFilter = "all" | StaffBreakStatus;
+
 export function StaffList() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState("staff");
+  const [timeOffStatus, setTimeOffStatus] =
+    useState<TimeOffStatusFilter>("pending");
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["staff", "invitations", "timeoffs"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -52,6 +88,40 @@ export function StaffList() {
     queryKey: ["staff-invitations", store?.id],
     queryFn: () => staffService.getInvitations(store!.id),
     enabled: !!store?.id,
+  });
+
+  const {
+    data: timeOffs,
+    isLoading: timeOffsLoading,
+    error: timeOffsError,
+  } = useQuery({
+    queryKey: ["store-breaks", store?.id, timeOffStatus],
+    queryFn: () =>
+      breakService.getStoreBreaks(
+        store!.id,
+        timeOffStatus === "all" ? undefined : timeOffStatus
+      ),
+    enabled: !!store?.id,
+  });
+
+  const updateBreakStatus = useMutation({
+    mutationFn: ({
+      breakId,
+      staffId,
+      status,
+    }: {
+      breakId: number;
+      staffId: number;
+      status: StaffBreakStatus;
+    }) =>
+      breakService.updateStaffBreak(store!.id, staffId, breakId, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["store-breaks", store?.id] });
+      toast.success("Time off updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update time off: " + error.message);
+    },
   });
 
   const isLoading = storeLoading || staffLoading || invitationsLoading;
@@ -103,6 +173,59 @@ export function StaffList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const statusFilters: { value: TimeOffStatusFilter; label: string }[] = [
+    { value: "pending", label: "Pending" },
+    { value: "approved", label: "Approved" },
+    { value: "declined", label: "Declined" },
+    { value: "all", label: "All" },
+  ];
+
+  const statusLabels: Record<StaffBreakStatus, string> = {
+    pending: "Pending",
+    approved: "Approved",
+    declined: "Declined",
+  };
+
+  const statusBadgeClass: Record<StaffBreakStatus, string> = {
+    pending: "bg-yellow-50 text-yellow-800 border-yellow-200",
+    approved: "bg-green-50 text-green-800 border-green-200",
+    declined: "bg-red-50 text-red-800 border-red-200",
+  };
+
+  const formatDate = (dateStr: string) =>
+    format(parseISO(dateStr), "d MMMM yyyy", { locale: tr });
+
+  const formatDateRange = (timeOff: StaffBreakWithStaff) =>
+    timeOff.startDate === timeOff.endDate
+      ? formatDate(timeOff.startDate)
+      : `${formatDate(timeOff.startDate)} - ${formatDate(timeOff.endDate)}`;
+
+  const formatTimeRange = (timeOff: StaffBreakWithStaff) =>
+    timeOff.startTime && timeOff.endTime
+      ? `${timeOff.startTime.substring(0, 5)} - ${timeOff.endTime.substring(
+          0,
+          5
+        )}`
+      : "All day";
+
+  const getStaffName = (timeOff: StaffBreakWithStaff) => {
+    const parts = [timeOff.staffFirstName, timeOff.staffLastName].filter(
+      Boolean
+    );
+    return parts.length ? parts.join(" ") : `Staff #${timeOff.staffId}`;
+  };
+
+  const handleStatusChange = (
+    timeOff: StaffBreakWithStaff,
+    status: StaffBreakStatus
+  ) => {
+    updateBreakStatus.mutate({
+      breakId: timeOff.id,
+      staffId: timeOff.staffId,
+      status,
+    });
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -150,13 +273,20 @@ export function StaffList() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="staff" className="space-y-4">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        className="space-y-4"
+      >
         <TabsList>
           <TabsTrigger value="staff">
             Staff Members ({staffMembers?.length || 0})
           </TabsTrigger>
           <TabsTrigger value="invitations">
             Invitations ({pendingInvitations.length})
+          </TabsTrigger>
+          <TabsTrigger value="timeoffs">
+            Time Off ({timeOffs?.length || 0})
           </TabsTrigger>
         </TabsList>
 
@@ -263,6 +393,138 @@ export function StaffList() {
                   </h3>
                   <p className="text-gray-600">
                     All invitations have been accepted or expired
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Time Off Tab */}
+        <TabsContent value="timeoffs" className="space-y-4">
+          <Card>
+            <CardHeader className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <CardTitle>Time Off Requests</CardTitle>
+                <CardDescription>
+                  Review, approve, or decline staff time off
+                </CardDescription>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {statusFilters.map((filter) => (
+                  <Button
+                    key={filter.value}
+                    size="sm"
+                    variant={
+                      timeOffStatus === filter.value ? "default" : "outline"
+                    }
+                    onClick={() => setTimeOffStatus(filter.value)}
+                    disabled={timeOffsLoading}
+                  >
+                    {filter.label}
+                  </Button>
+                ))}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {timeOffsLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                </div>
+              ) : timeOffsError ? (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Failed to load time off requests:{" "}
+                    {(timeOffsError as Error).message}
+                  </AlertDescription>
+                </Alert>
+              ) : timeOffs && timeOffs.length > 0 ? (
+                <div className="space-y-3">
+                  {timeOffs.map((timeOff) => (
+                    <div
+                      key={timeOff.id}
+                      className="flex flex-col gap-3 rounded-lg border bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                          <span className="font-semibold text-gray-900">
+                            {getStaffName(timeOff)}
+                          </span>
+                          {timeOff.staffTitle && (
+                            <span className="text-gray-500">
+                              • {timeOff.staffTitle}
+                            </span>
+                          )}
+                          <Badge
+                            variant="outline"
+                            className={statusBadgeClass[timeOff.status]}
+                          >
+                            {statusLabels[timeOff.status]}
+                          </Badge>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Calendar className="h-4 w-4" />
+                          <span>{formatDateRange(timeOff)}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                          <Clock className="h-4 w-4" />
+                          <span>{formatTimeRange(timeOff)}</span>
+                        </div>
+
+                        {timeOff.reason && (
+                          <div className="rounded bg-gray-50 p-2 text-sm text-gray-700">
+                            {timeOff.reason}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-start gap-2 md:items-end">
+                        <p className="text-xs text-gray-500">
+                          Requested{" "}
+                          {format(parseISO(timeOff.createdAt), "d MMM yyyy", {
+                            locale: tr,
+                          })}
+                        </p>
+                        {timeOff.status === "pending" ? (
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                handleStatusChange(timeOff, "approved")
+                              }
+                              disabled={updateBreakStatus.isPending}
+                            >
+                              <Check className="h-4 w-4 mr-1" />
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                handleStatusChange(timeOff, "declined")
+                              }
+                              disabled={updateBreakStatus.isPending}
+                            >
+                              <X className="h-4 w-4 mr-1" />
+                              Decline
+                            </Button>
+                          </div>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 border rounded-lg bg-gray-50">
+                  <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                  <p className="text-gray-700 font-medium mb-2">
+                    No time off requests
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Staff submissions will appear here for approval
                   </p>
                 </div>
               )}

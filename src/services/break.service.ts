@@ -7,6 +7,8 @@ import type {
   StaffBreak,
   CreateStaffBreakDto,
   UpdateStaffBreakDto,
+  StaffBreakWithStaff,
+  StaffBreakStatus,
 } from "@/types";
 
 export class BreakService {
@@ -65,6 +67,20 @@ export class BreakService {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`
     );
+  }
+
+  async getStoreBreaks(
+    storeId: number,
+    status?: StaffBreakStatus
+  ): Promise<StaffBreakWithStaff[]> {
+    const response = await axiosInstance.get<StaffBreakWithStaff[]>(
+      `/stores/${storeId}/breaks`,
+      {
+        params: status ? { status } : undefined,
+      }
+    );
+
+    return response.data;
   }
 }
 

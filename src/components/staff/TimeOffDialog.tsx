@@ -21,6 +21,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { breakService } from "@/services";
 import type { StaffBreak, CreateStaffBreakDto } from "@/types";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
@@ -53,6 +59,8 @@ export function TimeOffDialog({
   const [reason, setReason] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [isPartialDay, setIsPartialDay] = useState(false);
+  const [isStartDatePopoverOpen, setIsStartDatePopoverOpen] = useState(false);
+  const [isEndDatePopoverOpen, setIsEndDatePopoverOpen] = useState(false);
 
   // Initialize form with existing data
   useEffect(() => {
@@ -171,13 +179,40 @@ export function TimeOffDialog({
                   <CalendarIcon className="h-4 w-4" />
                   Başlangıç Tarihi
                 </Label>
-                <Input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  required
-                />
+                <Popover
+                  open={isStartDatePopoverOpen}
+                  onOpenChange={setIsStartDatePopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {startDate ? (
+                        format(new Date(startDate), "MMM dd, yyyy")
+                      ) : (
+                        <span>Tarih seçin</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate ? new Date(startDate) : undefined}
+                      onSelect={(date) => {
+                        if (date) {
+                          setStartDate(format(date, "yyyy-MM-dd"));
+                          setIsStartDatePopoverOpen(false);
+                          // If end date is before new start date, update it
+                          if (endDate && new Date(endDate) < date) {
+                            setEndDate(format(date, "yyyy-MM-dd"));
+                          }
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div className="space-y-2">
@@ -185,14 +220,39 @@ export function TimeOffDialog({
                   <CalendarIcon className="h-4 w-4" />
                   Bitiş Tarihi
                 </Label>
-                <Input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  min={startDate}
-                  required
-                />
+                <Popover
+                  open={isEndDatePopoverOpen}
+                  onOpenChange={setIsEndDatePopoverOpen}
+                >
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      {endDate ? (
+                        format(new Date(endDate), "MMM dd, yyyy")
+                      ) : (
+                        <span>Tarih seçin</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate ? new Date(endDate) : undefined}
+                      disabled={(date) =>
+                        startDate ? date < new Date(startDate) : false
+                      }
+                      onSelect={(date) => {
+                        if (date) {
+                          setEndDate(format(date, "yyyy-MM-dd"));
+                          setIsEndDatePopoverOpen(false);
+                        }
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 

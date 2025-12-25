@@ -110,6 +110,8 @@ export interface UpdateWorkingHoursDto {
 export interface StaffBreak {
   id: number;
   staffId: number;
+  type?: StaffBreakType;
+  status: StaffBreakStatus;
   startDate: string;
   endDate: string;
   startTime?: string; // For partial day breaks
@@ -120,7 +122,16 @@ export interface StaffBreak {
   updatedAt: string;
 }
 
+export interface StaffBreakWithStaff extends StaffBreak {
+  staffFirstName?: string | null;
+  staffLastName?: string | null;
+  staffEmail?: string | null;
+  staffTitle?: string | null;
+}
+
 export interface CreateStaffBreakDto {
+  type?: StaffBreakType;
+  status?: StaffBreakStatus;
   startDate: string;
   endDate: string;
   startTime?: string;
@@ -130,6 +141,8 @@ export interface CreateStaffBreakDto {
 }
 
 export interface UpdateStaffBreakDto {
+  type?: StaffBreakType;
+  status?: StaffBreakStatus;
   startDate?: string;
   endDate?: string;
   startTime?: string;
@@ -137,3 +150,12 @@ export interface UpdateStaffBreakDto {
   reason?: string;
   isRecurring?: boolean;
 }
+
+export type StaffBreakStatus = "pending" | "approved" | "declined";
+
+export type StaffBreakType =
+  | "paid_leave"
+  | "sick_leave"
+  | "unpaid_leave"
+  | "break"
+  | "other";

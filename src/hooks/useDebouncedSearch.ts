@@ -7,7 +7,7 @@ interface UseDebouncedSearchOptions {
 
 export function useDebouncedSearch(
   value: string,
-  { delay = 400, minLength = 3 }: UseDebouncedSearchOptions = {}
+  { delay = 400, minLength = 2 }: UseDebouncedSearchOptions = {}
 ): string {
   const [debouncedValue, setDebouncedValue] = useState("");
 

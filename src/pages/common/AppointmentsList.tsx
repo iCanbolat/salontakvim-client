@@ -19,7 +19,7 @@ import {
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useSearchParams } from "react-router-dom";
-import { useDebouncedSearch } from "@/hooks";
+import { useDebouncedSearch, useMediaQuery } from "@/hooks";
 import { storeService, appointmentService, staffService } from "@/services";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -49,7 +49,7 @@ export function AppointmentsList() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { latestNotification } = useNotifications();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
@@ -64,9 +64,10 @@ export function AppointmentsList() {
     DateRange | undefined
   >();
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 767px)");
   const itemsPerPage = 6;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
-    minLength: 3,
+    minLength: 2,
     delay: 400,
   });
 
@@ -88,6 +89,10 @@ export function AppointmentsList() {
 
   // If navigated with startDate/endDate query params, initialize date filter.
   useEffect(() => {
+    const initialSearch = searchParams.get("search");
+    if (initialSearch && initialSearch !== searchTerm) {
+      setSearchTerm(initialSearch);
+    }
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
     if (!startDateParam && !endDateParam) return;
@@ -125,6 +130,22 @@ export function AppointmentsList() {
     setPendingDateRange(undefined);
   };
 
+  // Keep URL in sync with search text so deep links / notifications can prefill
+  useEffect(() => {
+    const current = new URLSearchParams(searchParams);
+    if (searchTerm) {
+      current.set("search", searchTerm);
+    } else {
+      current.delete("search");
+    }
+    const nextSearch = current.toString();
+    const prevSearch = searchParams.toString();
+
+    if (nextSearch !== prevSearch) {
+      setSearchParams(current, { replace: true });
+    }
+  }, [searchTerm, setSearchParams, searchParams]);
+
   const statusFilter = activeTab === "all" ? undefined : activeTab;
 
   // Fetch appointments
@@ -155,7 +176,10 @@ export function AppointmentsList() {
         endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
         staffId: user?.role === "staff" ? staffMember?.id : undefined,
       }),
-    enabled: !!store?.id && (user?.role !== "staff" || !!staffMember),
+    enabled:
+      !!store?.id &&
+      (user?.role !== "staff" || !!staffMember) &&
+      (view === "list" || isMobile),
     placeholderData: keepPreviousData,
   });
 
@@ -283,9 +307,11 @@ export function AppointmentsList() {
       </div>
 
       {/* Calendar View - Tablet and up only */}
-      <div className={view === "calendar" ? "hidden md:block" : "hidden"}>
-        <AppointmentsCalendar storeId={store.id} />
-      </div>
+      {!isMobile && view === "calendar" && (
+        <div className="hidden md:block">
+          <AppointmentsCalendar storeId={store.id} />
+        </div>
+      )}
 
       {/* Appointments List with Status Tabs - Always visible on mobile */}
       <Card className={view === "calendar" ? "block md:hidden" : "block"}>

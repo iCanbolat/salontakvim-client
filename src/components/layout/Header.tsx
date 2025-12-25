@@ -4,6 +4,7 @@
  */
 
 import { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Bell, CheckCheck, Loader2, Menu } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ interface HeaderProps {
 export function Header({ onMenuClick }: HeaderProps) {
   const { notifications, unreadCount, markAsRead, markAllAsRead } =
     useNotifications();
+  const navigate = useNavigate();
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const maxVisibleNotifications = 8;
 
@@ -33,12 +35,21 @@ export function Header({ onMenuClick }: HeaderProps) {
     [notifications]
   );
 
-  const handleNotificationClick = async (id: number, isRead: boolean) => {
-    if (isRead) return;
+  const handleNotificationClick = async (
+    id: number,
+    isRead: boolean,
+    url?: string
+  ) => {
     try {
-      await markAsRead(id);
+      if (!isRead) {
+        await markAsRead(id);
+      }
     } catch (error) {
       console.error("Failed to mark notification as read", error);
+    }
+
+    if (url) {
+      navigate(url);
     }
   };
 
@@ -145,7 +156,8 @@ export function Header({ onMenuClick }: HeaderProps) {
                         onClick={() =>
                           handleNotificationClick(
                             notification.id,
-                            notification.isRead
+                            notification.isRead,
+                            notification.metadata?.url as string | undefined
                           )
                         }
                       >
