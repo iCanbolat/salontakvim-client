@@ -17,6 +17,8 @@ import {
   Mail,
   Phone,
   Calendar,
+  MessageSquare,
+  X,
 } from "lucide-react";
 import { usePagination, useDebouncedSearch } from "@/hooks";
 import { storeService, customerService } from "@/services";
@@ -31,7 +33,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CustomerCard } from "@/components/customers/CustomerCard";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CustomerCard, SmsDialog } from "@/components/customers";
 import { PaginationControls } from "@/components/ui/PaginationControls";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +42,9 @@ export function CustomersList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
+  const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
+  const [isSendingSms, setIsSendingSms] = useState(false);
 
   const debouncedSearch = useDebouncedSearch(searchTerm);
 
@@ -83,6 +89,57 @@ export function CustomersList() {
     navigate(`/admin/customers/${customer.id}`);
   };
 
+  const handleSelectCustomer = (customerId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers([...selectedCustomers, customerId]);
+    } else {
+      setSelectedCustomers(selectedCustomers.filter((id) => id !== customerId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedCustomers(paginatedItems.map((c) => c.id));
+    } else {
+      setSelectedCustomers([]);
+    }
+  };
+
+  const handleOpenSmsDialog = () => {
+    setIsSmsDialogOpen(true);
+  };
+
+  const handleCloseSmsDialog = () => {
+    setIsSmsDialogOpen(false);
+  };
+
+  const handleSendSms = async (message: string) => {
+    setIsSendingSms(true);
+    try {
+      // TODO: Implement SMS sending API call
+      console.log("Sending SMS to customers:", selectedCustomers);
+      console.log("Message:", message);
+
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      // Reset state after successful send
+      setSelectedCustomers([]);
+      handleCloseSmsDialog();
+    } catch (error) {
+      console.error("Failed to send SMS:", error);
+    } finally {
+      setIsSendingSms(false);
+    }
+  };
+
+  const isAllSelected =
+    paginatedItems.length > 0 &&
+    selectedCustomers.length === paginatedItems.length;
+  const selectedCustomersData = customers.filter((c) =>
+    selectedCustomers.includes(c.id)
+  );
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -118,9 +175,35 @@ export function CustomersList() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
-        <p className="text-gray-600 mt-1">View and manage your customer base</p>
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Customers</h1>
+          <p className="text-gray-600 mt-1">
+            View and manage your customer base
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          {selectedCustomers.length > 0 && (
+            <>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleOpenSmsDialog}
+                className="gap-2"
+              >
+                <MessageSquare className="h-4 w-4" />
+                Send SMS ({selectedCustomers.length})
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedCustomers([])}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Customers List */}
@@ -131,6 +214,11 @@ export function CustomersList() {
             <CardDescription>
               {customers.length} customer{customers.length !== 1 ? "s" : ""}{" "}
               total
+              {selectedCustomers.length > 0 && (
+                <span className="ml-2 text-blue-600 font-medium">
+                  - {selectedCustomers.length} selected
+                </span>
+              )}
             </CardDescription>
           </div>
           <div className="flex items-center gap-2">
@@ -172,13 +260,18 @@ export function CustomersList() {
               )}
             >
               {view === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
                   {paginatedItems.map((customer) => (
-                    <CustomerCard
-                      key={customer.id}
-                      customer={customer}
-                      onView={handleViewCustomer}
-                    />
+                    <div key={customer.id} className="h-full">
+                      <CustomerCard
+                        customer={customer}
+                        onView={handleViewCustomer}
+                        isSelected={selectedCustomers.includes(customer.id)}
+                        onSelectChange={(checked) =>
+                          handleSelectCustomer(customer.id, checked)
+                        }
+                      />
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -187,6 +280,12 @@ export function CustomersList() {
                     <table className="w-full text-sm text-left">
                       <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-medium">
                         <tr>
+                          <th className="px-4 py-3 w-12">
+                            <Checkbox
+                              checked={isAllSelected}
+                              onCheckedChange={handleSelectAll}
+                            />
+                          </th>
                           <th className="px-4 py-3">Customer</th>
                           <th className="px-4 py-3 hidden md:table-cell">
                             Contact
@@ -199,12 +298,24 @@ export function CustomersList() {
                       </thead>
                       <tbody className="divide-y">
                         {paginatedItems.map((customer) => (
-                          <tr
-                            key={customer.id}
-                            className="hover:bg-gray-50 cursor-pointer"
-                            onClick={() => handleViewCustomer(customer)}
-                          >
+                          <tr key={customer.id} className="hover:bg-gray-50">
                             <td className="px-4 py-4">
+                              <Checkbox
+                                checked={selectedCustomers.includes(
+                                  customer.id
+                                )}
+                                onCheckedChange={(checked) =>
+                                  handleSelectCustomer(
+                                    customer.id,
+                                    checked as boolean
+                                  )
+                                }
+                              />
+                            </td>
+                            <td
+                              className="px-4 py-4 cursor-pointer"
+                              onClick={() => handleViewCustomer(customer)}
+                            >
                               <div className="font-medium text-gray-900">
                                 {customer.firstName} {customer.lastName}
                               </div>
@@ -212,7 +323,10 @@ export function CustomersList() {
                                 #{customer.id}
                               </div>
                             </td>
-                            <td className="px-4 py-4 hidden md:table-cell">
+                            <td
+                              className="px-4 py-4 hidden md:table-cell cursor-pointer"
+                              onClick={() => handleViewCustomer(customer)}
+                            >
                               <div className="flex flex-col gap-1">
                                 <div className="flex items-center text-xs text-gray-600">
                                   <Mail className="h-3 w-3 mr-1.5" />
@@ -226,7 +340,10 @@ export function CustomersList() {
                                 )}
                               </div>
                             </td>
-                            <td className="px-4 py-4 hidden lg:table-cell">
+                            <td
+                              className="px-4 py-4 hidden lg:table-cell cursor-pointer"
+                              onClick={() => handleViewCustomer(customer)}
+                            >
                               <div className="flex flex-col gap-1">
                                 <div className="text-xs text-gray-600">
                                   <span className="font-medium">
@@ -247,9 +364,26 @@ export function CustomersList() {
                               </div>
                             </td>
                             <td className="px-4 py-4 text-right">
-                              <Button variant="ghost" size="sm">
-                                View
-                              </Button>
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedCustomers([customer.id]);
+                                    handleOpenSmsDialog();
+                                  }}
+                                >
+                                  <MessageSquare className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleViewCustomer(customer)}
+                                >
+                                  View
+                                </Button>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -286,6 +420,14 @@ export function CustomersList() {
           )}
         </CardContent>
       </Card>
+
+      <SmsDialog
+        isOpen={isSmsDialogOpen}
+        onClose={handleCloseSmsDialog}
+        selectedCustomers={selectedCustomersData}
+        onSend={handleSendSms}
+        isSending={isSendingSms}
+      />
     </div>
   );
 }

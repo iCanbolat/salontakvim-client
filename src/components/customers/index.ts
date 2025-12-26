@@ -4,3 +4,4 @@
 
 export * from "./CustomerCard";
 export * from "./CustomerProfile";
+export * from "./SmsDialog";

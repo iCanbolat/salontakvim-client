@@ -16,7 +16,6 @@ import {
   Bell,
   Puzzle,
   Clock,
-  UserCog,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
