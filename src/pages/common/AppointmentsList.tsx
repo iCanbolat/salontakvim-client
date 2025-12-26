@@ -15,6 +15,11 @@ import {
   AlertCircle,
   Calendar as CalendarIcon,
   X,
+  LayoutGrid,
+  List,
+  Clock,
+  User,
+  Briefcase,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -33,6 +38,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
+import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "@/components/appointments/AppointmentStatusDialog";
 import { AppointmentsCalendar } from "@/components/appointments/AppointmentsCalendar";
@@ -44,6 +50,7 @@ import type {
   PaginatedAppointmentsResponse,
 } from "@/types";
 import { useNotifications, useAuth } from "@/contexts";
+import { cn } from "@/lib/utils";
 
 export function AppointmentsList() {
   const { user } = useAuth();
@@ -58,13 +65,14 @@ export function AppointmentsList() {
   const [activeTab, setActiveTab] = useState<AppointmentStatus | "all">("all");
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [view, setView] = useState<"list" | "calendar">("list");
+  const [view, setView] = useState<"grid" | "list" | "calendar">("grid");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pendingDateRange, setPendingDateRange] = useState<
     DateRange | undefined
   >();
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
+  // const isXl = useMediaQuery("(min-width: 1280px)");
   const itemsPerPage = 6;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,
@@ -179,7 +187,7 @@ export function AppointmentsList() {
     enabled:
       !!store?.id &&
       (user?.role !== "staff" || !!staffMember) &&
-      (view === "list" || isMobile),
+      (view !== "calendar" || isMobile),
     placeholderData: keepPreviousData,
   });
 
@@ -211,6 +219,13 @@ export function AppointmentsList() {
     setPage(1);
   }, [activeTab, debouncedSearch, dateRange]);
 
+  // Force grid view on screens smaller than xl if currently in list view
+  useEffect(() => {
+    if (isMobile && view === "list") {
+      setView("grid");
+    }
+  }, [isMobile, view]);
+
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
   };
@@ -219,6 +234,111 @@ export function AppointmentsList() {
     setIsCreateDialogOpen(false);
     setEditingAppointment(null);
   };
+
+  const renderListView = () => (
+    <div className="overflow-x-auto">
+      <table className="w-full text-left border-collapse">
+        <thead>
+          <tr className="border-b border-gray-100">
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
+              Date & Time
+            </th>
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
+              Customer
+            </th>
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
+              Service
+            </th>
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
+              Staff
+            </th>
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
+              Status
+            </th>
+            <th className="py-4 px-4 font-semibold text-gray-600 text-xs text-right">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-50">
+          {appointments.map((appointment) => {
+            const guestName =
+              appointment.guestInfo?.firstName &&
+              appointment.guestInfo?.lastName
+                ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
+                : appointment.guestInfo?.firstName ||
+                  appointment.guestInfo?.lastName;
+
+            const customerDisplayName =
+              appointment.customerName || guestName || "Guest Customer";
+            const serviceDisplayName =
+              appointment.serviceName || "Custom Service";
+            const staffDisplayName = appointment.staffName || "Any Staff";
+
+            return (
+              <tr
+                key={appointment.id}
+                className="hover:bg-gray-50/50 transition-colors"
+              >
+                <td className="py-4 px-4">
+                  <div className="flex flex-col">
+                    <span className="font-medium text-gray-900 text-xs">
+                      {format(
+                        new Date(appointment.startDateTime),
+                        "MMM d, yyyy"
+                      )}
+                    </span>
+                    <div className="flex items-center text-xs text-gray-500 mt-1">
+                      <Clock className="h-3 w-3 mr-1" />
+                      {format(
+                        new Date(appointment.startDateTime),
+                        "HH:mm"
+                      )} - {format(new Date(appointment.endDateTime), "HH:mm")}
+                    </div>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex items-center">
+                    <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center mr-3">
+                      <User className="h-4 w-4 text-blue-600" />
+                    </div>
+                    <span className="text-xs text-gray-700">
+                      {customerDisplayName}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <div className="flex items-center">
+                    <Briefcase className="h-4 w-4 text-gray-400 mr-2" />
+                    <span className="text-xs text-gray-700">
+                      {serviceDisplayName}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-4 px-4">
+                  <span className="text-xs text-gray-700">
+                    {staffDisplayName}
+                  </span>
+                </td>
+                <td className="py-4 px-4">
+                  <AppointmentStatusBadge status={appointment.status} />
+                </td>
+                <td className="py-4 px-4 text-right">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(appointment)}
+                  >
+                    <span className="text-xs">View Details</span>
+                  </Button>
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
 
   const defaultStatusCounts: AppointmentStatusCounts = {
     all: 0,
@@ -291,11 +411,11 @@ export function AppointmentsList() {
         <div className="flex gap-2 mt-4 md:mt-0">
           <Button
             variant="outline"
-            onClick={() => setView(view === "list" ? "calendar" : "list")}
+            onClick={() => setView(view === "calendar" ? "grid" : "calendar")}
             className="hidden md:flex"
           >
             <CalendarIcon className="h-4 w-4 mr-2" />
-            {view === "list" ? "Calendar View" : "List View"}
+            {view === "calendar" ? "List View" : "Calendar View"}
           </Button>
           {user?.role === "admin" && (
             <Button onClick={() => setIsCreateDialogOpen(true)}>
@@ -324,64 +444,93 @@ export function AppointmentsList() {
               className="w-full"
             />
           </div>
-          <div className="flex w-full md:w-auto">
-            <Popover
-              open={isDatePopoverOpen}
-              onOpenChange={handleDatePopoverChange}
+
+          <div className="hidden lg:flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("grid")}
+              className={cn(
+                "flex-1 md:flex-none h-8 px-3",
+                view === "grid" && "bg-white shadow-sm"
+              )}
             >
-              <PopoverTrigger asChild>
-                <Button
-                  variant={dateRange?.from ? "secondary" : "outline"}
-                  size="sm"
-                  className={`justify-start gap-2 text-left font-normal relative ${
-                    dateRange?.from
-                      ? "w-full md:w-[calc(15rem-2.25rem)] border"
-                      : "w-full md:w-60"
-                  }`}
-                >
-                  <CalendarIcon className="h-4 w-4 shrink-0" />
-                  {dateRange?.from ? (
-                    dateRange.to ? (
-                      <>
-                        {format(dateRange.from, "LLL dd")} -{" "}
-                        {format(dateRange.to, "LLL dd")}
-                      </>
-                    ) : (
-                      format(dateRange.from, "LLL dd")
-                    )
-                  ) : (
-                    <span>Pick a date range</span>
-                  )}
-                  {dateRange?.from && (
-                    <Button
-                      variant={dateRange?.from ? "secondary" : "ghost"}
-                      onClick={handleClearDateRange}
-                      className="absolute right-1 top-1 border-none border-b w-6 h-6 "
-                    >
-                      <X className="h-2 w-2" />
-                    </Button>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="range"
-                  defaultMonth={(pendingDateRange ?? dateRange)?.from}
-                  selected={pendingDateRange ?? dateRange}
-                  onSelect={setPendingDateRange}
-                />
-                <div className="flex items-center gap-2 border-t p-3">
+              <LayoutGrid className="h-4 w-4 mr-2" />
+              Grid
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setView("list")}
+              className={cn(
+                "flex-1 md:flex-none h-8 px-3",
+                view === "list" && "bg-white shadow-sm"
+              )}
+            >
+              <List className="h-4 w-4 mr-2" />
+              List
+            </Button>
+          </div>
+          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            <div className="flex w-full md:w-auto">
+              <Popover
+                open={isDatePopoverOpen}
+                onOpenChange={handleDatePopoverChange}
+              >
+                <PopoverTrigger asChild>
                   <Button
+                    variant={dateRange?.from ? "secondary" : "outline"}
                     size="sm"
-                    className="w-full"
-                    onClick={handleApplyDateRange}
-                    disabled={!pendingDateRange?.from && !dateRange?.from}
+                    className={`justify-start gap-2 text-left font-normal relative ${
+                      dateRange?.from
+                        ? "w-full md:w-[calc(15rem-2.25rem)] border"
+                        : "w-full md:w-60"
+                    }`}
                   >
-                    Apply
+                    <CalendarIcon className="h-4 w-4 shrink-0" />
+                    {dateRange?.from ? (
+                      dateRange.to ? (
+                        <>
+                          {format(dateRange.from, "LLL dd")} -{" "}
+                          {format(dateRange.to, "LLL dd")}
+                        </>
+                      ) : (
+                        format(dateRange.from, "LLL dd")
+                      )
+                    ) : (
+                      <span>Pick a date range</span>
+                    )}
+                    {dateRange?.from && (
+                      <Button
+                        variant={dateRange?.from ? "secondary" : "ghost"}
+                        onClick={handleClearDateRange}
+                        className="absolute right-1 top-1 border-none border-b w-6 h-6 "
+                      >
+                        <X className="h-2 w-2" />
+                      </Button>
+                    )}
                   </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <Calendar
+                    mode="range"
+                    defaultMonth={(pendingDateRange ?? dateRange)?.from}
+                    selected={pendingDateRange ?? dateRange}
+                    onSelect={setPendingDateRange}
+                  />
+                  <div className="flex items-center gap-2 border-t p-3">
+                    <Button
+                      size="sm"
+                      className="w-full"
+                      onClick={handleApplyDateRange}
+                      disabled={!pendingDateRange?.from && !dateRange?.from}
+                    >
+                      Apply
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -422,17 +571,21 @@ export function AppointmentsList() {
                     totalPages > 1 ? "min-h-[850px]" : ""
                   }`}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    {appointments.map((appointment) => (
-                      <AppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
-                        storeId={store.id}
-                        onEdit={handleEdit}
-                        onChangeStatus={setStatusUpdateAppointment}
-                      />
-                    ))}
-                  </div>
+                  {view === "list" ? (
+                    renderListView()
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {appointments.map((appointment) => (
+                        <AppointmentCard
+                          key={appointment.id}
+                          appointment={appointment}
+                          storeId={store.id}
+                          onEdit={handleEdit}
+                          onChangeStatus={setStatusUpdateAppointment}
+                        />
+                      ))}
+                    </div>
+                  )}
                   <div className="mt-auto">
                     <PaginationControls
                       currentPage={page}

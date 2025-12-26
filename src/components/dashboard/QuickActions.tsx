@@ -3,27 +3,40 @@
  * Provides quick access buttons for common actions
  */
 
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, UserPlus, Settings, BarChart3 } from "lucide-react";
+import { storeService } from "@/services";
+import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
+import { InviteStaffDialog } from "@/components/staff/InviteStaffDialog";
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
+  const [isInviteStaffDialogOpen, setIsInviteStaffDialogOpen] = useState(false);
+
+  // Fetch user's store
+  const { data: store } = useQuery({
+    queryKey: ["my-store"],
+    queryFn: () => storeService.getMyStore(),
+  });
 
   const actions = [
     {
       label: "New Appointment",
       description: "Schedule a new appointment",
       icon: Calendar,
-      onClick: () => navigate("/admin/appointments"),
+      onClick: () => setIsAppointmentDialogOpen(true),
       color: "bg-blue-50 text-blue-600 hover:bg-blue-100",
     },
     {
       label: "Invite Staff",
       description: "Add a new team member",
       icon: UserPlus,
-      onClick: () => navigate("/admin/staff"),
+      onClick: () => setIsInviteStaffDialogOpen(true),
       color: "bg-purple-50 text-purple-600 hover:bg-purple-100",
     },
     {
@@ -74,6 +87,22 @@ export function QuickActions() {
           })}
         </div>
       </CardContent>
+
+      {/* Dialogs */}
+      {store && (
+        <>
+          <AppointmentFormDialog
+            storeId={store.id}
+            open={isAppointmentDialogOpen}
+            onClose={() => setIsAppointmentDialogOpen(false)}
+          />
+          <InviteStaffDialog
+            storeId={store.id}
+            open={isInviteStaffDialogOpen}
+            onClose={() => setIsInviteStaffDialogOpen(false)}
+          />
+        </>
+      )}
     </Card>
   );
 }

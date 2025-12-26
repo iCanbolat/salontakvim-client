@@ -5,7 +5,18 @@
 
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, CheckCheck, Loader2, Menu } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  Loader2,
+  Menu,
+  Calendar,
+  XCircle,
+  RefreshCw,
+  Coffee,
+  UserPlus,
+  CheckCircle2,
+} from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,6 +45,59 @@ export function Header({ onMenuClick }: HeaderProps) {
     () => notifications.slice(0, maxVisibleNotifications),
     [notifications]
   );
+
+  const getNotificationConfig = (type: string) => {
+    switch (type) {
+      case "appointment_created":
+        return {
+          icon: Calendar,
+          color: "text-blue-600",
+          bgColor: "bg-blue-50",
+        };
+      case "appointment_cancelled":
+        return {
+          icon: XCircle,
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+        };
+      case "appointment_status_changed":
+        return {
+          icon: RefreshCw,
+          color: "text-amber-600",
+          bgColor: "bg-amber-50",
+        };
+      case "staff_time_off":
+        return {
+          icon: Coffee,
+          color: "text-purple-600",
+          bgColor: "bg-purple-50",
+        };
+      case "staff_invitation":
+        return {
+          icon: UserPlus,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+        };
+      case "staff_break_approved":
+        return {
+          icon: CheckCircle2,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+        };
+      case "staff_break_declined":
+        return {
+          icon: XCircle,
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+        };
+      default:
+        return {
+          icon: Bell,
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
+        };
+    }
+  };
 
   const handleNotificationClick = async (
     id: number,
@@ -146,46 +210,59 @@ export function Header({ onMenuClick }: HeaderProps) {
               ) : (
                 <ScrollArea className="max-h-[400px]">
                   <div>
-                    {visibleNotifications.map((notification) => (
-                      <button
-                        key={notification.id}
-                        className={cn(
-                          "flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-gray-50 border-b last:border-b-0",
-                          !notification.isRead && "bg-blue-50/50"
-                        )}
-                        onClick={() =>
-                          handleNotificationClick(
-                            notification.id,
-                            notification.isRead,
-                            notification.metadata?.url as string | undefined
-                          )
-                        }
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2 mb-1">
-                              <p className="text-sm font-semibold text-gray-900 line-clamp-1">
-                                {notification.title}
-                              </p>
-                              {!notification.isRead && (
-                                <span className="shrink-0 h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-600 line-clamp-2">
-                              {notification.message}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-xs text-gray-400">
-                          {formatDistanceToNow(
-                            new Date(notification.createdAt),
-                            {
-                              addSuffix: true,
-                            }
+                    {visibleNotifications.map((notification) => {
+                      const config = getNotificationConfig(notification.type);
+                      const Icon = config.icon;
+
+                      return (
+                        <button
+                          key={notification.id}
+                          className={cn(
+                            "flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-gray-50 border-b last:border-b-0",
+                            !notification.isRead && "bg-blue-50/50"
                           )}
-                        </div>
-                      </button>
-                    ))}
+                          onClick={() =>
+                            handleNotificationClick(
+                              notification.id,
+                              notification.isRead,
+                              notification.metadata?.url as string | undefined
+                            )
+                          }
+                        >
+                          <div className="flex items-start gap-3">
+                            <div
+                              className={cn(
+                                "shrink-0 p-2 rounded-full mt-0.5",
+                                config.bgColor
+                              )}
+                            >
+                              <Icon className={cn("h-4 w-4", config.color)} />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-start justify-between gap-2 mb-1">
+                                <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                                  {notification.title}
+                                </p>
+                                {!notification.isRead && (
+                                  <span className="shrink-0 h-2 w-2 rounded-full bg-blue-500 mt-1.5" />
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600 line-clamp-2">
+                                {notification.message}
+                              </p>
+                              <div className="text-[10px] text-gray-400 mt-1">
+                                {formatDistanceToNow(
+                                  new Date(notification.createdAt),
+                                  {
+                                    addSuffix: true,
+                                  }
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </div>
                 </ScrollArea>
               )}

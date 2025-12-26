@@ -119,6 +119,7 @@ export function AppointmentFormDialog({
     formState: { errors, isDirty },
   } = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
+    mode: "onBlur",
     defaultValues: {
       serviceId: 0,
       staffId: 0,
@@ -346,7 +347,9 @@ export function AppointmentFormDialog({
                 Service <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={watchServiceId?.toString()}
+                value={
+                  watchServiceId > 0 ? watchServiceId.toString() : undefined
+                }
                 onValueChange={(value) =>
                   setValue("serviceId", parseInt(value), { shouldDirty: true })
                 }
@@ -407,7 +410,7 @@ export function AppointmentFormDialog({
                 Staff Member <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={watchStaffId?.toString()}
+                value={watchStaffId > 0 ? watchStaffId.toString() : undefined}
                 onValueChange={(value) =>
                   setValue("staffId", parseInt(value), { shouldDirty: true })
                 }

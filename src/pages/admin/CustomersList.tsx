@@ -6,8 +6,19 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
-import { Search, Loader2, AlertCircle, Users } from "lucide-react";
-import { usePagination } from "@/hooks";
+import { format } from "date-fns";
+import {
+  Search,
+  Loader2,
+  AlertCircle,
+  Users,
+  LayoutGrid,
+  List,
+  Mail,
+  Phone,
+  Calendar,
+} from "lucide-react";
+import { usePagination, useDebouncedSearch } from "@/hooks";
 import { storeService, customerService } from "@/services";
 import type { CustomerWithStats } from "@/types";
 import {
@@ -18,13 +29,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CustomerCard } from "@/components/customers/CustomerCard";
 import { PaginationControls } from "@/components/ui/PaginationControls";
+import { cn } from "@/lib/utils";
 
 export function CustomersList() {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [view, setView] = useState<"grid" | "list">("grid");
+
+  const debouncedSearch = useDebouncedSearch(searchTerm);
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -38,10 +54,10 @@ export function CustomersList() {
     isLoading: customersLoading,
     error,
   } = useQuery({
-    queryKey: ["customers", store?.id, searchQuery],
+    queryKey: ["customers", store?.id, debouncedSearch],
     queryFn: () =>
       customerService.getCustomers(store!.id, {
-        search: searchQuery || undefined,
+        search: debouncedSearch || undefined,
       }),
     enabled: !!store?.id,
   });
@@ -107,54 +123,142 @@ export function CustomersList() {
         <p className="text-gray-600 mt-1">View and manage your customer base</p>
       </div>
 
-      {/* Search & Filters */}
+      {/* Customers List */}
       <Card>
-        <CardHeader>
-          <CardTitle>Search Customers</CardTitle>
-          <CardDescription>
-            Search by name, email, or phone number
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
+        <CardHeader className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <CardTitle>All Customers</CardTitle>
+            <CardDescription>
+              {customers.length} customer{customers.length !== 1 ? "s" : ""}{" "}
+              total
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 placeholder="Search customers..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10"
               />
             </div>
+            <div className="flex items-center border rounded-md p-1 bg-gray-50">
+              <Button
+                variant={view === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setView("grid")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={view === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setView("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Customers List */}
-      <Card>
-        <CardHeader>
-          <CardTitle>All Customers</CardTitle>
-          <CardDescription>
-            {customers.length} customer{customers.length !== 1 ? "s" : ""} total
-          </CardDescription>
         </CardHeader>
         <CardContent>
           {customers.length > 0 ? (
             <div
-              className={`flex flex-col ${
-                paginatedItems.length < 7 ? "" : "min-h-[600px]"
-              }`}
+              className={cn(
+                "flex flex-col",
+                paginatedItems.length >= 7 && "min-h-[600px]"
+              )}
             >
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                {paginatedItems.map((customer) => (
-                  <CustomerCard
-                    key={customer.id}
-                    customer={customer}
-                    onView={handleViewCustomer}
-                  />
-                ))}
-              </div>
-              <div className="mt-auto">
+              {view === "grid" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {paginatedItems.map((customer) => (
+                    <CustomerCard
+                      key={customer.id}
+                      customer={customer}
+                      onView={handleViewCustomer}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="border rounded-md overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                      <thead className="bg-gray-50 text-gray-500 uppercase text-xs font-medium">
+                        <tr>
+                          <th className="px-4 py-3">Customer</th>
+                          <th className="px-4 py-3 hidden md:table-cell">
+                            Contact
+                          </th>
+                          <th className="px-4 py-3 hidden lg:table-cell">
+                            Stats
+                          </th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y">
+                        {paginatedItems.map((customer) => (
+                          <tr
+                            key={customer.id}
+                            className="hover:bg-gray-50 cursor-pointer"
+                            onClick={() => handleViewCustomer(customer)}
+                          >
+                            <td className="px-4 py-4">
+                              <div className="font-medium text-gray-900">
+                                {customer.firstName} {customer.lastName}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                #{customer.id}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 hidden md:table-cell">
+                              <div className="flex flex-col gap-1">
+                                <div className="flex items-center text-xs text-gray-600">
+                                  <Mail className="h-3 w-3 mr-1.5" />
+                                  {customer.email}
+                                </div>
+                                {customer.phone && (
+                                  <div className="flex items-center text-xs text-gray-600">
+                                    <Phone className="h-3 w-3 mr-1.5" />
+                                    {customer.phone}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 hidden lg:table-cell">
+                              <div className="flex flex-col gap-1">
+                                <div className="text-xs text-gray-600">
+                                  <span className="font-medium">
+                                    {customer.totalAppointments}
+                                  </span>{" "}
+                                  appointments
+                                </div>
+                                {customer.lastAppointmentDate && (
+                                  <div className="flex items-center text-[10px] text-gray-400">
+                                    <Calendar className="h-3 w-3 mr-1" />
+                                    Last:{" "}
+                                    {format(
+                                      new Date(customer.lastAppointmentDate),
+                                      "MMM d, yyyy"
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                            <td className="px-4 py-4 text-right">
+                              <Button variant="ghost" size="sm">
+                                View
+                              </Button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+              <div className="mt-auto pt-6">
                 <PaginationControls
                   currentPage={currentPage}
                   totalPages={totalPages}
@@ -171,10 +275,10 @@ export function CustomersList() {
             <div className="text-center py-12">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
-                {searchQuery ? "No customers found" : "No customers yet"}
+                {searchTerm ? "No customers found" : "No customers yet"}
               </h3>
               <p className="text-gray-600">
-                {searchQuery
+                {searchTerm
                   ? "Try adjusting your search query"
                   : "Customers will appear here when they book appointments"}
               </p>
