@@ -17,9 +17,6 @@ import {
   X,
   LayoutGrid,
   List,
-  Clock,
-  User,
-  Briefcase,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -38,11 +35,11 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
-import { AppointmentStatusBadge } from "@/components/appointments/AppointmentStatusBadge";
 import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "@/components/appointments/AppointmentStatusDialog";
 import { AppointmentsCalendar } from "@/components/appointments/AppointmentsCalendar";
 import { PaginationControls } from "@/components/ui/PaginationControls";
+import { AppointmentsListTable } from "./AppointmentsListTable";
 import type {
   Appointment,
   AppointmentStatus,
@@ -235,111 +232,6 @@ export function AppointmentsList() {
     setEditingAppointment(null);
   };
 
-  const renderListView = () => (
-    <div className="overflow-x-auto">
-      <table className="w-full text-left border-collapse">
-        <thead>
-          <tr className="border-b border-gray-100">
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
-              Date & Time
-            </th>
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
-              Customer
-            </th>
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
-              Service
-            </th>
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
-              Staff
-            </th>
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs">
-              Status
-            </th>
-            <th className="py-4 px-4 font-semibold text-gray-600 text-xs text-right">
-              Actions
-            </th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-gray-50">
-          {appointments.map((appointment) => {
-            const guestName =
-              appointment.guestInfo?.firstName &&
-              appointment.guestInfo?.lastName
-                ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-                : appointment.guestInfo?.firstName ||
-                  appointment.guestInfo?.lastName;
-
-            const customerDisplayName =
-              appointment.customerName || guestName || "Guest Customer";
-            const serviceDisplayName =
-              appointment.serviceName || "Custom Service";
-            const staffDisplayName = appointment.staffName || "Any Staff";
-
-            return (
-              <tr
-                key={appointment.id}
-                className="hover:bg-gray-50/50 transition-colors"
-              >
-                <td className="py-4 px-4">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-gray-900 text-xs">
-                      {format(
-                        new Date(appointment.startDateTime),
-                        "MMM d, yyyy"
-                      )}
-                    </span>
-                    <div className="flex items-center text-xs text-gray-500 mt-1">
-                      <Clock className="h-3 w-3 mr-1" />
-                      {format(
-                        new Date(appointment.startDateTime),
-                        "HH:mm"
-                      )} - {format(new Date(appointment.endDateTime), "HH:mm")}
-                    </div>
-                  </div>
-                </td>
-                <td className="py-4 px-4">
-                  <div className="flex items-center">
-                    <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center mr-3">
-                      <User className="h-4 w-4 text-blue-600" />
-                    </div>
-                    <span className="text-xs text-gray-700">
-                      {customerDisplayName}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-4">
-                  <div className="flex items-center">
-                    <Briefcase className="h-4 w-4 text-gray-400 mr-2" />
-                    <span className="text-xs text-gray-700">
-                      {serviceDisplayName}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-4 px-4">
-                  <span className="text-xs text-gray-700">
-                    {staffDisplayName}
-                  </span>
-                </td>
-                <td className="py-4 px-4">
-                  <AppointmentStatusBadge status={appointment.status} />
-                </td>
-                <td className="py-4 px-4 text-right">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleEdit(appointment)}
-                  >
-                    <span className="text-xs">View Details</span>
-                  </Button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
-  );
-
   const defaultStatusCounts: AppointmentStatusCounts = {
     all: 0,
     pending: 0,
@@ -434,7 +326,12 @@ export function AppointmentsList() {
       )}
 
       {/* Appointments List with Status Tabs - Always visible on mobile */}
-      <Card className={view === "calendar" ? "block md:hidden" : "block"}>
+      <Card
+        className={cn(
+          view === "calendar" ? "block md:hidden" : "block",
+          view === "list" && "h-full"
+        )}
+      >
         <CardHeader className="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
           <div className="w-full md:w-64">
             <SearchInput
@@ -445,32 +342,6 @@ export function AppointmentsList() {
             />
           </div>
 
-          <div className="hidden lg:flex bg-gray-100 p-1 rounded-lg w-full md:w-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView("grid")}
-              className={cn(
-                "flex-1 md:flex-none h-8 px-3",
-                view === "grid" && "bg-white shadow-sm"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4 mr-2" />
-              Grid
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setView("list")}
-              className={cn(
-                "flex-1 md:flex-none h-8 px-3",
-                view === "list" && "bg-white shadow-sm"
-              )}
-            >
-              <List className="h-4 w-4 mr-2" />
-              List
-            </Button>
-          </div>
           <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
             <div className="flex w-full md:w-auto">
               <Popover
@@ -480,7 +351,7 @@ export function AppointmentsList() {
                 <PopoverTrigger asChild>
                   <Button
                     variant={dateRange?.from ? "secondary" : "outline"}
-                    size="sm"
+                    size="lg"
                     className={`justify-start gap-2 text-left font-normal relative ${
                       dateRange?.from
                         ? "w-full md:w-[calc(15rem-2.25rem)] border"
@@ -504,9 +375,9 @@ export function AppointmentsList() {
                       <Button
                         variant={dateRange?.from ? "secondary" : "ghost"}
                         onClick={handleClearDateRange}
-                        className="absolute right-1 top-1 border-none border-b w-6 h-6 "
+                        className="absolute right-1 top-1 border-none border-b w-7 h-7 hover:bg-primary/50 rounded-4xl focus:ring-0"
                       >
-                        <X className="h-2 w-2" />
+                        <X />
                       </Button>
                     )}
                   </Button>
@@ -531,12 +402,31 @@ export function AppointmentsList() {
                 </PopoverContent>
               </Popover>
             </div>
+            <div className="flex items-center border rounded-md p-1  bg-gray-50">
+              <Button
+                variant={view === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setView("grid")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={view === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8"
+                onClick={() => setView("list")}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className={cn(view === "list" && "h-full")}>
           <Tabs
             value={activeTab}
             onValueChange={(v) => setActiveTab(v as AppointmentStatus | "all")}
+            className={cn(view === "list" && "h-full")}
           >
             <div className="overflow-x-auto -mx-2 px-2 mb-4">
               <TabsList className="inline-flex w-auto min-w-full">
@@ -564,15 +454,23 @@ export function AppointmentsList() {
               </TabsList>
             </div>
 
-            <TabsContent value={activeTab}>
+            <TabsContent
+              value={activeTab}
+              className={cn(view === "list" && "h-full")}
+            >
               {appointments.length > 0 ? (
                 <div
-                  className={`flex flex-col ${
-                    totalPages > 1 ? "min-h-[850px]" : ""
-                  }`}
+                  className={cn(
+                    "flex flex-col",
+                    view === "grid" && totalPages > 1 && "min-h-[850px]",
+                    view === "list" && "h-full"
+                  )}
                 >
                   {view === "list" ? (
-                    renderListView()
+                    <AppointmentsListTable
+                      appointments={appointments}
+                      onEdit={handleEdit}
+                    />
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
                       {appointments.map((appointment) => (

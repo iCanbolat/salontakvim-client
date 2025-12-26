@@ -9,7 +9,7 @@ export * from "./CategoriesList";
 export * from "./StaffList";
 export * from "./StaffDetails";
 export * from "./LocationsList";
-export { AppointmentsList } from "../common/AppointmentsList";
+export { AppointmentsList } from "../common/appointments-page/AppointmentsList";
 export * from "./CustomerDetails";
 export * from "./CustomersList";
 export { default as WidgetSettings } from "./WidgetSettings";

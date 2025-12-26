@@ -113,6 +113,10 @@ export function CustomersList() {
     setIsSmsDialogOpen(false);
   };
 
+  const handleSelectAllCustomers = () => {
+    setSelectedCustomers(customers.map((c) => c.id));
+  };
+
   const handleSendSms = async (message: string) => {
     setIsSendingSms(true);
     try {
@@ -136,6 +140,8 @@ export function CustomersList() {
   const isAllSelected =
     paginatedItems.length > 0 &&
     selectedCustomers.length === paginatedItems.length;
+  const isAllCustomersSelected =
+    customers.length > 0 && selectedCustomers.length === customers.length;
   const selectedCustomersData = customers.filter((c) =>
     selectedCustomers.includes(c.id)
   );
@@ -182,7 +188,17 @@ export function CustomersList() {
             View and manage your customer base
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap justify-end">
+          {!isAllCustomersSelected && customers.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSelectAllCustomers}
+              className="gap-2"
+            >
+              Select all {customers.length} customers
+            </Button>
+          )}
           {selectedCustomers.length > 0 && (
             <>
               <Button
