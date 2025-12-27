@@ -402,7 +402,7 @@ export function AppointmentsList() {
                 </PopoverContent>
               </Popover>
             </div>
-            <div className="flex items-center border rounded-md p-1  bg-gray-50">
+            <div className="hidden md:flex items-center border rounded-md p-1 bg-gray-50">
               <Button
                 variant={view === "grid" ? "secondary" : "ghost"}
                 size="icon"

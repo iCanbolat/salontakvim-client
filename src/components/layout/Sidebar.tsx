@@ -210,42 +210,6 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
           ))}
         </nav>
       </ScrollArea>
-
-      {/* User Info */}
-      <Separator />
-      <div
-        className={cn("p-4 transition-all duration-300", isCollapsed && "px-2")}
-      >
-        <div
-          className={cn(
-            "flex items-center gap-3 overflow-hidden",
-            isCollapsed && "justify-center"
-          )}
-        >
-          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center shrink-0">
-            {user?.avatar ? (
-              <img
-                src={user.avatar}
-                alt={user.firstName || "User"}
-                className="w-full h-full rounded-full object-cover"
-              />
-            ) : (
-              <span className="text-gray-600 font-medium text-sm">
-                {user?.firstName?.[0]}
-                {user?.lastName?.[0]}
-              </span>
-            )}
-          </div>
-          {!isCollapsed && (
-            <div className="flex-1 min-w-0 transition-opacity duration-300 opacity-100">
-              <p className="text-sm font-medium text-gray-900 truncate">
-                {user?.firstName} {user?.lastName}
-              </p>
-              <p className="text-xs text-gray-500 truncate">{user?.email}</p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
