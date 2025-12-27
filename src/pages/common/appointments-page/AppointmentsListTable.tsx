@@ -1,5 +1,4 @@
 import { format } from "date-fns";
-import { User, Briefcase } from "lucide-react";
 import {
   Table,
   TableBody,

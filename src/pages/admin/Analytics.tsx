@@ -42,7 +42,7 @@ import {
   Users,
   AlertCircle,
   Loader2,
-  Download,
+  FileSpreadsheet,
 } from "lucide-react";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
@@ -52,6 +52,7 @@ export default function Analytics() {
     DateRangePreset.LAST_30_DAYS
   );
   const [activeTab, setActiveTab] = useState("appointments");
+  const [isExporting, setIsExporting] = useState(false);
 
   // Get current store
   const { data: store } = useQuery({
@@ -87,9 +88,32 @@ export default function Analytics() {
     enabled: !!store?.id,
   });
 
-  const handleExport = () => {
-    // TODO: Implement export functionality
-    alert("Export functionality coming soon!");
+  const handleExport = async () => {
+    if (!store?.id) return;
+
+    setIsExporting(true);
+    try {
+      const blob = await analyticsService.exportToExcel(
+        store.id,
+        analyticsQuery
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `analytics-report-${
+        new Date().toISOString().split("T")[0]
+      }.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Failed to export analytics:", error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   if (appointmentLoading || revenueLoading) {
@@ -191,9 +215,17 @@ export default function Analytics() {
               </SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" />
-            Export
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={isExporting}
+          >
+            {isExporting ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <FileSpreadsheet className="mr-2 h-4 w-4" />
+            )}
+            {isExporting ? "Exporting..." : "Export Excel"}
           </Button>
         </div>
       </div>

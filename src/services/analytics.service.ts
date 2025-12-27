@@ -52,6 +52,20 @@ export class AnalyticsService {
     );
     return response.data;
   }
+
+  /**
+   * Export analytics to Excel
+   */
+  async exportToExcel(storeId: number, query?: AnalyticsQuery): Promise<Blob> {
+    const response = await axiosInstance.get(
+      `/stores/${storeId}/analytics/export`,
+      {
+        params: query,
+        responseType: "blob",
+      }
+    );
+    return response.data;
+  }
 }
 
 export const analyticsService = new AnalyticsService();
