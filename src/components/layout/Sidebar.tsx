@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 

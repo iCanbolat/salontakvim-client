@@ -276,18 +276,17 @@ export function CustomersList() {
               )}
             >
               {view === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-stretch">
+                <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch">
                   {paginatedItems.map((customer) => (
-                    <div key={customer.id} className="h-full">
-                      <CustomerCard
-                        customer={customer}
-                        onView={handleViewCustomer}
-                        isSelected={selectedCustomers.includes(customer.id)}
-                        onSelectChange={(checked) =>
-                          handleSelectCustomer(customer.id, checked)
-                        }
-                      />
-                    </div>
+                    <CustomerCard
+                      key={customer.id}
+                      customer={customer}
+                      onView={handleViewCustomer}
+                      isSelected={selectedCustomers.includes(customer.id)}
+                      onSelectChange={(checked) =>
+                        handleSelectCustomer(customer.id, checked)
+                      }
+                    />
                   ))}
                 </div>
               ) : (

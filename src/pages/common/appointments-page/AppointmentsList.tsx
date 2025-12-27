@@ -70,7 +70,7 @@ export function AppointmentsList() {
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   // const isXl = useMediaQuery("(min-width: 1280px)");
-  const itemsPerPage = 6;
+  const itemsPerPage = 8;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,
     delay: 400,
@@ -472,7 +472,7 @@ export function AppointmentsList() {
                       onEdit={handleEdit}
                     />
                   ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch">
                       {appointments.map((appointment) => (
                         <AppointmentCard
                           key={appointment.id}
