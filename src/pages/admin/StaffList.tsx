@@ -352,7 +352,7 @@ export function StaffList() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row text-center sm:text-start items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Staff</h1>
           <p className="text-gray-600 mt-1">
@@ -371,7 +371,7 @@ export function StaffList() {
         onValueChange={handleTabChange}
         className="space-y-4"
       >
-        <TabsList>
+        <TabsList className="m-auto sm:m-0">
           <TabsTrigger value="staff">
             Staff Members ({staffMembers?.length || 0})
           </TabsTrigger>

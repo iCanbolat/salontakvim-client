@@ -120,6 +120,58 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
     { id: 3, name: "Beard Trim", duration: 15, price: "75" },
   ];
 
+  const renderServiceList = () => (
+    <div className="space-y-2">
+      {mockServices.map((service, index) => {
+        const isSelected = index === 0;
+
+        return (
+          <button
+            key={service.id}
+            className="w-full text-left p-3 rounded-lg border transition-all"
+            style={{
+              borderColor: isSelected ? primaryColor : `${textColor}20`,
+              backgroundColor: isSelected ? `${primaryColor}08` : "transparent",
+              borderRadius: `${cardRadius}px`,
+            }}
+          >
+            <div className="space-y-2">
+              <div className="flex items-start justify-between gap-3">
+                <h3
+                  className="font-medium text-sm leading-tight flex-1"
+                  style={{ color: headingColor }}
+                >
+                  {service.name}
+                </h3>
+                <div
+                  className="font-semibold text-sm whitespace-nowrap"
+                  style={{ color: primaryColor }}
+                >
+                  ₺{service.price}
+                </div>
+              </div>
+
+              <p
+                className="text-xs line-clamp-2"
+                style={{ color: `${textColor}70` }}
+              >
+                Professional {service.name.toLowerCase()} service
+              </p>
+
+              <div
+                className="flex items-center gap-1.5 text-xs"
+                style={{ color: `${textColor}60` }}
+              >
+                <Clock className="h-3.5 w-3.5" />
+                <span>{service.duration} min</span>
+              </div>
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div
       className="border shadow-lg overflow-hidden"
@@ -128,14 +180,12 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
         borderRadius: `${containerRadius}px`,
       }}
     >
-      {/* Widget Container - Desktop layout with sidebar */}
-      <div className="flex h-[500px]">
-        {/* Sidebar */}
+      {/* Desktop layout with sidebar */}
+      <div className="hidden md:flex h-[520px]">
         <aside
           className="w-64 shrink-0 border-r overflow-y-auto p-6"
           style={{ backgroundColor: sidebarBackgroundColor }}
         >
-          {/* Header */}
           <div className="space-y-2 mb-6">
             <div className="flex items-center justify-between">
               <h2
@@ -150,28 +200,6 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
             </p>
           </div>
 
-          {/* Progress Bar - Shows on mobile/tablet, hidden on desktop */}
-          <div className="mb-6 md:hidden">
-            <div
-              className="h-1.5 rounded-full overflow-hidden"
-              style={{ backgroundColor: `${primaryColor}20` }}
-            >
-              <div
-                className="h-full transition-all duration-300"
-                style={{
-                  backgroundColor: primaryColor,
-                  width: `${
-                    ((currentStepIndex + 1) / visibleSteps.length) * 100
-                  }%`,
-                }}
-              />
-            </div>
-            <p className="text-xs mt-1.5" style={{ color: `${textColor}80` }}>
-              Step {currentStepIndex + 1} of {visibleSteps.length}
-            </p>
-          </div>
-
-          {/* Step List */}
           <nav className="space-y-2">
             {visibleSteps.map((step, index) => {
               const isCurrent = step === currentStep;
@@ -194,7 +222,6 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
                     borderRadius: `${cardRadius}px`,
                   }}
                 >
-                  {/* Step indicator */}
                   <div
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full font-medium text-sm"
                     style={{
@@ -215,7 +242,6 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
                     )}
                   </div>
 
-                  {/* Step label */}
                   <span
                     className="text-sm font-medium"
                     style={{
@@ -234,14 +260,11 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
           </nav>
         </aside>
 
-        {/* Main Content */}
         <main
           className="flex-1 min-w-0 flex flex-col relative"
           style={{ backgroundColor: contentBackgroundColor }}
         >
-          {/* Scrollable Content */}
           <div className="flex-1 overflow-y-auto p-6 mb-16">
-            {/* Page Header */}
             <div className="mb-6">
               <h2
                 className="text-xl font-semibold mb-1"
@@ -254,64 +277,9 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
               </p>
             </div>
 
-            {/* Service List */}
-            <div className="space-y-2">
-              {mockServices.map((service, index) => {
-                const isSelected = index === 0;
-
-                return (
-                  <button
-                    key={service.id}
-                    className="w-full text-left p-3 rounded-lg border transition-all"
-                    style={{
-                      borderColor: isSelected ? primaryColor : `${textColor}20`,
-                      backgroundColor: isSelected
-                        ? `${primaryColor}08`
-                        : "transparent",
-                      borderRadius: `${cardRadius}px`,
-                    }}
-                  >
-                    <div className="space-y-2">
-                      {/* Service Name & Price */}
-                      <div className="flex items-start justify-between gap-3">
-                        <h3
-                          className="font-medium text-sm leading-tight flex-1"
-                          style={{ color: headingColor }}
-                        >
-                          {service.name}
-                        </h3>
-                        <div
-                          className="font-semibold text-sm whitespace-nowrap"
-                          style={{ color: primaryColor }}
-                        >
-                          ₺{service.price}
-                        </div>
-                      </div>
-
-                      {/* Description */}
-                      <p
-                        className="text-xs line-clamp-2"
-                        style={{ color: `${textColor}70` }}
-                      >
-                        Professional {service.name.toLowerCase()} service
-                      </p>
-
-                      {/* Duration */}
-                      <div
-                        className="flex items-center gap-1.5 text-xs"
-                        style={{ color: `${textColor}60` }}
-                      >
-                        <Clock className="h-3.5 w-3.5" />
-                        <span>{service.duration} min</span>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
+            {renderServiceList()}
           </div>
 
-          {/* Navigation Buttons - Fixed at bottom */}
           <div
             className="absolute bottom-0 left-0 right-0 border-t p-4"
             style={{ backgroundColor: `${sidebarBackgroundColor}F5` }}
@@ -339,6 +307,80 @@ export function WidgetPreview({ settings }: WidgetPreviewProps) {
             </div>
           </div>
         </main>
+      </div>
+
+      {/* Mobile preview */}
+      <div
+        className="flex flex-col md:hidden"
+        style={{ backgroundColor: contentBackgroundColor }}
+      >
+        <div className="p-4 space-y-3">
+          <div className="space-y-1">
+            <h2
+              className="text-lg font-semibold"
+              style={{ color: headingColor }}
+            >
+              Select Service
+            </h2>
+            <p className="text-sm" style={{ color: `${textColor}70` }}>
+              Choose the service you'd like to book
+            </p>
+          </div>
+
+          <div className="space-y-1">
+            <div
+              className="h-1.5 rounded-full overflow-hidden"
+              style={{ backgroundColor: `${primaryColor}20` }}
+            >
+              <div
+                className="h-full transition-all duration-300"
+                style={{
+                  backgroundColor: primaryColor,
+                  width: `${
+                    ((currentStepIndex + 1) / visibleSteps.length) * 100
+                  }%`,
+                }}
+              />
+            </div>
+            <p className="text-xs" style={{ color: `${textColor}70` }}>
+              Step {currentStepIndex + 1} of {visibleSteps.length}
+            </p>
+          </div>
+        </div>
+
+        <div
+          className="px-4 pb-24 space-y-3"
+          style={{ backgroundColor: contentBackgroundColor }}
+        >
+          {renderServiceList()}
+        </div>
+
+        <div
+          className="sticky bottom-0 border-t px-4 py-3"
+          style={{ backgroundColor: `${sidebarBackgroundColor}F5` }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <button
+              className="flex items-center gap-1 px-3 py-2 text-sm font-medium rounded-lg transition-colors invisible"
+              style={{ color: textColor }}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Back
+            </button>
+
+            <button
+              className="flex items-center gap-1 px-4 py-2 text-sm font-medium min-w-[100px] justify-center transition-opacity hover:opacity-90"
+              style={{
+                backgroundColor: primaryColor,
+                color: buttonTextColor,
+                borderRadius: `${buttonBorderRadius}px`,
+              }}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );

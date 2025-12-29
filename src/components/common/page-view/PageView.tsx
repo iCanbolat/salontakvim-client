@@ -254,7 +254,7 @@ export function PageView<TData, TFilter extends string = string>({
           </div>
         )}
 
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+        <div className="hidden sm:flex sm:flex-col md:flex-row items-center gap-4 w-full md:w-auto">
           {/* Date Range Picker */}
           {showDatePicker && onDateRangeChange && (
             <div className="flex w-full md:w-auto">

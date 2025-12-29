@@ -291,7 +291,7 @@ export function AppointmentsList() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row items-center justify-between">
+      <div className="flex flex-col text-center sm:text-start md:flex-row items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Appointments</h1>
           <p className="text-gray-600 mt-1">

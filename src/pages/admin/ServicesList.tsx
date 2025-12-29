@@ -194,7 +194,7 @@ export function ServicesList() {
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row text-center sm:text-start items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Services</h1>
           <p className="text-gray-600 mt-1">
