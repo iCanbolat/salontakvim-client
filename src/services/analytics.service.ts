@@ -15,7 +15,7 @@ export class AnalyticsService {
    * Get dashboard statistics
    */
   async getDashboard(
-    storeId: number,
+    storeId: string,
     query?: AnalyticsQuery
   ): Promise<DashboardResponse> {
     const response = await axiosInstance.get<DashboardResponse>(
@@ -29,7 +29,7 @@ export class AnalyticsService {
    * Get appointment analytics
    */
   async getAppointmentAnalytics(
-    storeId: number,
+    storeId: string,
     query?: AnalyticsQuery
   ): Promise<AppointmentAnalyticsResponse> {
     const response = await axiosInstance.get<AppointmentAnalyticsResponse>(
@@ -43,7 +43,7 @@ export class AnalyticsService {
    * Get revenue analytics
    */
   async getRevenueAnalytics(
-    storeId: number,
+    storeId: string,
     query?: AnalyticsQuery
   ): Promise<RevenueAnalyticsResponse> {
     const response = await axiosInstance.get<RevenueAnalyticsResponse>(
@@ -56,7 +56,7 @@ export class AnalyticsService {
   /**
    * Export analytics to Excel
    */
-  async exportToExcel(storeId: number, query?: AnalyticsQuery): Promise<Blob> {
+  async exportToExcel(storeId: string, query?: AnalyticsQuery): Promise<Blob> {
     const response = await axiosInstance.get(
       `/stores/${storeId}/analytics/export`,
       {

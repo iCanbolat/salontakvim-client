@@ -14,7 +14,7 @@ export class CategoryService {
   /**
    * Get all categories for a store
    */
-  async getCategories(storeId: number): Promise<Category[]> {
+  async getCategories(storeId: string): Promise<Category[]> {
     const response = await axiosInstance.get<Category[]>(
       `/stores/${storeId}/categories`
     );
@@ -24,7 +24,7 @@ export class CategoryService {
   /**
    * Get a single category
    */
-  async getCategory(storeId: number, categoryId: number): Promise<Category> {
+  async getCategory(storeId: string, categoryId: string): Promise<Category> {
     const response = await axiosInstance.get<Category>(
       `/stores/${storeId}/categories/${categoryId}`
     );
@@ -35,7 +35,7 @@ export class CategoryService {
    * Create a new category
    */
   async createCategory(
-    storeId: number,
+    storeId: string,
     data: CreateCategoryDto
   ): Promise<Category> {
     const response = await axiosInstance.post<Category>(
@@ -49,8 +49,8 @@ export class CategoryService {
    * Update a category
    */
   async updateCategory(
-    storeId: number,
-    categoryId: number,
+    storeId: string,
+    categoryId: string,
     data: UpdateCategoryDto
   ): Promise<Category> {
     const response = await axiosInstance.patch<Category>(
@@ -63,7 +63,7 @@ export class CategoryService {
   /**
    * Delete a category
    */
-  async deleteCategory(storeId: number, categoryId: number): Promise<void> {
+  async deleteCategory(storeId: string, categoryId: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/categories/${categoryId}`);
   }
 
@@ -71,7 +71,7 @@ export class CategoryService {
    * Reorder categories
    */
   async reorderCategories(
-    storeId: number,
+    storeId: string,
     data: ReorderCategoriesDto
   ): Promise<Category[]> {
     const response = await axiosInstance.patch<Category[]>(

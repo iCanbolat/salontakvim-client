@@ -110,8 +110,8 @@ export function StaffList() {
       staffId,
       status,
     }: {
-      breakId: number;
-      staffId: number;
+      breakId: string;
+      staffId: string;
       status: StaffBreakStatus;
     }) =>
       breakService.updateStaffBreak(store!.id, staffId, breakId, { status }),

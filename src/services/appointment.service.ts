@@ -18,7 +18,7 @@ export class AppointmentService {
    * Get appointments list with filters
    */
   async getAppointments(
-    storeId: number,
+    storeId: string,
     filters?: AppointmentFilters
   ): Promise<PaginatedAppointmentsResponse> {
     const response = await axiosInstance.get<PaginatedAppointmentsResponse>(
@@ -31,7 +31,7 @@ export class AppointmentService {
   /**
    * Get single appointment
    */
-  async getAppointment(storeId: number, id: number): Promise<Appointment> {
+  async getAppointment(storeId: string, id: string): Promise<Appointment> {
     const response = await axiosInstance.get<Appointment>(
       `/stores/${storeId}/appointments/${id}`
     );
@@ -42,7 +42,7 @@ export class AppointmentService {
    * Create new appointment
    */
   async createAppointment(
-    storeId: number,
+    storeId: string,
     data: CreateAppointmentDto
   ): Promise<Appointment> {
     const response = await axiosInstance.post<Appointment>(
@@ -56,8 +56,8 @@ export class AppointmentService {
    * Update appointment
    */
   async updateAppointment(
-    storeId: number,
-    id: number,
+    storeId: string,
+    id: string,
     data: UpdateAppointmentDto
   ): Promise<Appointment> {
     const response = await axiosInstance.patch<Appointment>(
@@ -71,8 +71,8 @@ export class AppointmentService {
    * Update appointment status
    */
   async updateAppointmentStatus(
-    storeId: number,
-    id: number,
+    storeId: string,
+    id: string,
     data: UpdateAppointmentStatusDto
   ): Promise<Appointment> {
     const response = await axiosInstance.patch<Appointment>(
@@ -85,7 +85,7 @@ export class AppointmentService {
   /**
    * Delete appointment
    */
-  async deleteAppointment(storeId: number, id: number): Promise<void> {
+  async deleteAppointment(storeId: string, id: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/appointments/${id}`);
   }
 
@@ -93,12 +93,12 @@ export class AppointmentService {
    * Get availability time slots for a staff/service/date
    */
   async getAvailability(params: {
-    storeId: number;
-    serviceId: number;
-    staffId: number;
+    storeId: string;
+    serviceId: string;
+    staffId: string;
     date: string;
-    locationId?: number;
-    excludeAppointmentId?: number;
+    locationId?: string;
+    excludeAppointmentId?: string;
   }): Promise<AvailabilityResponse> {
     const { storeId, ...query } = params;
 

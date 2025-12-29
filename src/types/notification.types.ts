@@ -1,8 +1,8 @@
 export type NotificationChannel = "email" | "sms" | "both";
 
 export interface NotificationSettings {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   appointmentConfirmationEnabled: boolean;
   appointmentConfirmationChannel: NotificationChannel;
   appointmentReminderEnabled: boolean;

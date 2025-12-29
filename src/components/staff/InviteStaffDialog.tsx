@@ -54,7 +54,7 @@ const inviteSchema = z.object({
 type InviteFormData = z.infer<typeof inviteSchema>;
 
 interface InviteStaffDialogProps {
-  storeId: number;
+  storeId: string;
   open: boolean;
   onClose: () => void;
 }

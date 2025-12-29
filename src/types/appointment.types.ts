@@ -19,23 +19,24 @@ export interface GuestInfo {
 }
 
 export interface AppointmentExtra {
-  id: number;
-  extraId: number;
+  id: string;
+  extraId: string;
   quantity: number;
   price: string;
   createdAt: string;
 }
 
 export interface Appointment {
-  id: number;
-  storeId: number;
-  customerId?: number;
+  id: string;
+  storeId: string;
+  customerId?: string;
   customerName?: string;
-  serviceId?: number;
+  customerNumber?: number; // For easy customer search
+  serviceId?: string;
   serviceName?: string;
-  staffId?: number;
+  staffId?: string;
   staffName?: string;
-  locationId?: number;
+  locationId?: string;
   locationName?: string;
   guestInfo?: GuestInfo;
   startDateTime: string;
@@ -51,17 +52,18 @@ export interface Appointment {
   cancelledAt?: string;
   cancellationReason?: string;
   isRecurring: boolean;
-  parentAppointmentId?: number;
+  parentAppointmentId?: string;
+  publicNumber?: string; // For easy appointment search
   extras?: AppointmentExtra[];
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateAppointmentDto {
-  customerId?: number;
-  serviceId?: number;
-  staffId?: number;
-  locationId?: number;
+  customerId?: string;
+  serviceId?: string;
+  staffId?: string;
+  locationId?: string;
   guestFirstName?: string;
   guestLastName?: string;
   guestEmail?: string;
@@ -70,15 +72,15 @@ export interface CreateAppointmentDto {
   numberOfPeople: number;
   customerNotes?: string;
   extras?: Array<{
-    extraId: number;
+    extraId: string;
     quantity: number;
   }>;
 }
 
 export interface UpdateAppointmentDto {
-  serviceId?: number;
-  staffId?: number;
-  locationId?: number;
+  serviceId?: string;
+  staffId?: string;
+  locationId?: string;
   startDateTime?: string;
   numberOfPeople?: number;
   status?: AppointmentStatus;
@@ -98,10 +100,10 @@ export interface AppointmentFilters {
   startDate?: string;
   endDate?: string;
   status?: AppointmentStatus;
-  serviceId?: number;
-  staffId?: number;
-  locationId?: number;
-  customerId?: number;
+  serviceId?: string;
+  staffId?: string;
+  locationId?: string;
+  customerId?: string;
   page?: number;
   limit?: number;
   search?: string;
@@ -135,8 +137,8 @@ export interface AvailabilityTimeSlot {
 
 export interface AvailabilityResponse {
   date: string;
-  serviceId: number;
-  staffId: number;
-  locationId?: number;
+  serviceId: string;
+  staffId: string;
+  locationId?: string;
   slots: AvailabilityTimeSlot[];
 }

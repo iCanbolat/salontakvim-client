@@ -9,7 +9,7 @@ export class LocationService {
   /**
    * Get all locations for a store
    */
-  async getLocations(storeId: number): Promise<Location[]> {
+  async getLocations(storeId: string): Promise<Location[]> {
     const response = await axiosInstance.get<Location[]>(
       `/stores/${storeId}/locations`
     );
@@ -19,7 +19,7 @@ export class LocationService {
   /**
    * Get visible locations for a store (public endpoint)
    */
-  async getVisibleLocations(storeId: number): Promise<Location[]> {
+  async getVisibleLocations(storeId: string): Promise<Location[]> {
     const response = await axiosInstance.get<Location[]>(
       `/stores/${storeId}/locations/visible`
     );
@@ -29,7 +29,7 @@ export class LocationService {
   /**
    * Get a single location
    */
-  async getLocation(storeId: number, locationId: number): Promise<Location> {
+  async getLocation(storeId: string, locationId: string): Promise<Location> {
     const response = await axiosInstance.get<Location>(
       `/stores/${storeId}/locations/${locationId}`
     );
@@ -40,7 +40,7 @@ export class LocationService {
    * Create a new location
    */
   async createLocation(
-    storeId: number,
+    storeId: string,
     data: CreateLocationDto
   ): Promise<Location> {
     const response = await axiosInstance.post<Location>(
@@ -54,8 +54,8 @@ export class LocationService {
    * Update a location
    */
   async updateLocation(
-    storeId: number,
-    locationId: number,
+    storeId: string,
+    locationId: string,
     data: UpdateLocationDto
   ): Promise<Location> {
     const response = await axiosInstance.patch<Location>(
@@ -68,7 +68,7 @@ export class LocationService {
   /**
    * Delete a location
    */
-  async deleteLocation(storeId: number, locationId: number): Promise<void> {
+  async deleteLocation(storeId: string, locationId: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/locations/${locationId}`);
   }
 }

@@ -47,7 +47,7 @@ const locationSchema = z.object({
 type LocationFormData = z.infer<typeof locationSchema>;
 
 interface LocationFormDialogProps {
-  storeId: number;
+  storeId: string;
   location?: Location | null;
   open: boolean;
   onClose: () => void;

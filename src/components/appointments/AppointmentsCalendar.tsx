@@ -37,7 +37,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface AppointmentsCalendarProps {
-  storeId: number;
+  storeId: string;
 }
 
 type CalendarView = "month" | "week" | "day";

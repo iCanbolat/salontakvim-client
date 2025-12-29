@@ -16,8 +16,8 @@ export class BreakService {
    * Get all breaks for a staff member
    */
   async getStaffBreaks(
-    storeId: number,
-    staffId: number
+    storeId: string,
+    staffId: string
   ): Promise<StaffBreak[]> {
     const response = await axiosInstance.get<StaffBreak[]>(
       `/stores/${storeId}/staff/${staffId}/breaks`
@@ -29,8 +29,8 @@ export class BreakService {
    * Create a new break for a staff member
    */
   async createStaffBreak(
-    storeId: number,
-    staffId: number,
+    storeId: string,
+    staffId: string,
     data: CreateStaffBreakDto
   ): Promise<StaffBreak> {
     const response = await axiosInstance.post<StaffBreak>(
@@ -44,9 +44,9 @@ export class BreakService {
    * Update a staff break
    */
   async updateStaffBreak(
-    storeId: number,
-    staffId: number,
-    breakId: number,
+    storeId: string,
+    staffId: string,
+    breakId: string,
     data: UpdateStaffBreakDto
   ): Promise<StaffBreak> {
     const response = await axiosInstance.patch<StaffBreak>(
@@ -60,9 +60,9 @@ export class BreakService {
    * Delete a staff break
    */
   async deleteStaffBreak(
-    storeId: number,
-    staffId: number,
-    breakId: number
+    storeId: string,
+    staffId: string,
+    breakId: string
   ): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`
@@ -70,7 +70,7 @@ export class BreakService {
   }
 
   async getStoreBreaks(
-    storeId: number,
+    storeId: string,
     status?: StaffBreakStatus
   ): Promise<StaffBreakWithStaff[]> {
     const response = await axiosInstance.get<StaffBreakWithStaff[]>(

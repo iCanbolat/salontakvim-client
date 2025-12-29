@@ -8,7 +8,7 @@ export type PaymentStatus = "freemium" | "paid";
 export type AuthProvider = "local" | "google" | "facebook" | "apple";
 
 export interface User {
-  id: number;
+  id: string;
   email: string;
   firstName: string | null;
   lastName: string | null;
@@ -23,11 +23,12 @@ export interface User {
   lastLogin?: string;
   createdAt: string;
   updatedAt: string;
+  customerNumber?: number; // For easy customer search
 }
 
 export interface AuthResponse {
   user: {
-    id: number;
+    id: string;
     email: string;
     firstName: string | null;
     lastName: string | null;

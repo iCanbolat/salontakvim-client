@@ -1,4 +1,4 @@
-import { useMemo, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
@@ -8,21 +8,17 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CustomerProfileContent } from "@/components/customers";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
+// UUID v4 regex pattern
+const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function CustomerDetails() {
   const navigate = useNavigate();
   const location = useLocation();
   const { customerId } = useParams<{ customerId: string }>();
   const { setBreadcrumbLabel, clearBreadcrumbLabel } = useBreadcrumb();
 
-  const parsedCustomerId = useMemo(() => {
-    if (!customerId) {
-      return NaN;
-    }
-    const id = Number(customerId);
-    return Number.isFinite(id) ? id : NaN;
-  }, [customerId]);
-
-  const isValidCustomerId = Number.isInteger(parsedCustomerId);
+  const isValidCustomerId = !!customerId && UUID_REGEX.test(customerId);
 
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["my-store"],
@@ -34,9 +30,8 @@ export function CustomerDetails() {
     isLoading: profileLoading,
     error: profileError,
   } = useQuery({
-    queryKey: ["customer-profile", store?.id, parsedCustomerId],
-    queryFn: () =>
-      customerService.getCustomerProfile(store!.id, parsedCustomerId),
+    queryKey: ["customer-profile", store?.id, customerId],
+    queryFn: () => customerService.getCustomerProfile(store!.id, customerId!),
     enabled: !!store?.id && isValidCustomerId,
     retry: 1,
   });

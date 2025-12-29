@@ -4,14 +4,7 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Edit,
-  Trash2,
-  Eye,
-  EyeOff,
-  Clock,
-  Users,
-} from "lucide-react";
+import { Edit, Trash2, Eye, EyeOff, Clock, Users } from "lucide-react";
 import { serviceService } from "@/services";
 import type { Service } from "@/types";
 import {
@@ -27,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface ServiceCardProps {
   service: Service;
-  storeId: number;
+  storeId: string;
   onEdit: (service: Service) => void;
 }
 

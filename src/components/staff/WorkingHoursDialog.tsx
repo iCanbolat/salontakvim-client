@@ -26,7 +26,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import type { StaffMember, CreateWorkingHoursDto, DayOfWeek } from "@/types";
 
 interface WorkingHoursDialogProps {
-  storeId: number;
+  storeId: string;
   staff: StaffMember;
   open: boolean;
   onClose: () => void;

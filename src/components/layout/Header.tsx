@@ -100,7 +100,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   };
 
   const handleNotificationClick = async (
-    id: number,
+    id: string,
     isRead: boolean,
     url?: string
   ) => {

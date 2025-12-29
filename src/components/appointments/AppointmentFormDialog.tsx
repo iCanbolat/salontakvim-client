@@ -52,9 +52,9 @@ import {
 } from "@/components/ui/select";
 
 const appointmentSchema = z.object({
-  serviceId: z.number().min(1, "Service is required"),
-  staffId: z.number().min(1, "Staff member is required"),
-  locationId: z.number().optional(),
+  serviceId: z.string().min(1, "Service is required"),
+  staffId: z.string().min(1, "Staff member is required"),
+  locationId: z.string().optional(),
   guestFirstName: z.string().min(1, "First name is required"),
   guestLastName: z.string().min(1, "Last name is required"),
   guestEmail: z.string().email("Invalid email address"),
@@ -68,7 +68,7 @@ const appointmentSchema = z.object({
 type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
 interface AppointmentFormDialogProps {
-  storeId: number;
+  storeId: string;
   appointment?: Appointment | null;
   open: boolean;
   onClose: () => void;
@@ -121,8 +121,8 @@ export function AppointmentFormDialog({
     resolver: zodResolver(appointmentSchema),
     mode: "onBlur",
     defaultValues: {
-      serviceId: 0,
-      staffId: 0,
+      serviceId: "",
+      staffId: "",
       locationId: undefined,
       guestFirstName: "",
       guestLastName: "",
@@ -148,7 +148,7 @@ export function AppointmentFormDialog({
     queryFn: () =>
       staffService.getStaffMembers(storeId, {
         includeHidden: false,
-        serviceId: watchServiceId > 0 ? watchServiceId : undefined,
+        serviceId: watchServiceId || undefined,
         locationId: watchLocationId,
       }),
     enabled: open,
@@ -184,8 +184,8 @@ export function AppointmentFormDialog({
     enabled:
       open &&
       Boolean(watchDate) &&
-      watchServiceId > 0 &&
-      watchStaffId > 0 &&
+      Boolean(watchServiceId) &&
+      Boolean(watchStaffId) &&
       Boolean(selectedService),
   });
 
@@ -198,8 +198,8 @@ export function AppointmentFormDialog({
     if (appointment) {
       const startDate = new Date(appointment.startDateTime);
       reset({
-        serviceId: appointment.serviceId || 0,
-        staffId: appointment.staffId || 0,
+        serviceId: appointment.serviceId || "",
+        staffId: appointment.staffId || "",
         locationId: appointment.locationId,
         guestFirstName: appointment.guestInfo?.firstName || "",
         guestLastName: appointment.guestInfo?.lastName || "",
@@ -212,8 +212,8 @@ export function AppointmentFormDialog({
       });
     } else {
       reset({
-        serviceId: 0,
-        staffId: currentStaffMember?.id || 0,
+        serviceId: "",
+        staffId: currentStaffMember?.id || "",
         locationId: undefined,
         guestFirstName: "",
         guestLastName: "",
@@ -237,14 +237,14 @@ export function AppointmentFormDialog({
     );
 
     if (watchStaffId && !staffMatchesLocation) {
-      setValue("staffId", 0, { shouldDirty: true });
+      setValue("staffId", "", { shouldDirty: true });
     }
   }, [filteredStaff, open, setValue, watchLocationId, watchStaffId]);
 
   // Ensure selected time is always one of the available times
   useEffect(() => {
     if (!open) return;
-    if (watchServiceId <= 0 || watchStaffId <= 0) return;
+    if (!watchServiceId || !watchStaffId) return;
 
     // If availability not loaded yet, don't touch user selection.
     if (!availability) return;
@@ -347,11 +347,9 @@ export function AppointmentFormDialog({
                 Service <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={
-                  watchServiceId > 0 ? watchServiceId.toString() : undefined
-                }
+                value={watchServiceId || undefined}
                 onValueChange={(value) =>
-                  setValue("serviceId", parseInt(value), { shouldDirty: true })
+                  setValue("serviceId", value, { shouldDirty: true })
                 }
               >
                 <SelectTrigger className="w-full">
@@ -359,7 +357,7 @@ export function AppointmentFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {services?.map((service) => (
-                    <SelectItem key={service.id} value={service.id.toString()}>
+                    <SelectItem key={service.id} value={service.id}>
                       {service.name} - ${service.price} ({service.duration} min)
                     </SelectItem>
                   ))}
@@ -376,11 +374,11 @@ export function AppointmentFormDialog({
             <div className="space-y-2">
               <Label htmlFor="locationId">Location (optional)</Label>
               <Select
-                value={watchLocationId?.toString() || ""}
+                value={watchLocationId || ""}
                 onValueChange={(value) =>
                   setValue(
                     "locationId",
-                    value && value !== "all" ? parseInt(value) : undefined,
+                    value && value !== "all" ? value : undefined,
                     {
                       shouldDirty: true,
                     }
@@ -393,10 +391,7 @@ export function AppointmentFormDialog({
                 <SelectContent>
                   <SelectItem value="all">All locations</SelectItem>
                   {locations?.map((location) => (
-                    <SelectItem
-                      key={location.id}
-                      value={location.id.toString()}
-                    >
+                    <SelectItem key={location.id} value={location.id}>
                       {location.name}
                     </SelectItem>
                   ))}
@@ -410,9 +405,9 @@ export function AppointmentFormDialog({
                 Staff Member <span className="text-red-500">*</span>
               </Label>
               <Select
-                value={watchStaffId > 0 ? watchStaffId.toString() : undefined}
+                value={watchStaffId || undefined}
                 onValueChange={(value) =>
-                  setValue("staffId", parseInt(value), { shouldDirty: true })
+                  setValue("staffId", value, { shouldDirty: true })
                 }
                 disabled={user?.role === "staff"}
               >
@@ -421,7 +416,7 @@ export function AppointmentFormDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {filteredStaff?.map((member) => (
-                    <SelectItem key={member.id} value={member.id.toString()}>
+                    <SelectItem key={member.id} value={member.id}>
                       {member.firstName} {member.lastName}
                     </SelectItem>
                   ))}
@@ -552,8 +547,8 @@ export function AppointmentFormDialog({
                     setValue("time", value, { shouldDirty: true })
                   }
                   disabled={
-                    watchServiceId <= 0 ||
-                    watchStaffId <= 0 ||
+                    !watchServiceId ||
+                    !watchStaffId ||
                     !watchDate ||
                     isAvailabilityLoading ||
                     availableTimes.length === 0
@@ -562,7 +557,7 @@ export function AppointmentFormDialog({
                   <SelectTrigger className="w-full">
                     <SelectValue
                       placeholder={
-                        watchServiceId <= 0 || watchStaffId <= 0
+                        !watchServiceId || !watchStaffId
                           ? "Select service & staff"
                           : isAvailabilityLoading
                           ? "Loading..."

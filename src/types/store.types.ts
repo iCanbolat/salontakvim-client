@@ -4,8 +4,8 @@
  */
 
 export interface Store {
-  id: number;
-  ownerId: number;
+  id: string;
+  ownerId: string;
   name: string;
   slug: string;
   description?: string;

@@ -42,7 +42,7 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 interface StaffProfileDialogProps {
-  storeId: number;
+  storeId: string;
   staff: StaffMember;
   open: boolean;
   onClose: () => void;

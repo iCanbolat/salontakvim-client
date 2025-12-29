@@ -32,8 +32,8 @@ import type { StaffBreak, CreateStaffBreakDto } from "@/types";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
 
 interface TimeOffDialogProps {
-  storeId: number;
-  staffId: number;
+  storeId: string;
+  staffId: string;
   staffName: string;
   timeOff?: StaffBreak | null;
   open: boolean;

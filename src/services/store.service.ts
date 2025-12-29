@@ -17,7 +17,7 @@ export class StoreService {
   /**
    * Update store
    */
-  async updateStore(storeId: number, data: Partial<Store>): Promise<Store> {
+  async updateStore(storeId: string, data: Partial<Store>): Promise<Store> {
     const response = await axiosInstance.patch<Store>(
       `/stores/${storeId}`,
       data

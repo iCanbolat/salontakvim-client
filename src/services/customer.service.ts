@@ -21,7 +21,7 @@ export const customerService = {
    * Note: This is a simplified version. In production, backend should provide a dedicated endpoint.
    */
   async getCustomers(
-    storeId: number,
+    storeId: string,
     filters?: CustomerFilters
   ): Promise<CustomerWithStats[]> {
     const params = new URLSearchParams();
@@ -40,10 +40,11 @@ export const customerService = {
 
   /**
    * Get customer profile with appointment history
+   * @param customerId - Customer UUID
    */
   async getCustomerProfile(
-    storeId: number,
-    customerId: number
+    storeId: string,
+    customerId: string
   ): Promise<CustomerProfile> {
     const response = await axiosInstance.get<CustomerProfile>(
       `/stores/${storeId}/customers/${customerId}`
@@ -55,8 +56,8 @@ export const customerService = {
    * Update customer information
    */
   async updateCustomer(
-    storeId: number,
-    customerId: number,
+    storeId: string,
+    customerId: string,
     data: UpdateCustomerDto
   ): Promise<CustomerWithStats> {
     const response = await axiosInstance.patch<CustomerWithStats>(
@@ -69,14 +70,14 @@ export const customerService = {
   /**
    * Delete customer (soft delete - deactivate)
    */
-  async deleteCustomer(storeId: number, customerId: number): Promise<void> {
+  async deleteCustomer(storeId: string, customerId: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/customers/${customerId}`);
   },
 
   /**
    * Get customer appointments
    */
-  async getCustomerAppointments(storeId: number, customerId: number) {
+  async getCustomerAppointments(storeId: string, customerId: string) {
     const response = await axiosInstance.get(
       `/stores/${storeId}/appointments?customerId=${customerId}`
     );
@@ -87,7 +88,7 @@ export const customerService = {
    * Search customers by name, email, or phone
    */
   async searchCustomers(
-    storeId: number,
+    storeId: string,
     query: string
   ): Promise<CustomerWithStats[]> {
     const response = await axiosInstance.get<CustomerWithStats[]>(

@@ -40,7 +40,7 @@ const categorySchema = z.object({
 type CategoryFormData = z.infer<typeof categorySchema>;
 
 interface CategoryFormDialogProps {
-  storeId: number;
+  storeId: string;
   category?: Category | null;
   open: boolean;
   onClose: () => void;

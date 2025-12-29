@@ -4,8 +4,8 @@
  */
 
 export interface Location {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   name: string;
   address?: string;
   city?: string;

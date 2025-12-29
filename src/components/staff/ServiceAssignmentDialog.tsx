@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import type { StaffMember, Service } from "@/types";
 
 interface ServiceAssignmentDialogProps {
-  storeId: number;
+  storeId: string;
   staff: StaffMember;
   open: boolean;
   onClose: () => void;

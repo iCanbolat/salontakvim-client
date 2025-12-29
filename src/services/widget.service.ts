@@ -9,7 +9,7 @@ export const widgetService = {
   /**
    * Get widget settings for the store
    */
-  async getWidgetSettings(storeId: number): Promise<WidgetSettings> {
+  async getWidgetSettings(storeId: string): Promise<WidgetSettings> {
     const response = await axiosInstance.get<WidgetSettings>(
       `/stores/${storeId}/widget-settings`
     );
@@ -20,7 +20,7 @@ export const widgetService = {
    * Update widget settings
    */
   async updateWidgetSettings(
-    storeId: number,
+    storeId: string,
     data: UpdateWidgetSettingsDto
   ): Promise<WidgetSettings> {
     const response = await axiosInstance.patch<WidgetSettings>(
@@ -33,7 +33,7 @@ export const widgetService = {
   /**
    * Regenerate widget key (WARNING: This will invalidate the old widget key)
    */
-  async regenerateWidgetKey(storeId: number): Promise<{ widgetKey: string }> {
+  async regenerateWidgetKey(storeId: string): Promise<{ widgetKey: string }> {
     const response = await axiosInstance.post<{ widgetKey: string }>(
       `/stores/${storeId}/widget-settings/regenerate-key`
     );
@@ -43,7 +43,7 @@ export const widgetService = {
   /**
    * Get widget embed code
    */
-  async getEmbedCode(storeId: number): Promise<WidgetEmbedCode> {
+  async getEmbedCode(storeId: string): Promise<WidgetEmbedCode> {
     const response = await axiosInstance.get<WidgetEmbedCode>(
       `/stores/${storeId}/widget-settings/embed-code`
     );

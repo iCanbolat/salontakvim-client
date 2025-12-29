@@ -16,7 +16,7 @@ export class ServiceService {
   /**
    * Get all services for a store
    */
-  async getServices(storeId: number): Promise<Service[]> {
+  async getServices(storeId: string): Promise<Service[]> {
     const response = await axiosInstance.get<Service[]>(
       `/stores/${storeId}/services`
     );
@@ -26,7 +26,7 @@ export class ServiceService {
   /**
    * Get visible services for a store (public)
    */
-  async getVisibleServices(storeId: number): Promise<Service[]> {
+  async getVisibleServices(storeId: string): Promise<Service[]> {
     const response = await axiosInstance.get<Service[]>(
       `/stores/${storeId}/services/visible`
     );
@@ -36,7 +36,7 @@ export class ServiceService {
   /**
    * Get a single service
    */
-  async getService(storeId: number, serviceId: number): Promise<Service> {
+  async getService(storeId: string, serviceId: string): Promise<Service> {
     const response = await axiosInstance.get<Service>(
       `/stores/${storeId}/services/${serviceId}`
     );
@@ -47,7 +47,7 @@ export class ServiceService {
    * Create a new service
    */
   async createService(
-    storeId: number,
+    storeId: string,
     data: CreateServiceDto
   ): Promise<Service> {
     const response = await axiosInstance.post<Service>(
@@ -61,8 +61,8 @@ export class ServiceService {
    * Update a service
    */
   async updateService(
-    storeId: number,
-    serviceId: number,
+    storeId: string,
+    serviceId: string,
     data: UpdateServiceDto
   ): Promise<Service> {
     const response = await axiosInstance.patch<Service>(
@@ -75,7 +75,7 @@ export class ServiceService {
   /**
    * Delete a service
    */
-  async deleteService(storeId: number, serviceId: number): Promise<void> {
+  async deleteService(storeId: string, serviceId: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/services/${serviceId}`);
   }
 
@@ -85,8 +85,8 @@ export class ServiceService {
    * Get all extras for a service
    */
   async getServiceExtras(
-    storeId: number,
-    serviceId: number
+    storeId: string,
+    serviceId: string
   ): Promise<ServiceExtra[]> {
     const response = await axiosInstance.get<ServiceExtra[]>(
       `/stores/${storeId}/services/${serviceId}/extras`
@@ -98,8 +98,8 @@ export class ServiceService {
    * Create a new service extra
    */
   async createServiceExtra(
-    storeId: number,
-    serviceId: number,
+    storeId: string,
+    serviceId: string,
     data: CreateServiceExtraDto
   ): Promise<ServiceExtra> {
     const response = await axiosInstance.post<ServiceExtra>(
@@ -113,9 +113,9 @@ export class ServiceService {
    * Update a service extra
    */
   async updateServiceExtra(
-    storeId: number,
-    serviceId: number,
-    extraId: number,
+    storeId: string,
+    serviceId: string,
+    extraId: string,
     data: UpdateServiceExtraDto
   ): Promise<ServiceExtra> {
     const response = await axiosInstance.patch<ServiceExtra>(
@@ -129,9 +129,9 @@ export class ServiceService {
    * Delete a service extra
    */
   async deleteServiceExtra(
-    storeId: number,
-    serviceId: number,
-    extraId: number
+    storeId: string,
+    serviceId: string,
+    extraId: string
   ): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/services/${serviceId}/extras/${extraId}`

@@ -19,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface CategoryCardProps {
   category: Category;
-  storeId: number;
+  storeId: string;
   onEdit: (category: Category) => void;
 }
 

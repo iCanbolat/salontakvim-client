@@ -39,7 +39,7 @@ import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 
 interface AppointmentCardProps {
   appointment: Appointment;
-  storeId: number;
+  storeId: string;
   onEdit: (appointment: Appointment) => void;
   onChangeStatus?: (appointment: Appointment) => void;
 }
@@ -118,7 +118,7 @@ export function AppointmentCard({
               <CardTitle className="text-lg">{customerDisplayName}</CardTitle>
             </div>
             <CardDescription className="mb-2">
-              Appointment #{appointment.id}
+              Appointment #{appointment.publicNumber}
             </CardDescription>
             <AppointmentStatusBadge status={appointment.status} />
           </div>

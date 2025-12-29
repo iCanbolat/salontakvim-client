@@ -27,7 +27,7 @@ export class StaffService {
    * Invite a staff member via email
    */
   async inviteStaff(
-    storeId: number,
+    storeId: string,
     data: InviteStaffDto
   ): Promise<StaffInvitation> {
     const response = await axiosInstance.post<StaffInvitation>(
@@ -40,7 +40,7 @@ export class StaffService {
   /**
    * Get all pending invitations
    */
-  async getInvitations(storeId: number): Promise<StaffInvitation[]> {
+  async getInvitations(storeId: string): Promise<StaffInvitation[]> {
     const response = await axiosInstance.get<StaffInvitation[]>(
       `/stores/${storeId}/staff/invitations`
     );
@@ -74,7 +74,7 @@ export class StaffService {
   /**
    * Delete (cancel) an invitation
    */
-  async deleteInvitation(storeId: number, invitationId: number): Promise<void> {
+  async deleteInvitation(storeId: string, invitationId: string): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/invitations/${invitationId}`
     );
@@ -86,13 +86,13 @@ export class StaffService {
    * Get all staff members
    */
   async getStaffMembers(
-    storeId: number,
+    storeId: string,
     includeHiddenOrOptions:
       | boolean
       | {
           includeHidden?: boolean;
-          serviceId?: number;
-          locationId?: number;
+          serviceId?: string;
+          locationId?: string;
         } = false
   ): Promise<StaffMember[]> {
     const options =
@@ -116,7 +116,7 @@ export class StaffService {
   /**
    * Get a single staff member
    */
-  async getStaffMember(storeId: number, staffId: number): Promise<StaffMember> {
+  async getStaffMember(storeId: string, staffId: string): Promise<StaffMember> {
     const response = await axiosInstance.get<StaffMember>(
       `/stores/${storeId}/staff/${staffId}`
     );
@@ -127,8 +127,8 @@ export class StaffService {
    * Update staff profile
    */
   async updateStaffProfile(
-    storeId: number,
-    staffId: number,
+    storeId: string,
+    staffId: string,
     data: UpdateStaffProfileDto
   ): Promise<StaffMember> {
     const response = await axiosInstance.patch<StaffMember>(
@@ -141,7 +141,7 @@ export class StaffService {
   /**
    * Delete a staff member
    */
-  async deleteStaffMember(storeId: number, staffId: number): Promise<void> {
+  async deleteStaffMember(storeId: string, staffId: string): Promise<void> {
     await axiosInstance.delete(`/stores/${storeId}/staff/${staffId}`);
   }
 
@@ -151,8 +151,8 @@ export class StaffService {
    * Assign services to a staff member
    */
   async assignServices(
-    storeId: number,
-    staffId: number,
+    storeId: string,
+    staffId: string,
     data: AssignServicesDto
   ): Promise<Service[]> {
     const response = await axiosInstance.post<Service[]>(
@@ -165,7 +165,7 @@ export class StaffService {
   /**
    * Get staff member's assigned services
    */
-  async getStaffServices(storeId: number, staffId: number): Promise<Service[]> {
+  async getStaffServices(storeId: string, staffId: string): Promise<Service[]> {
     const response = await axiosInstance.get<Service[]>(
       `/stores/${storeId}/staff/${staffId}/services`
     );
@@ -176,9 +176,9 @@ export class StaffService {
    * Remove a service from staff member
    */
   async removeServiceFromStaff(
-    storeId: number,
-    staffId: number,
-    serviceId: number
+    storeId: string,
+    staffId: string,
+    serviceId: string
   ): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/services/${serviceId}`
@@ -191,8 +191,8 @@ export class StaffService {
    * Create working hours for a staff member
    */
   async createWorkingHours(
-    storeId: number,
-    staffId: number,
+    storeId: string,
+    staffId: string,
     data: CreateWorkingHoursDto
   ): Promise<WorkingHours> {
     const response = await axiosInstance.post<WorkingHours>(
@@ -206,8 +206,8 @@ export class StaffService {
    * Get staff member's working hours
    */
   async getWorkingHours(
-    storeId: number,
-    staffId: number
+    storeId: string,
+    staffId: string
   ): Promise<WorkingHours[]> {
     const response = await axiosInstance.get<WorkingHours[]>(
       `/stores/${storeId}/staff/${staffId}/working-hours`
@@ -219,9 +219,9 @@ export class StaffService {
    * Update working hours
    */
   async updateWorkingHours(
-    storeId: number,
-    staffId: number,
-    workingHoursId: number,
+    storeId: string,
+    staffId: string,
+    workingHoursId: string,
     data: UpdateWorkingHoursDto
   ): Promise<WorkingHours> {
     const response = await axiosInstance.patch<WorkingHours>(
@@ -235,9 +235,9 @@ export class StaffService {
    * Delete working hours
    */
   async deleteWorkingHours(
-    storeId: number,
-    staffId: number,
-    workingHoursId: number
+    storeId: string,
+    staffId: string,
+    workingHoursId: string
   ): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/working-hours/${workingHoursId}`
@@ -250,8 +250,8 @@ export class StaffService {
    * Create a break/time off
    */
   async createStaffBreak(
-    storeId: number,
-    staffId: number,
+    storeId: string,
+    staffId: string,
     data: CreateStaffBreakDto
   ): Promise<StaffBreak> {
     const response = await axiosInstance.post<StaffBreak>(
@@ -265,8 +265,8 @@ export class StaffService {
    * Get staff member's breaks
    */
   async getStaffBreaks(
-    storeId: number,
-    staffId: number
+    storeId: string,
+    staffId: string
   ): Promise<StaffBreak[]> {
     const response = await axiosInstance.get<StaffBreak[]>(
       `/stores/${storeId}/staff/${staffId}/breaks`
@@ -278,9 +278,9 @@ export class StaffService {
    * Update a break
    */
   async updateStaffBreak(
-    storeId: number,
-    staffId: number,
-    breakId: number,
+    storeId: string,
+    staffId: string,
+    breakId: string,
     data: UpdateStaffBreakDto
   ): Promise<StaffBreak> {
     const response = await axiosInstance.patch<StaffBreak>(
@@ -294,9 +294,9 @@ export class StaffService {
    * Delete a break
    */
   async deleteStaffBreak(
-    storeId: number,
-    staffId: number,
-    breakId: number
+    storeId: string,
+    staffId: string,
+    breakId: string
   ): Promise<void> {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`

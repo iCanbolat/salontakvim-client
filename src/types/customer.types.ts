@@ -11,6 +11,7 @@ import type { Appointment } from "./appointment.types";
  */
 export interface Customer extends User {
   role: "customer";
+  publicNumber?: string;
 }
 
 /**
@@ -39,11 +40,11 @@ export interface CustomerProfile {
  * Customer note
  */
 export interface CustomerNote {
-  id: number;
-  customerId: number;
-  storeId: number;
+  id: string;
+  customerId: string;
+  storeId: string;
   note: string;
-  createdBy: number;
+  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }

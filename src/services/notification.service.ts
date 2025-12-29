@@ -10,7 +10,7 @@ export const notificationService = {
    * Get notification settings for the store
    */
   async getNotificationSettings(
-    storeId: number
+    storeId: string
   ): Promise<NotificationSettings> {
     const response = await axiosInstance.get<NotificationSettings>(
       `/stores/${storeId}/notifications/settings`
@@ -22,7 +22,7 @@ export const notificationService = {
    * Update notification settings
    */
   async updateNotificationSettings(
-    storeId: number,
+    storeId: string,
     data: UpdateNotificationSettingsDto
   ): Promise<NotificationSettings> {
     const response = await axiosInstance.patch<NotificationSettings>(
@@ -37,7 +37,7 @@ export const notificationService = {
     return response.data;
   },
 
-  async markAsRead(id: number): Promise<void> {
+  async markAsRead(id: string): Promise<void> {
     await axiosInstance.patch(`/notifications/${id}/read`);
   },
 

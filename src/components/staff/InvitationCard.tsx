@@ -21,7 +21,7 @@ import type { StaffInvitation } from "@/types";
 
 interface InvitationCardProps {
   invitation: StaffInvitation;
-  storeId: number;
+  storeId: string;
 }
 
 const statusConfig: Record<

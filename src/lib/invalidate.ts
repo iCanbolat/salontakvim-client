@@ -2,7 +2,7 @@ import type { QueryClient } from "@tanstack/react-query";
 
 export function invalidateAfterAppointmentChange(
   queryClient: QueryClient,
-  storeId: number
+  storeId: string
 ) {
   // Appointments list for this store
   queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });

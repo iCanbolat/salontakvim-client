@@ -4,7 +4,7 @@
  */
 
 export interface ServiceExtra {
-  id: number;
+  id: string;
   name: string;
   description?: string;
   price: string; // decimal as string from backend
@@ -14,9 +14,9 @@ export interface ServiceExtra {
 }
 
 export interface Service {
-  id: number;
-  storeId: number;
-  categoryId?: number;
+  id: string;
+  storeId: string;
+  categoryId?: string;
   name: string;
   description?: string;
   duration: number; // minutes
@@ -38,7 +38,7 @@ export interface Service {
 export interface CreateServiceDto {
   name: string;
   description?: string;
-  categoryId?: number;
+  categoryId?: string;
   duration: number;
   price: number;
   capacity?: number;
@@ -55,7 +55,7 @@ export interface CreateServiceDto {
 export interface UpdateServiceDto {
   name?: string;
   description?: string;
-  categoryId?: number;
+  categoryId?: string;
   duration?: number;
   price?: number;
   capacity?: number;

@@ -42,7 +42,7 @@ export function CustomersList() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
-  const [selectedCustomers, setSelectedCustomers] = useState<number[]>([]);
+  const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
 
@@ -89,7 +89,7 @@ export function CustomersList() {
     navigate(`/admin/customers/${customer.id}`);
   };
 
-  const handleSelectCustomer = (customerId: number, checked: boolean) => {
+  const handleSelectCustomer = (customerId: string, checked: boolean) => {
     if (checked) {
       setSelectedCustomers([...selectedCustomers, customerId]);
     } else {
@@ -335,7 +335,7 @@ export function CustomersList() {
                                 {customer.firstName} {customer.lastName}
                               </div>
                               <div className="text-xs text-gray-500">
-                                #{customer.id}
+                                #{customer.publicNumber || customer.id}
                               </div>
                             </td>
                             <td

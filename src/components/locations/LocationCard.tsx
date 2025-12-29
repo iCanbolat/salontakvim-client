@@ -20,7 +20,7 @@ import { Badge } from "@/components/ui/badge";
 
 interface LocationCardProps {
   location: Location;
-  storeId: number;
+  storeId: string;
   onEdit: (location: Location) => void;
 }
 

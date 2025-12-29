@@ -26,8 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { TimeOffDialog } from "./TimeOffDialog";
 
 interface TimeOffListProps {
-  storeId: number;
-  staffId: number;
+  storeId: string;
+  staffId: string;
   staffName: string;
 }
 

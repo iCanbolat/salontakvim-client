@@ -9,8 +9,8 @@ export interface SidebarMenuItems {
 }
 
 export interface WidgetSettings {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   layout: WidgetLayout;
   showCompanyEmail: boolean;
   companyEmail?: string;

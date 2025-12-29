@@ -4,8 +4,8 @@
  */
 
 export interface Category {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   name: string;
   description?: string;
   color?: string; // hex color
@@ -35,5 +35,5 @@ export interface UpdateCategoryDto {
 }
 
 export interface ReorderCategoriesDto {
-  categoryIds: number[];
+  categoryIds: string[];
 }

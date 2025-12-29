@@ -23,8 +23,8 @@ export interface DashboardStats {
 }
 
 export interface RecentActivity {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   type: "appointment" | "customer" | "staff";
   message: string;
   metadata?: any;
@@ -65,10 +65,10 @@ export interface AnalyticsQuery {
   dateRange?: DateRangePreset;
   startDate?: string;
   endDate?: string;
-  serviceId?: number;
-  staffId?: number;
-  locationId?: number;
-  categoryId?: number;
+  serviceId?: string;
+  staffId?: string;
+  locationId?: string;
+  categoryId?: string;
   groupBy?: GroupBy;
   limit?: number;
 }
@@ -93,7 +93,7 @@ export interface AppointmentByTimeSlot {
 }
 
 export interface AppointmentByService {
-  serviceId: number;
+  serviceId: string;
   serviceName: string;
   count: number;
   revenue: string;
@@ -101,7 +101,7 @@ export interface AppointmentByService {
 }
 
 export interface AppointmentByStaff {
-  staffId: number;
+  staffId: string;
   staffName: string;
   count: number;
   revenue: string;
@@ -131,7 +131,7 @@ export interface RevenueByDate {
 }
 
 export interface RevenueByService {
-  serviceId: number;
+  serviceId: string;
   serviceName: string;
   revenue: string;
   appointmentCount: number;
@@ -139,7 +139,7 @@ export interface RevenueByService {
 }
 
 export interface RevenueByStaff {
-  staffId: number;
+  staffId: string;
   staffName: string;
   revenue: string;
   appointmentCount: number;

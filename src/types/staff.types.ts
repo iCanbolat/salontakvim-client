@@ -4,10 +4,10 @@
  */
 
 export interface StaffMember {
-  id: number;
-  userId: number;
-  storeId: number;
-  locationId?: number;
+  id: string;
+  userId: string;
+  storeId: string;
+  locationId?: string;
   locationName?: string | null;
   bio?: string;
   title?: string;
@@ -32,13 +32,13 @@ export type DayOfWeek =
   | "sunday";
 
 export interface StaffInvitation {
-  id: number;
-  storeId: number;
+  id: string;
+  storeId: string;
   email: string;
   token: string;
   status: "pending" | "accepted" | "expired" | "cancelled";
-  invitedBy?: number;
-  locationId?: number | null;
+  invitedBy?: string;
+  locationId?: string | null;
   locationName?: string | null;
   title?: string | null;
   expiresAt: string;
@@ -49,7 +49,7 @@ export interface StaffInvitation {
 export interface InviteStaffDto {
   email: string;
   title?: string;
-  locationId?: number;
+  locationId?: string;
 }
 
 export interface AcceptStaffInvitationDto {
@@ -60,11 +60,11 @@ export interface AcceptStaffInvitationDto {
 }
 
 export interface StaffInvitationDetails {
-  id: number;
+  id: string;
   email: string;
-  storeId: number;
+  storeId: string;
   storeName: string | null;
-  locationId: number | null;
+  locationId: string | null;
   locationName: string | null;
   title: string | null;
   status: "pending" | "accepted" | "expired" | "cancelled";
@@ -74,17 +74,17 @@ export interface StaffInvitationDetails {
 export interface UpdateStaffProfileDto {
   bio?: string;
   title?: string;
-  locationId?: number;
+  locationId?: string;
   isVisible?: boolean;
 }
 
 export interface AssignServicesDto {
-  serviceIds: number[];
+  serviceIds: string[];
 }
 
 export interface WorkingHours {
-  id: number;
-  staffId: number;
+  id: string;
+  staffId: string;
   dayOfWeek: DayOfWeek;
   startTime: string; // HH:mm format
   endTime: string; // HH:mm format
@@ -108,8 +108,8 @@ export interface UpdateWorkingHoursDto {
 }
 
 export interface StaffBreak {
-  id: number;
-  staffId: number;
+  id: string;
+  staffId: string;
   type?: StaffBreakType;
   status: StaffBreakStatus;
   startDate: string;

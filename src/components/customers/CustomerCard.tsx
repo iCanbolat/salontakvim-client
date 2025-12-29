@@ -49,7 +49,9 @@ export function CustomerCard({
                 </Badge>
               )}
             </div>
-            <CardDescription>Customer #{customer.id}</CardDescription>
+            <CardDescription>
+              Customer #{customer.publicNumber || customer.id}
+            </CardDescription>
           </div>
           <Checkbox
             checked={isSelected}

@@ -58,7 +58,7 @@ const serviceSchema = z.object({
 type ServiceFormData = z.infer<typeof serviceSchema>;
 
 interface ServiceFormDialogProps {
-  storeId: number;
+  storeId: string;
   service?: Service | null;
   open: boolean;
   onClose: () => void;

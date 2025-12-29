@@ -14,9 +14,9 @@ import { notificationService } from "@/services/notification.service";
 import type { RecentActivity } from "@/types";
 
 export interface Notification {
-  id: number;
-  userId: number;
-  storeId: number;
+  id: string;
+  userId: string;
+  storeId: string;
   title: string;
   message: string;
   type: string;
@@ -31,7 +31,7 @@ interface NotificationContextValue {
   notifications: Notification[];
   unreadCount: number;
   latestNotification: Notification | null;
-  markAsRead: (id: number) => Promise<void>;
+  markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
 
@@ -70,7 +70,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const [latestNotification, setLatestNotification] =
     useState<Notification | null>(null);
-  
+
   const resolveToastVariant = (type: string): ToastVariant => {
     if (type === "appointment_cancelled") return "error";
     if (type === "appointment_created") return "success";

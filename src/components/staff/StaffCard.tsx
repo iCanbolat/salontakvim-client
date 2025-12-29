@@ -20,7 +20,7 @@ import type { StaffMember } from "@/types";
 
 interface StaffCardProps {
   staff: StaffMember;
-  storeId: number;
+  storeId: string;
 }
 
 export function StaffCard({ staff, storeId }: StaffCardProps) {
@@ -147,7 +147,7 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
         <Button
           asChild
           size="sm"
-          variant={'outline'}
+          variant={"outline"}
           disabled={
             toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
           }
