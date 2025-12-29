@@ -3,7 +3,7 @@
  * Displays and manages all appointments
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import {
   keepPreviousData,
   useQuery,
@@ -14,31 +14,20 @@ import {
   Loader2,
   AlertCircle,
   Calendar as CalendarIcon,
-  X,
-  LayoutGrid,
-  List,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
 import { useSearchParams } from "react-router-dom";
 import { useDebouncedSearch, useMediaQuery } from "@/hooks";
 import { storeService, appointmentService, staffService } from "@/services";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SearchInput } from "@/components/ui/search-input";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "@/components/appointments/AppointmentStatusDialog";
 import { AppointmentsCalendar } from "@/components/appointments/AppointmentsCalendar";
-import { PaginationControls } from "@/components/ui/PaginationControls";
+import { PageView } from "@/components/common/page-view";
+import type { FilterTab } from "@/components/common/page-view";
 import { AppointmentsListTable } from "./AppointmentsListTable";
 import type {
   Appointment,
@@ -48,6 +37,8 @@ import type {
 } from "@/types";
 import { useNotifications, useAuth } from "@/contexts";
 import { cn } from "@/lib/utils";
+
+type AppointmentFilter = AppointmentStatus | "all";
 
 export function AppointmentsList() {
   const { user } = useAuth();
@@ -59,7 +50,7 @@ export function AppointmentsList() {
     useState<Appointment | null>(null);
   const [statusUpdateAppointment, setStatusUpdateAppointment] =
     useState<Appointment | null>(null);
-  const [activeTab, setActiveTab] = useState<AppointmentStatus | "all">("all");
+  const [activeTab, setActiveTab] = useState<AppointmentFilter>("all");
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"grid" | "list" | "calendar">("grid");
@@ -69,7 +60,6 @@ export function AppointmentsList() {
   >();
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
-  // const isXl = useMediaQuery("(min-width: 1280px)");
   const itemsPerPage = 8;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,
@@ -115,25 +105,6 @@ export function AppointmentsList() {
       to: to ?? from,
     });
   }, [searchParams]);
-
-  const handleDatePopoverChange = (open: boolean) => {
-    setIsDatePopoverOpen(open);
-    if (open) {
-      setPendingDateRange(dateRange);
-    } else {
-      setPendingDateRange(undefined);
-    }
-  };
-
-  const handleApplyDateRange = () => {
-    setDateRange(pendingDateRange);
-    setIsDatePopoverOpen(false);
-  };
-
-  const handleClearDateRange = () => {
-    setDateRange(undefined);
-    setPendingDateRange(undefined);
-  };
 
   // Keep URL in sync with search text so deep links / notifications can prefill
   useEffect(() => {
@@ -258,6 +229,33 @@ export function AppointmentsList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Filter tabs configuration
+  const filterTabs: FilterTab<AppointmentFilter>[] = useMemo(
+    () => [
+      { value: "all", label: "All", count: statusCounts.all },
+      { value: "pending", label: "Pending", count: statusCounts.pending },
+      { value: "confirmed", label: "Confirmed", count: statusCounts.confirmed },
+      { value: "completed", label: "Completed", count: statusCounts.completed },
+      { value: "cancelled", label: "Cancelled", count: statusCounts.cancelled },
+      { value: "no_show", label: "No Show", count: statusCounts.no_show },
+      { value: "expired", label: "Expired", count: statusCounts.expired },
+    ],
+    [statusCounts]
+  );
+
+  // Empty state message
+  const emptyTitle = debouncedSearch
+    ? `No appointments matching "${debouncedSearch}"`
+    : activeTab !== "all"
+    ? `No appointments with status "${activeTab}"`
+    : "No appointments";
+
+  const emptyDescription = debouncedSearch
+    ? "Try adjusting your search keywords or filters"
+    : activeTab === "all"
+    ? "Create your first appointment to get started"
+    : "No appointments match this status filter";
+
   if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -325,208 +323,65 @@ export function AppointmentsList() {
         </div>
       )}
 
-      {/* Appointments List with Status Tabs - Always visible on mobile */}
-      <Card
-        className={cn(
-          view === "calendar" ? "block md:hidden" : "block",
-          view === "list" && "h-full"
+      {/* Appointments List with Status Tabs */}
+      <PageView<Appointment, AppointmentFilter>
+        data={appointments}
+        // Search
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        searchPlaceholder="Search..."
+        // View Toggle
+        view={view === "calendar" ? "grid" : view}
+        onViewChange={(next) => setView(next)}
+        // Date Range
+        showDatePicker
+        dateRange={dateRange}
+        onDateRangeChange={setDateRange}
+        pendingDateRange={pendingDateRange}
+        onPendingDateRangeChange={setPendingDateRange}
+        isDatePopoverOpen={isDatePopoverOpen}
+        onDatePopoverOpenChange={setIsDatePopoverOpen}
+        // Filter Tabs
+        filterTabs={filterTabs}
+        activeFilter={activeTab}
+        onFilterChange={setActiveTab}
+        // Grid View
+        renderGridItem={(appointment) => (
+          <AppointmentCard
+            key={appointment.id}
+            appointment={appointment}
+            storeId={store.id}
+            onEdit={handleEdit}
+            onChangeStatus={setStatusUpdateAppointment}
+          />
         )}
-      >
-        <CardHeader className="flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between">
-          <div className="w-full md:w-64">
-            <SearchInput
-              value={searchTerm}
-              onChange={setSearchTerm}
-              placeholder="Search..."
-              className="w-full"
-            />
-          </div>
-
-          <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-            <div className="flex w-full md:w-auto">
-              <Popover
-                open={isDatePopoverOpen}
-                onOpenChange={handleDatePopoverChange}
-              >
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={dateRange?.from ? "secondary" : "outline"}
-                    size="lg"
-                    className={`justify-start gap-2 text-left font-normal relative ${
-                      dateRange?.from
-                        ? "w-full md:w-[calc(15rem-2.25rem)] border"
-                        : "w-full md:w-60"
-                    }`}
-                  >
-                    <CalendarIcon className="h-4 w-4 shrink-0" />
-                    {dateRange?.from ? (
-                      dateRange.to ? (
-                        <>
-                          {format(dateRange.from, "LLL dd")} -{" "}
-                          {format(dateRange.to, "LLL dd")}
-                        </>
-                      ) : (
-                        format(dateRange.from, "LLL dd")
-                      )
-                    ) : (
-                      <span>Pick a date range</span>
-                    )}
-                    {dateRange?.from && (
-                      <Button
-                        variant={dateRange?.from ? "secondary" : "ghost"}
-                        onClick={handleClearDateRange}
-                        className="absolute right-1 top-1 border-none border-b w-7 h-7 hover:bg-primary/50 rounded-4xl focus:ring-0"
-                      >
-                        <X />
-                      </Button>
-                    )}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="range"
-                    defaultMonth={(pendingDateRange ?? dateRange)?.from}
-                    selected={pendingDateRange ?? dateRange}
-                    onSelect={setPendingDateRange}
-                  />
-                  <div className="flex items-center gap-2 border-t p-3">
-                    <Button
-                      size="sm"
-                      className="w-full"
-                      onClick={handleApplyDateRange}
-                      disabled={!pendingDateRange?.from && !dateRange?.from}
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="hidden md:flex items-center border rounded-md p-1 bg-gray-50">
-              <Button
-                variant={view === "grid" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setView("grid")}
-              >
-                <LayoutGrid className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={view === "list" ? "secondary" : "ghost"}
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setView("list")}
-              >
-                <List className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className={cn(view === "list" && "h-full")}>
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => setActiveTab(v as AppointmentStatus | "all")}
-            className={cn(view === "list" && "h-full")}
-          >
-            <div className="overflow-x-auto -mx-2 px-2 mb-4">
-              <TabsList className="inline-flex w-auto min-w-full">
-                <TabsTrigger value="all" className="whitespace-nowrap">
-                  All ({statusCounts.all})
-                </TabsTrigger>
-                <TabsTrigger value="pending" className="whitespace-nowrap">
-                  Pending ({statusCounts.pending})
-                </TabsTrigger>
-                <TabsTrigger value="confirmed" className="whitespace-nowrap">
-                  Confirmed ({statusCounts.confirmed})
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="whitespace-nowrap">
-                  Completed ({statusCounts.completed})
-                </TabsTrigger>
-                <TabsTrigger value="cancelled" className="whitespace-nowrap">
-                  Cancelled ({statusCounts.cancelled})
-                </TabsTrigger>
-                <TabsTrigger value="no_show" className="whitespace-nowrap">
-                  No Show ({statusCounts.no_show})
-                </TabsTrigger>
-                <TabsTrigger value="expired" className="whitespace-nowrap">
-                  Expired ({statusCounts.expired})
-                </TabsTrigger>
-              </TabsList>
-            </div>
-
-            <TabsContent
-              value={activeTab}
-              className={cn(view === "list" && "h-full")}
-            >
-              {appointments.length > 0 ? (
-                <div
-                  className={cn(
-                    "flex flex-col",
-                    view === "grid" && totalPages > 1 && "min-h-[850px]",
-                    view === "list" && "h-full"
-                  )}
-                >
-                  {view === "list" ? (
-                    <AppointmentsListTable
-                      appointments={appointments}
-                      onEdit={handleEdit}
-                    />
-                  ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch">
-                      {appointments.map((appointment) => (
-                        <AppointmentCard
-                          key={appointment.id}
-                          appointment={appointment}
-                          storeId={store.id}
-                          onEdit={handleEdit}
-                          onChangeStatus={setStatusUpdateAppointment}
-                        />
-                      ))}
-                    </div>
-                  )}
-                  <div className="mt-auto">
-                    <PaginationControls
-                      currentPage={page}
-                      totalPages={totalPages}
-                      onPageChange={handlePageChange}
-                      canGoPrevious={page > 1}
-                      canGoNext={page < totalPages}
-                      startIndex={startIndex}
-                      endIndex={endIndex}
-                      totalItems={totalItems}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <CalendarIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No appointments
-                    {debouncedSearch
-                      ? ` matching "${debouncedSearch}"`
-                      : activeTab !== "all"
-                      ? ` with status "${activeTab}"`
-                      : ""}
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    {debouncedSearch
-                      ? "Try adjusting your search keywords or filters"
-                      : activeTab === "all"
-                      ? "Create your first appointment to get started"
-                      : "No appointments match this status filter"}
-                  </p>
-                  {activeTab === "all" && user?.role === "admin" && (
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      New Appointment
-                    </Button>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+        // Table View
+        renderTableView={(data) => (
+          <AppointmentsListTable appointments={data} onEdit={handleEdit} />
+        )}
+        // Pagination
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={handlePageChange}
+        startIndex={startIndex}
+        endIndex={endIndex}
+        totalItems={totalItems}
+        // Empty State
+        emptyIcon={<CalendarIcon className="h-12 w-12 text-gray-400 mx-auto" />}
+        emptyTitle={emptyTitle}
+        emptyDescription={emptyDescription}
+        emptyAction={
+          activeTab === "all" &&
+          user?.role === "admin" && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Appointment
+            </Button>
+          )
+        }
+        // Card wrapper
+        cardClassName={cn(view === "calendar" ? "block md:hidden" : "block")}
+      />
 
       {/* Create/Edit Dialog */}
       <AppointmentFormDialog

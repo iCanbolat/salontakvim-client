@@ -129,13 +129,6 @@ export function ServicesList() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>All Services</CardTitle>
-              <CardDescription>
-                {services?.length || 0} service
-                {services?.length !== 1 ? "s" : ""} total
-              </CardDescription>
-            </div>
             <div className="w-72">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -146,6 +139,13 @@ export function ServicesList() {
                   className="pl-10"
                 />
               </div>
+            </div>
+            <div>
+              <CardTitle>All Services</CardTitle>
+              <CardDescription>
+                {services?.length || 0} service
+                {services?.length !== 1 ? "s" : ""} total
+              </CardDescription>
             </div>
           </div>
         </CardHeader>
