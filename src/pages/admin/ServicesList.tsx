@@ -3,29 +3,26 @@
  * Displays and manages all services with create/edit functionality
  */
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus, Loader2, AlertCircle, Search } from "lucide-react";
 import { usePagination } from "@/hooks";
 import { storeService, serviceService } from "@/services";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ServiceCard, ServiceFormDialog } from "@/components/services";
-import { PaginationControls } from "@/components/ui/PaginationControls";
+import {
+  PageView,
+  TableView,
+  type TableColumn,
+} from "@/components/common/page-view";
 import type { Service } from "@/types";
 
 export function ServicesList() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [view, setView] = useState<"grid" | "list">("grid");
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -59,14 +56,99 @@ export function ServicesList() {
     currentPage,
     totalPages,
     goToPage,
-    canGoNext,
-    canGoPrevious,
     startIndex,
     endIndex,
   } = usePagination({
     items: filteredServices || [],
     itemsPerPage: 6,
   });
+
+  useEffect(() => {
+    goToPage(1);
+  }, [searchQuery, goToPage]);
+
+  const tableColumns: TableColumn<Service>[] = useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Service",
+        render: (service) => (
+          <div className="flex items-center gap-2">
+            {service.color && (
+              <span
+                className="h-3 w-3 rounded-full border border-border"
+                style={{ backgroundColor: service.color }}
+                aria-label="Service color"
+              />
+            )}
+            <div className="flex flex-col">
+              <span className="font-medium">{service.name}</span>
+              {service.description && (
+                <span className="text-sm text-muted-foreground line-clamp-1">
+                  {service.description}
+                </span>
+              )}
+            </div>
+          </div>
+        ),
+      },
+      {
+        key: "duration",
+        header: "Duration",
+        render: (service) => <span>{service.duration} min</span>,
+        hideOnMobile: true,
+      },
+      {
+        key: "capacity",
+        header: "Capacity",
+        render: (service) => (
+          <span>
+            {service.capacity} {service.capacity === 1 ? "person" : "people"}
+          </span>
+        ),
+        hideOnMobile: true,
+      },
+      {
+        key: "price",
+        header: "Price",
+        render: (service) => (
+          <span className="font-medium">
+            ₺{Number(service.price).toFixed(2)}
+          </span>
+        ),
+        hideOnMobile: true,
+        hideOnTablet: true,
+      },
+      {
+        key: "visibility",
+        header: "Visibility",
+        render: (service) => (
+          <span className="text-sm font-medium">
+            {service.isVisible ? "Visible" : "Hidden"}
+          </span>
+        ),
+        hideOnTablet: true,
+      },
+      {
+        key: "actions",
+        header: "",
+        render: (service) => (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={(e) => {
+              e.stopPropagation();
+              setEditingService(service);
+            }}
+          >
+            Edit
+          </Button>
+        ),
+        cellClassName: "text-right",
+      },
+    ],
+    [setEditingService]
+  );
 
   const handleEdit = (service: Service) => {
     setEditingService(service);
@@ -125,85 +207,53 @@ export function ServicesList() {
         </Button>
       </div>
 
-      {/* Search and Stats */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div className="w-72">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                  placeholder="Search services..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-            <div>
-              <CardTitle>All Services</CardTitle>
-              <CardDescription>
-                {services?.length || 0} service
-                {services?.length !== 1 ? "s" : ""} total
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {filteredServices && filteredServices.length > 0 ? (
-            <div
-              className={`flex flex-col ${
-                totalPages > 1 ? "min-h-[600px]" : ""
-              }`}
-            >
-              <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 pb-4">
-                {paginatedItems.map((service) => (
-                  <ServiceCard
-                    key={service.id}
-                    service={service}
-                    storeId={store.id}
-                    onEdit={handleEdit}
-                  />
-                ))}
-              </div>
-              <div className="mt-auto">
-                <PaginationControls
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={goToPage}
-                  canGoPrevious={canGoPrevious}
-                  canGoNext={canGoNext}
-                  startIndex={startIndex}
-                  endIndex={endIndex}
-                  totalItems={filteredServices.length}
-                />
-              </div>
-            </div>
-          ) : searchQuery ? (
-            <div className="text-center py-12">
-              <Search className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No services found
-              </h3>
-              <p className="text-gray-600">Try adjusting your search query</p>
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
-                No services yet
-              </h3>
-              <p className="text-gray-600 mb-4">
-                Get started by creating your first service
-              </p>
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Service
-              </Button>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      <PageView<Service>
+        data={paginatedItems}
+        searchValue={searchQuery}
+        onSearchChange={(value) => setSearchQuery(value)}
+        searchPlaceholder="Search services..."
+        view={view}
+        onViewChange={setView}
+        gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
+        gridMinHeightClassName="min-h-[600px]"
+        renderGridItem={(service) => (
+          <ServiceCard
+            key={service.id}
+            service={service}
+            storeId={store.id}
+            onEdit={handleEdit}
+          />
+        )}
+        renderTableView={(data) => (
+          <TableView
+            data={data}
+            columns={tableColumns}
+            getRowKey={(service) => service.id}
+            onRowClick={setEditingService}
+          />
+        )}
+        currentPage={totalPages === 0 ? 1 : currentPage}
+        totalPages={Math.max(totalPages, 1)}
+        onPageChange={goToPage}
+        startIndex={paginatedItems.length === 0 ? 0 : startIndex}
+        endIndex={paginatedItems.length === 0 ? 0 : endIndex}
+        totalItems={filteredServices?.length ?? 0}
+        emptyIcon={<Search className="h-12 w-12 text-gray-400 mx-auto" />}
+        emptyTitle={searchQuery ? "No services found" : "No services yet"}
+        emptyDescription={
+          searchQuery
+            ? "Try adjusting your search keywords"
+            : "Get started by creating your first service"
+        }
+        emptyAction={
+          !searchQuery && (
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Service
+            </Button>
+          )
+        }
+      />
 
       {/* Create/Edit Dialog */}
       <ServiceFormDialog

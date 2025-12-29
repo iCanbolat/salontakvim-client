@@ -19,7 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PaginationControls } from "@/components/ui/PaginationControls";
+import { PaginationControls } from "@/components/common/PaginationControls";
 import { ViewToggle } from "../ViewToggle";
 
 export type FilterTab<T extends string = string> = {
@@ -59,6 +59,10 @@ export type PageViewProps<TData, TFilter extends string = string> = {
   // Grid View
   renderGridItem: (item: TData, index: number) => ReactNode;
   gridClassName?: string;
+  /** Optional override for grid column min width (e.g. "md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]") */
+  gridMinColumnClassName?: string;
+  /** Optional override for grid min-height when paginated */
+  gridMinHeightClassName?: string;
 
   // Table/List View
   renderTableView?: (data: TData[]) => ReactNode;
@@ -106,6 +110,8 @@ export function PageView<TData, TFilter extends string = string>({
   onFilterChange,
   renderGridItem,
   gridClassName,
+  gridMinColumnClassName,
+  gridMinHeightClassName,
   renderTableView,
   currentPage,
   totalPages,
@@ -161,7 +167,9 @@ export function PageView<TData, TFilter extends string = string>({
       <div
         className={cn(
           "flex flex-col",
-          view === "grid" && totalPages > 1 && "min-h-[850px]",
+          view === "grid" &&
+            totalPages > 1 &&
+            (gridMinHeightClassName ?? "min-h-[850px]"),
           view === "list" && "h-full"
         )}
       >
@@ -170,7 +178,9 @@ export function PageView<TData, TFilter extends string = string>({
         ) : (
           <div
             className={cn(
-              "grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-4 items-stretch transition-all duration-300",
+              "grid grid-cols-1 gap-4 items-stretch transition-all duration-300",
+              gridMinColumnClassName ??
+                "md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]",
               gridClassName
             )}
           >

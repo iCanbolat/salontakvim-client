@@ -93,6 +93,7 @@ export class StaffService {
           includeHidden?: boolean;
           serviceId?: string;
           locationId?: string;
+          search?: string;
         } = false
   ): Promise<StaffMember[]> {
     const options =
@@ -107,6 +108,7 @@ export class StaffService {
           includeHidden: options.includeHidden ? "true" : "false",
           serviceId: options.serviceId,
           locationId: options.locationId,
+          search: options.search,
         },
       }
     );

@@ -3,9 +3,14 @@
  * Displays staff members and invitations
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
@@ -36,7 +41,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StaffCard } from "@/components/staff/StaffCard";
 import { InvitationCard } from "@/components/staff/InvitationCard";
 import { InviteStaffDialog } from "@/components/staff/InviteStaffDialog";
-import { PaginationControls } from "@/components/ui/PaginationControls";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import {
+  PageView,
+  TableView,
+  type TableColumn,
+} from "@/components/common/page-view";
+import type { StaffMember } from "@/types";
+import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 
 type TimeOffStatusFilter = "all" | StaffBreakStatus;
 
@@ -44,21 +56,38 @@ export function StaffList() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState("staff");
+  const [searchTerm, setSearchTerm] = useState("");
   const [timeOffStatus, setTimeOffStatus] =
     useState<TimeOffStatusFilter>("pending");
+  const [view, setView] = useState<"grid" | "list">("grid");
   const queryClient = useQueryClient();
+  const debouncedSearchTerm = useDebouncedSearch(searchTerm);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
     if (tabParam && ["staff", "invitations", "timeoffs"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
+
+    const searchParam = searchParams.get("search") ?? "";
+    setSearchTerm(searchParam);
   }, [searchParams]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
     const next = new URLSearchParams(searchParams);
     next.set("tab", value);
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    const next = new URLSearchParams(searchParams);
+    if (value) {
+      next.set("search", value);
+    } else {
+      next.delete("search");
+    }
     setSearchParams(next, { replace: true });
   };
 
@@ -71,12 +100,17 @@ export function StaffList() {
   // Fetch staff members
   const {
     data: staffMembers,
-    isLoading: staffLoading,
+    isPending: staffPending,
     error: staffError,
   } = useQuery({
-    queryKey: ["staff", store?.id],
-    queryFn: () => staffService.getStaffMembers(store!.id, true),
+    queryKey: ["staff", store?.id, debouncedSearchTerm],
+    queryFn: () =>
+      staffService.getStaffMembers(store!.id, {
+        includeHidden: true,
+        search: debouncedSearchTerm || undefined,
+      }),
     enabled: !!store?.id,
+    placeholderData: keepPreviousData,
   });
 
   // Fetch invitations
@@ -124,7 +158,8 @@ export function StaffList() {
     },
   });
 
-  const isLoading = storeLoading || staffLoading || invitationsLoading;
+  const isInitialLoading =
+    (storeLoading || staffPending || invitationsLoading) && !staffMembers;
 
   const handleCloseInvite = () => {
     setIsInviteDialogOpen(false);
@@ -139,14 +174,63 @@ export function StaffList() {
     currentPage: staffPage,
     totalPages: staffTotalPages,
     goToPage: goToStaffPage,
-    canGoNext: canGoNextStaff,
-    canGoPrevious: canGoPreviousStaff,
     startIndex: staffStartIndex,
     endIndex: staffEndIndex,
   } = usePagination({
     items: staffMembers || [],
     itemsPerPage: 12,
   });
+
+  const staffTableColumns: TableColumn<StaffMember>[] = useMemo(
+    () => [
+      {
+        key: "name",
+        header: "Staff",
+        render: (staff) => (
+          <div className="flex flex-col">
+            <span className="font-medium">
+              {staff.fullName ||
+                `${staff.firstName ?? ""} ${staff.lastName ?? ""}`.trim() ||
+                staff.email}
+            </span>
+            {staff.title && (
+              <span className="text-sm text-muted-foreground line-clamp-1">
+                {staff.title}
+              </span>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: "email",
+        header: "Email",
+        render: (staff) => (
+          <span className="text-sm">{staff.email || "-"}</span>
+        ),
+        hideOnMobile: true,
+      },
+      {
+        key: "location",
+        header: "Location",
+        render: (staff) => (
+          <span className="text-sm">{staff.locationName || "-"}</span>
+        ),
+        hideOnMobile: true,
+        hideOnTablet: true,
+      },
+      {
+        key: "visibility",
+        header: "Visibility",
+        render: (staff) => (
+          <Badge variant="outline" className="text-xs">
+            {staff.isVisible ? "Visible" : "Hidden"}
+          </Badge>
+        ),
+        hideOnTablet: true,
+      },
+    ],
+    []
+  );
 
   const handleStaffPageChange = (page: number) => {
     goToStaffPage(page);
@@ -226,7 +310,7 @@ export function StaffList() {
     });
   };
 
-  if (isLoading) {
+  if (isInitialLoading) {
     return (
       <div className="flex items-center justify-center h-96">
         <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
@@ -255,6 +339,15 @@ export function StaffList() {
   if (!store) {
     return null;
   }
+
+  // Empty state messages based on search
+  const emptyTitle = debouncedSearchTerm
+    ? `No staff matching "${debouncedSearchTerm}"`
+    : "No staff members yet";
+
+  const emptyDescription = debouncedSearchTerm
+    ? "Try adjusting your search query"
+    : "Start by inviting your first team member";
 
   return (
     <div className="space-y-6">
@@ -292,59 +385,45 @@ export function StaffList() {
 
         {/* Staff Members Tab */}
         <TabsContent value="staff" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Team Members</CardTitle>
-              <CardDescription>
-                Active staff members in your store
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {staffMembers && staffMembers.length > 0 ? (
-                <div
-                  className={`flex flex-col ${
-                    staffTotalPages > 1 ? "min-h-[600px]" : ""
-                  }`}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4 pb-4">
-                    {paginatedStaff.map((staff) => (
-                      <StaffCard
-                        key={staff.id}
-                        staff={staff}
-                        storeId={store.id}
-                      />
-                    ))}
-                  </div>
-                  <div className="mt-auto">
-                    <PaginationControls
-                      currentPage={staffPage}
-                      totalPages={staffTotalPages}
-                      onPageChange={handleStaffPageChange}
-                      canGoPrevious={canGoPreviousStaff}
-                      canGoNext={canGoNextStaff}
-                      startIndex={staffStartIndex}
-                      endIndex={staffEndIndex}
-                      totalItems={staffMembers.length}
-                    />
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12">
-                  <UsersIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">
-                    No staff members yet
-                  </h3>
-                  <p className="text-gray-600 mb-4">
-                    Start by inviting your first team member
-                  </p>
-                  <Button onClick={() => setIsInviteDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Invite Staff
-                  </Button>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+          <PageView<StaffMember>
+            data={paginatedStaff}
+            searchValue={searchTerm}
+            onSearchChange={handleSearchChange}
+            searchPlaceholder="Search staff"
+            view={view}
+            onViewChange={setView}
+            gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
+            gridMinHeightClassName="min-h-[600px]"
+            renderGridItem={(staff) => (
+              <StaffCard key={staff.id} staff={staff} storeId={store.id} />
+            )}
+            renderTableView={(data) => (
+              <TableView
+                data={data}
+                columns={staffTableColumns}
+                getRowKey={(staff) => staff.id}
+              />
+            )}
+            currentPage={staffTotalPages === 0 ? 1 : staffPage}
+            totalPages={Math.max(staffTotalPages, 1)}
+            onPageChange={handleStaffPageChange}
+            startIndex={paginatedStaff.length === 0 ? 0 : staffStartIndex}
+            endIndex={paginatedStaff.length === 0 ? 0 : staffEndIndex}
+            totalItems={staffMembers?.length ?? 0}
+            emptyIcon={
+              <UsersIcon className="h-12 w-12 text-gray-400 mx-auto" />
+            }
+            emptyTitle={emptyTitle}
+            emptyDescription={emptyDescription}
+            emptyAction={
+              !debouncedSearchTerm ? (
+                <Button onClick={() => setIsInviteDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Invite Staff
+                </Button>
+              ) : undefined
+            }
+          />
         </TabsContent>
 
         {/* Invitations Tab */}
