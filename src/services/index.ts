@@ -15,3 +15,4 @@ export * from "./break.service";
 export * from "./customer.service";
 export * from "./notification.service";
 export * from "./activity.service";
+export * from "./widget-public.service";

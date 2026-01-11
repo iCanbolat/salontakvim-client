@@ -42,6 +42,7 @@ import {
   Loader2,
   Eye,
   Save,
+  Globe2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { WidgetPreview } from "@/components/widget";
@@ -51,7 +52,7 @@ export default function WidgetSettings() {
   const [showPreview, setShowPreview] = useState(true);
   const [copiedKey, setCopiedKey] = useState(false);
   const [copiedEmbed, setCopiedEmbed] = useState(false);
-  const [copiedIframe, setCopiedIframe] = useState(false);
+  const [domainsInput, setDomainsInput] = useState("");
   const [pendingChanges, setPendingChanges] = useState<UpdateWidgetSettingsDto>(
     {}
   );
@@ -80,6 +81,12 @@ export default function WidgetSettings() {
     queryFn: () => widgetService.getEmbedCode(store!.id),
     enabled: !!store?.id,
   });
+
+  useEffect(() => {
+    if (settings?.allowedDomains) {
+      setDomainsInput(settings.allowedDomains.join("\n"));
+    }
+  }, [settings?.allowedDomains]);
 
   // Update settings mutation
   const updateMutation = useMutation({
@@ -114,6 +121,21 @@ export default function WidgetSettings() {
     },
   });
 
+  const updateAllowedDomainsMutation = useMutation({
+    mutationFn: (domains: string[]) =>
+      widgetService.updateAllowedDomains(store!.id, domains),
+    onSuccess: (data) => {
+      setDomainsInput(data.allowedDomains.join("\n"));
+      queryClient.invalidateQueries({
+        queryKey: ["widgetSettings", store?.id],
+      });
+      toast.success("Allowed domains updated");
+    },
+    onError: () => {
+      toast.error("Failed to update allowed domains");
+    },
+  });
+
   // Local update handler - updates pending changes without API call
   const handleUpdate = (
     field: keyof UpdateWidgetSettingsDto,
@@ -136,8 +158,20 @@ export default function WidgetSettings() {
     toast.info("Changes reset");
   };
 
-  // Check if there are unsaved changes
+  // Check if there are unsaved settings changes (excluding domains textarea)
   const hasUnsavedChanges = Object.keys(pendingChanges).length > 0;
+
+  // Track if domain allowlist differs from saved state
+  const hasDomainChanges = useMemo(() => {
+    if (!settings) return false;
+    const current = settings.allowedDomains || [];
+    const next = domainsInput
+      .split(/[\n,]/)
+      .map((domain) => domain.trim())
+      .filter(Boolean);
+    if (current.length !== next.length) return true;
+    return current.some((domain, index) => domain !== next[index]);
+  }, [domainsInput, settings]);
 
   // Merged settings: original settings + pending changes for preview
   const previewSettings = useMemo((): WidgetSettingsType | null => {
@@ -195,15 +229,6 @@ export default function WidgetSettings() {
     }
   };
 
-  const handleCopyIframe = () => {
-    if (embedCode?.iframeCode) {
-      navigator.clipboard.writeText(embedCode.iframeCode);
-      setCopiedIframe(true);
-      toast.success("Iframe code copied to clipboard");
-      setTimeout(() => setCopiedIframe(false), 2000);
-    }
-  };
-
   const handleRegenerateKey = () => {
     if (
       confirm(
@@ -212,6 +237,43 @@ export default function WidgetSettings() {
     ) {
       regenerateMutation.mutate();
     }
+  };
+
+  const parseDomainsInput = () => {
+    const parsed = domainsInput
+      .split(/[\n,]/)
+      .map((domain) => domain.trim())
+      .filter(Boolean);
+
+    const unique = Array.from(new Set(parsed));
+
+    const invalid = unique.filter((domain) => {
+      const cleaned = domain.startsWith("*.") ? domain.slice(2) : domain;
+      if (!cleaned || cleaned.includes(" ")) return true;
+      try {
+        const url = new URL(`http://${cleaned}`);
+        return !url.hostname;
+      } catch {
+        return true;
+      }
+    });
+
+    return { unique, invalid };
+  };
+
+  const handleSaveAllowedDomains = () => {
+    const { unique, invalid } = parseDomainsInput();
+
+    if (invalid.length > 0) {
+      toast.error(`Invalid domain(s): ${invalid.join(", ")}`);
+      return;
+    }
+
+    updateAllowedDomainsMutation.mutate(unique);
+  };
+
+  const handleResetAllowedDomains = () => {
+    setDomainsInput((settings?.allowedDomains || []).join("\n"));
   };
 
   useEffect(() => {
@@ -703,6 +765,57 @@ export default function WidgetSettings() {
             <TabsContent value="embed" className="space-y-6">
               <Card>
                 <CardHeader>
+                  <CardTitle>Allowed Domains</CardTitle>
+                  <CardDescription>
+                    Restrict which hostnames can load the public widget
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="space-y-2">
+                    <Label className="flex items-center gap-2">
+                      <Globe2 className="h-4 w-4" /> Domain allowlist
+                    </Label>
+                    <Textarea
+                      value={domainsInput}
+                      onChange={(e) => setDomainsInput(e.target.value)}
+                      placeholder="example.com\nsub.example.com\n*.example.org"
+                      rows={4}
+                      className="font-mono text-sm"
+                    />
+                    <p className="text-sm text-muted-foreground">
+                      Enter one domain per line. Wildcards are supported with a
+                      leading *. Do not include protocol or paths.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={handleSaveAllowedDomains}
+                      disabled={
+                        !hasDomainChanges ||
+                        updateAllowedDomainsMutation.isPending
+                      }
+                    >
+                      {updateAllowedDomainsMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      Save Allowlist
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={handleResetAllowedDomains}
+                      disabled={updateAllowedDomainsMutation.isPending}
+                    >
+                      <RotateCcw className="h-4 w-4 mr-2" />
+                      Reset
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
                   <CardTitle>Widget Key</CardTitle>
                   <CardDescription>
                     Your unique widget identifier
@@ -777,38 +890,6 @@ export default function WidgetSettings() {
                       disabled={copiedEmbed}
                     >
                       {copiedEmbed ? (
-                        <Check className="h-4 w-4" />
-                      ) : (
-                        <Copy className="h-4 w-4" />
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Iframe Embed Code</CardTitle>
-                  <CardDescription>
-                    Alternative embedding method using iframe
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="relative">
-                    <Textarea
-                      value={embedCode?.iframeCode || ""}
-                      readOnly
-                      rows={3}
-                      className="font-mono text-sm"
-                    />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={handleCopyIframe}
-                      disabled={copiedIframe}
-                    >
-                      {copiedIframe ? (
                         <Check className="h-4 w-4" />
                       ) : (
                         <Copy className="h-4 w-4" />

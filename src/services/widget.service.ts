@@ -49,4 +49,18 @@ export const widgetService = {
     );
     return response.data;
   },
+
+  /**
+   * Update the list of allowed domains for the public widget
+   */
+  async updateAllowedDomains(
+    storeId: string,
+    domains: string[]
+  ): Promise<{ allowedDomains: string[] }> {
+    const response = await axiosInstance.patch<{ allowedDomains: string[] }>(
+      `/stores/${storeId}/widget-settings/allowed-domains`,
+      { domains }
+    );
+    return response.data;
+  },
 };

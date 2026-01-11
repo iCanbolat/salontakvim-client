@@ -31,6 +31,7 @@ import {
   StaffSchedule,
   StaffProfile,
 } from "./pages/staff";
+import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ function App() {
                 path="/staff/invitations/accept"
                 element={<AcceptInvitationPage />}
               />
+              <Route path="/book/:slug" element={<HostedWidgetPage />} />
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>

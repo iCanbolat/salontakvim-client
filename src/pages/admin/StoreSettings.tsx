@@ -27,6 +27,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 // Validation schema
 const storeSettingsSchema = z.object({
   name: z.string().min(1, "Store name is required").max(255),
+  slug: z
+    .string()
+    .min(1, "Slug is required")
+    .max(255)
+    .regex(/^[a-z0-9-]+$/, "Use lowercase letters, numbers, and hyphens only"),
   description: z.string().max(1000).optional(),
   email: z
     .string()
@@ -47,6 +52,7 @@ type StoreSettingsFormData = z.infer<typeof storeSettingsSchema>;
 export function StoreSettings() {
   const queryClient = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch store data
   const {
@@ -63,12 +69,14 @@ export function StoreSettings() {
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isDirty },
   } = useForm<StoreSettingsFormData>({
     resolver: zodResolver(storeSettingsSchema),
     values: store
       ? {
           name: store.name,
+          slug: store.slug,
           description: store.description || "",
           email: store.email || "",
           phone: store.phone || "",
@@ -84,12 +92,28 @@ export function StoreSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-store"] });
       setIsEditing(false);
+      setFormError(null);
+    },
+    onError: (err: unknown) => {
+      // Surface duplicate slug and other server errors
+      const maybeAxios = err as { response?: { status?: number; data?: any } };
+      if (maybeAxios?.response?.status === 409) {
+        setFormError("This slug is already taken. Please choose another.");
+      } else {
+        const message = maybeAxios?.response?.data?.message;
+        setFormError(
+          typeof message === "string"
+            ? message
+            : "Failed to update store settings."
+        );
+      }
     },
   });
 
   const onSubmit = (data: StoreSettingsFormData) => {
     const updateData: UpdateStoreDto = {
       name: data.name,
+      slug: data.slug,
       description: data.description || undefined,
       email: data.email || undefined,
       phone: data.phone || undefined,
@@ -101,7 +125,16 @@ export function StoreSettings() {
   const handleCancel = () => {
     reset();
     setIsEditing(false);
+    setFormError(null);
   };
+
+  const slugify = (value: string) =>
+    value
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-");
 
   if (isLoading) {
     return (
@@ -164,11 +197,11 @@ export function StoreSettings() {
       )}
 
       {/* Update Error Message */}
-      {updateMutation.isError && (
+      {(updateMutation.isError || formError) && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Failed to update store settings. Please try again.
+            {formError || "Failed to update store settings. Please try again."}
           </AlertDescription>
         </Alert>
       )}
@@ -199,17 +232,26 @@ export function StoreSettings() {
               )}
             </div>
 
-            {/* Store Slug (Read-only) */}
+            {/* Store Slug */}
             <div className="space-y-2">
-              <Label htmlFor="slug">Store Slug (URL)</Label>
+              <Label htmlFor="slug">
+                Store Slug (URL) <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="slug"
-                value={store.slug}
-                disabled
-                className="bg-gray-50"
+                {...register("slug")}
+                disabled={!isEditing}
+                onChange={(e) => {
+                  const cleaned = slugify(e.target.value);
+                  setValue("slug", cleaned, { shouldDirty: true });
+                }}
+                placeholder="my-salon"
               />
+              {errors.slug && (
+                <p className="text-sm text-red-600">{errors.slug.message}</p>
+              )}
               <p className="text-sm text-gray-500">
-                Your booking widget URL: https://yourdomain.com/{store.slug}
+                Public booking link: https://yourdomain.com/book/{"{"}slug{"}"}
               </p>
             </div>
 
