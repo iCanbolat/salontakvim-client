@@ -5,7 +5,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { format } from "date-fns";
 import {
   Loader2,
@@ -31,12 +31,18 @@ import {
 
 export function CustomersList() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
+
+  // Determine base path based on current location (admin or staff)
+  const basePath = location.pathname.startsWith("/staff")
+    ? "/staff/customers"
+    : "/admin/customers";
 
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,
@@ -109,7 +115,7 @@ export function CustomersList() {
   }, [debouncedSearch]);
 
   const handleViewCustomer = (customer: CustomerWithStats) => {
-    navigate(`/admin/customers/${customer.id}`);
+    navigate(`${basePath}/${customer.id}`);
   };
 
   const handleSelectCustomer = (customerId: string, checked: boolean) => {

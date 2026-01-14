@@ -175,7 +175,7 @@ export default function HostedWidgetPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-100">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-100">
       <div className="max-w-6xl mx-auto px-4 py-10 md:py-12">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
@@ -316,7 +316,7 @@ export default function HostedWidgetPage() {
               <div
                 id={containerId}
                 ref={widgetContainerRef}
-                className="relative min-h-[720px] bg-gradient-to-br from-white via-slate-50 to-slate-100"
+                className="relative min-h-[720px] bg-linear-to-br from-white via-slate-50 to-slate-100"
               >
                 {!isWidgetReady && !widgetError && !isError && (
                   <div className="absolute inset-0 flex items-center justify-center">

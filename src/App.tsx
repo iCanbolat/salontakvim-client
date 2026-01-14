@@ -30,6 +30,8 @@ import {
   AppointmentsList as StaffAppointmentsList,
   StaffSchedule,
   StaffProfile,
+  StaffCustomersList,
+  StaffCustomerDetails,
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 
@@ -108,6 +110,14 @@ function App() {
                   <Route
                     path="/staff/time-off"
                     element={<Navigate to="/staff/schedule" replace />}
+                  />
+                  <Route
+                    path="/staff/customers"
+                    element={<StaffCustomersList />}
+                  />
+                  <Route
+                    path="/staff/customers/:customerId"
+                    element={<StaffCustomerDetails />}
                   />
                   <Route path="/staff/profile" element={<StaffProfile />} />
                 </Route>

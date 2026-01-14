@@ -1,8 +1,3 @@
-/**
- * Customer Profile Component
- * Detailed customer profile with appointment history
- */
-
 import { format } from "date-fns";
 import { Mail, Phone, Calendar, User, X } from "lucide-react";
 import type { CustomerProfile as CustomerProfileType } from "@/types";
@@ -17,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppointmentStatusBadge } from "@/components/appointments";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { CustomerFiles } from "./CustomerFiles";
 
 interface CustomerProfileProps {
   profile: CustomerProfileType | null;
@@ -26,6 +22,7 @@ interface CustomerProfileProps {
 
 interface CustomerProfileContentProps {
   profile: CustomerProfileType;
+  storeId?: string;
 }
 
 export function CustomerProfile({
@@ -55,6 +52,7 @@ export function CustomerProfile({
 
 export function CustomerProfileContent({
   profile,
+  storeId,
 }: CustomerProfileContentProps) {
   const { customer, appointments } = profile;
   const fullName =
@@ -224,6 +222,9 @@ export function CustomerProfileContent({
           )}
         </CardContent>
       </Card>
+
+      {/* Customer Files Section */}
+      {storeId && <CustomerFiles storeId={storeId} customerId={customer.id} />}
     </div>
   );
 }

@@ -13,6 +13,7 @@ export * from "./staff.service";
 export * from "./location.service";
 export * from "./break.service";
 export * from "./customer.service";
+export * from "./customer-file.service";
 export * from "./notification.service";
 export * from "./activity.service";
 export * from "./widget-public.service";

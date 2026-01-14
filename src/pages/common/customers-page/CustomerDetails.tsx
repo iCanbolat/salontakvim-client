@@ -85,8 +85,8 @@ export function CustomerDetails() {
         <div className="flex items-center justify-center h-64">
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
-      ) : profile ? (
-        <CustomerProfileContent profile={profile} />
+      ) : profile && store ? (
+        <CustomerProfileContent profile={profile} storeId={store.id} />
       ) : profileError ? (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
