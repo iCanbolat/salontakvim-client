@@ -17,6 +17,7 @@ import {
   Puzzle,
   Clock,
   UserCog,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -69,6 +70,12 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Files",
+    href: "/admin/files",
+    icon: FileText,
+    roles: ["admin"],
+  },
+  {
     label: "Widget Settings",
     href: "/admin/widget",
     icon: Puzzle,
@@ -105,6 +112,18 @@ const staffNavItems: NavItem[] = [
     label: "My Appointments",
     href: "/staff/appointments",
     icon: Calendar,
+    roles: ["staff"],
+  },
+  {
+    label: "Customers",
+    href: "/staff/customers",
+    icon: Users,
+    roles: ["staff"],
+  },
+  {
+    label: "Files",
+    href: "/staff/files",
+    icon: FileText,
     roles: ["staff"],
   },
   {

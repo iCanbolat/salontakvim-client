@@ -23,6 +23,7 @@ import {
   WidgetSettings,
   Analytics,
   NotificationSettings,
+  FilesList,
 } from "./pages/admin";
 import {
   StaffDashboard,
@@ -32,6 +33,7 @@ import {
   StaffProfile,
   StaffCustomersList,
   StaffCustomerDetails,
+  StaffFilesList,
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 
@@ -90,6 +92,7 @@ function App() {
                     path="/admin/customers/:customerId"
                     element={<CustomerDetails />}
                   />
+                  <Route path="/admin/files" element={<FilesList />} />
                   <Route path="/admin/widget" element={<WidgetSettings />} />
                   <Route path="/admin/analytics" element={<Analytics />} />
                   <Route
@@ -119,6 +122,7 @@ function App() {
                     path="/staff/customers/:customerId"
                     element={<StaffCustomerDetails />}
                   />
+                  <Route path="/staff/files" element={<StaffFilesList />} />
                   <Route path="/staff/profile" element={<StaffProfile />} />
                 </Route>
               </Route>

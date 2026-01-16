@@ -18,6 +18,7 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -74,6 +75,12 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Files",
+    href: "/admin/files",
+    icon: FileText,
+    roles: ["admin"],
+  },
+  {
     label: "Widget Settings",
     href: "/admin/widget",
     icon: Puzzle,
@@ -116,6 +123,12 @@ const staffNavItems: NavItem[] = [
     label: "Customers",
     href: "/staff/customers",
     icon: Users,
+    roles: ["staff"],
+  },
+  {
+    label: "Files",
+    href: "/staff/files",
+    icon: FileText,
     roles: ["staff"],
   },
   {

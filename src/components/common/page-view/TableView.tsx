@@ -18,7 +18,7 @@ export type TableColumn<TData> = {
   /** Unique key for the column */
   key: string;
   /** Column header label */
-  header: string;
+  header: ReactNode;
   /** Render function for the cell content */
   render: (item: TData, index: number) => ReactNode;
   /** Optional CSS class for header */

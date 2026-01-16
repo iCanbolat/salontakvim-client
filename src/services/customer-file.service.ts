@@ -40,6 +40,57 @@ export interface UpdateFileOptions {
 
 export const customerFileService = {
   /**
+   * Get all files for a store (admin sees all, staff sees only their customers' files)
+   */
+  async getAllStoreFiles(
+    storeId: string,
+    options?: {
+      fileType?: string;
+      search?: string;
+      limit?: number;
+      offset?: number;
+    }
+  ): Promise<CustomerFileListResponse> {
+    const params = new URLSearchParams();
+
+    if (options?.fileType) params.append("fileType", options.fileType);
+    if (options?.search) params.append("search", options.search);
+    if (options?.limit) params.append("limit", options.limit.toString());
+    if (options?.offset) params.append("offset", options.offset.toString());
+
+    const response = await axiosInstance.get<CustomerFileListResponse>(
+      `/stores/${storeId}/files?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Download a store-level file with auth
+   */
+  async downloadStoreFile(
+    storeId: string,
+    fileId: string
+  ): Promise<{ blob: Blob; fileName: string }> {
+    const response = await axiosInstance.get(
+      `/stores/${storeId}/files/${fileId}/download`,
+      { responseType: "blob" }
+    );
+
+    const disposition = response.headers["content-disposition"] || "";
+    let fileName = "download";
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+    if (match && match[1]) {
+      try {
+        fileName = decodeURIComponent(match[1]);
+      } catch {
+        fileName = match[1];
+      }
+    }
+
+    return { blob: response.data, fileName };
+  },
+
+  /**
    * Get all files for a customer
    */
   async getFiles(

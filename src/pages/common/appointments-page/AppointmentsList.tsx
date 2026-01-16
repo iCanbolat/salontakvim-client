@@ -14,6 +14,7 @@ import {
   Loader2,
   AlertCircle,
   Calendar as CalendarIcon,
+  X,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -22,6 +23,12 @@ import { useDebouncedSearch, useMediaQuery } from "@/hooks";
 import { storeService, appointmentService, staffService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { AppointmentCard } from "@/components/appointments/AppointmentCard";
 import { AppointmentFormDialog } from "@/components/appointments/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "@/components/appointments/AppointmentStatusDialog";
@@ -229,6 +236,25 @@ export function AppointmentsList() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleApplyDateRange = () => {
+    setDateRange(pendingDateRange);
+    setIsDatePopoverOpen(false);
+  };
+
+  const handleClearDateRange = () => {
+    setDateRange(undefined);
+    setPendingDateRange(undefined);
+  };
+
+  const handleDatePopoverChange = (open: boolean) => {
+    setIsDatePopoverOpen(open);
+    if (open) {
+      setPendingDateRange(dateRange);
+    } else {
+      setPendingDateRange(undefined);
+    }
+  };
+
   // Filter tabs configuration
   const filterTabs: FilterTab<AppointmentFilter>[] = useMemo(
     () => [
@@ -333,14 +359,6 @@ export function AppointmentsList() {
         // View Toggle
         view={view === "calendar" ? "grid" : view}
         onViewChange={(next) => setView(next)}
-        // Date Range
-        showDatePicker
-        dateRange={dateRange}
-        onDateRangeChange={setDateRange}
-        pendingDateRange={pendingDateRange}
-        onPendingDateRangeChange={setPendingDateRange}
-        isDatePopoverOpen={isDatePopoverOpen}
-        onDatePopoverOpenChange={setIsDatePopoverOpen}
         // Filter Tabs
         filterTabs={filterTabs}
         activeFilter={activeTab}
@@ -378,6 +396,71 @@ export function AppointmentsList() {
               New Appointment
             </Button>
           )
+        }
+        headerActions={
+          <div className="flex w-full md:w-auto">
+            <Popover
+              open={isDatePopoverOpen}
+              onOpenChange={handleDatePopoverChange}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant={dateRange?.from ? "secondary" : "outline"}
+                  size="lg"
+                  className={cn(
+                    "justify-start gap-2 text-left font-normal relative",
+                    dateRange?.from
+                      ? "w-full md:w-[calc(15rem-2.25rem)] border"
+                      : "w-full md:w-60"
+                  )}
+                >
+                  <CalendarIcon className="h-4 w-4 shrink-0" />
+                  {dateRange?.from ? (
+                    dateRange.to ? (
+                      <>
+                        {format(dateRange.from, "LLL dd")} -{" "}
+                        {format(dateRange.to, "LLL dd")}
+                      </>
+                    ) : (
+                      format(dateRange.from, "LLL dd")
+                    )
+                  ) : (
+                    <span>Pick a date range</span>
+                  )}
+                  {dateRange?.from && (
+                    <Button
+                      variant={dateRange?.from ? "secondary" : "ghost"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleClearDateRange();
+                      }}
+                      className="absolute right-1 top-1 border-none border-b w-7 h-7 hover:bg-primary/50 rounded-4xl focus:ring-0"
+                    >
+                      <X />
+                    </Button>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="end">
+                <Calendar
+                  mode="range"
+                  defaultMonth={(pendingDateRange ?? dateRange)?.from}
+                  selected={pendingDateRange ?? dateRange}
+                  onSelect={setPendingDateRange}
+                />
+                <div className="flex items-center gap-2 border-t p-3">
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    onClick={handleApplyDateRange}
+                    disabled={!pendingDateRange?.from && !dateRange?.from}
+                  >
+                    Apply
+                  </Button>
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
         }
         // Card wrapper
         cardClassName={cn(view === "calendar" ? "block md:hidden" : "block")}
