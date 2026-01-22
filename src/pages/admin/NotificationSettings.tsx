@@ -24,14 +24,7 @@ import {
 } from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
-import {
-  Bell,
-  Mail,
-  MessageSquare,
-  AlertCircle,
-  Loader2,
-  CheckCircle2,
-} from "lucide-react";
+import { Bell, Mail, AlertCircle, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function NotificationSettings() {

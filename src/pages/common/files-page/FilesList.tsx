@@ -22,6 +22,8 @@ import {
   Image,
   FileSpreadsheet,
   File as FileIcon,
+  Folder,
+  ArrowLeft,
   MoreVertical,
   ArrowUpDown,
   Trash2,
@@ -29,8 +31,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { usePagination, useDebouncedSearch } from "@/hooks";
-import { storeService, customerFileService } from "@/services";
+import { storeService, customerFileService, customerService } from "@/services";
 import type { CustomerFile } from "@/services/customer-file.service";
+import type { CustomerWithStats } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -95,6 +98,9 @@ export function FilesList() {
   const [view, setView] = useState<"grid" | "list">("list");
   const [fileTypeFilter, setFileTypeFilter] = useState<string>("all");
   const [uploadedSort, setUploadedSort] = useState<"asc" | "desc">("desc");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
+    null,
+  );
 
   // Preview state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -134,8 +140,76 @@ export function FilesList() {
     placeholderData: keepPreviousData,
   });
 
+  // Fetch customers for folder names
+  const { data: customers } = useQuery({
+    queryKey: ["customers", store?.id, "files"],
+    queryFn: () => customerService.getCustomers(store!.id),
+    enabled: !!store?.id,
+    placeholderData: keepPreviousData,
+  });
+
   const isInitialLoading = (storeLoading || filesPending) && !filesData;
   const files = filesData?.files || [];
+
+  const customerMap = useMemo(() => {
+    const map = new Map<string, CustomerWithStats>();
+    (customers || []).forEach((customer) => {
+      map.set(customer.id, customer);
+    });
+    return map;
+  }, [customers]);
+
+  const folders = useMemo(() => {
+    if (!files.length)
+      return [] as Array<{
+        customerId: string;
+        customerName: string;
+        fileCount: number;
+        totalSize: number;
+        lastUploadedAt: string;
+      }>;
+
+    const grouped = new Map<
+      string,
+      {
+        customerId: string;
+        customerName: string;
+        fileCount: number;
+        totalSize: number;
+        lastUploadedAt: string;
+      }
+    >();
+
+    files.forEach((file) => {
+      const customer = customerMap.get(file.customerId);
+      const name = customer
+        ? `${customer.firstName} ${customer.lastName}`.trim() ||
+          customer.email ||
+          "Customer"
+        : `Customer ${file.customerId.slice(0, 6)}`;
+
+      const existing = grouped.get(file.customerId);
+      const lastUploadedAt = existing
+        ? new Date(existing.lastUploadedAt) > new Date(file.createdAt)
+          ? existing.lastUploadedAt
+          : file.createdAt
+        : file.createdAt;
+
+      grouped.set(file.customerId, {
+        customerId: file.customerId,
+        customerName: name,
+        fileCount: (existing?.fileCount || 0) + 1,
+        totalSize: (existing?.totalSize || 0) + file.fileSize,
+        lastUploadedAt,
+      });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => {
+      const aTime = new Date(a.lastUploadedAt).getTime();
+      const bTime = new Date(b.lastUploadedAt).getTime();
+      return bTime - aTime;
+    });
+  }, [files, customerMap]);
 
   const sortedFiles = useMemo(() => {
     if (!files.length) return files;
@@ -145,6 +219,11 @@ export function FilesList() {
       return uploadedSort === "asc" ? aTime - bTime : bTime - aTime;
     });
   }, [files, uploadedSort]);
+
+  const activeFiles = useMemo(() => {
+    if (!selectedCustomerId) return sortedFiles;
+    return sortedFiles.filter((file) => file.customerId === selectedCustomerId);
+  }, [sortedFiles, selectedCustomerId]);
 
   // Sync search term from URL
   useEffect(() => {
@@ -179,13 +258,26 @@ export function FilesList() {
     startIndex,
     endIndex,
   } = usePagination({
-    items: sortedFiles,
+    items: activeFiles,
     itemsPerPage: 20,
+  });
+
+  const {
+    paginatedItems: paginatedFolders,
+    currentPage: folderPage,
+    totalPages: folderTotalPages,
+    goToPage: goToFolderPage,
+    startIndex: folderStartIndex,
+    endIndex: folderEndIndex,
+  } = usePagination({
+    items: folders,
+    itemsPerPage: 12,
   });
 
   // Reset to first page on search/filter change
   useEffect(() => {
     goToPage(1);
+    goToFolderPage(1);
   }, [debouncedSearch, fileTypeFilter]);
 
   // Clean up preview URL on unmount
@@ -248,6 +340,7 @@ export function FilesList() {
   const handleToggleUploadedSort = () => {
     setUploadedSort((prev) => (prev === "asc" ? "desc" : "asc"));
     goToPage(1);
+    goToFolderPage(1);
   };
 
   const queryClient = useQueryClient();
@@ -484,6 +577,48 @@ export function FilesList() {
     },
   ];
 
+  const renderFolderCard = (folder: {
+    customerId: string;
+    customerName: string;
+    fileCount: number;
+    totalSize: number;
+    lastUploadedAt: string;
+  }) => (
+    <div
+      key={folder.customerId}
+      onClick={() => {
+        setSelectedCustomerId(folder.customerId);
+        setView("list");
+      }}
+      className="group relative overflow-hidden rounded-xl border bg-white p-4 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md cursor-pointer"
+    >
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg bg-blue-50 p-2 text-blue-600">
+            <Folder className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="font-semibold text-sm truncate">
+              {folder.customerName}
+            </p>
+            <p className="text-xs text-gray-500">
+              {folder.fileCount} file{folder.fileCount !== 1 ? "s" : ""}
+            </p>
+          </div>
+        </div>
+        <span className="text-xs text-gray-400">
+          {format(new Date(folder.lastUploadedAt), "MMM d, yyyy")}
+        </span>
+      </div>
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+        <span>{customerFileService.formatFileSize(folder.totalSize)}</span>
+        <span className="text-blue-600 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+          Open folder
+        </span>
+      </div>
+    </div>
+  );
+
   // Grid card render
   const renderGridItem = (file: CustomerFile) => (
     <div
@@ -594,11 +729,15 @@ export function FilesList() {
   // Empty state messages
   const emptyTitle = debouncedSearch
     ? `No files matching "${debouncedSearch}"`
-    : "No files uploaded yet";
+    : selectedCustomerId
+      ? "No files in this folder"
+      : "No files uploaded yet";
 
   const emptyDescription = debouncedSearch
     ? "Try adjusting your search query"
-    : "Customer files will appear here when uploaded";
+    : selectedCustomerId
+      ? "This customer has no uploaded files yet"
+      : "Customer files will appear here when uploaded";
 
   if (isInitialLoading) {
     return (
@@ -630,69 +769,153 @@ export function FilesList() {
     return null;
   }
 
+  const selectedCustomer = selectedCustomerId
+    ? customerMap.get(selectedCustomerId)
+    : null;
+
+  const selectedCustomerLabel = selectedCustomer
+    ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`.trim() ||
+      selectedCustomer.email ||
+      "Customer"
+    : selectedCustomerId
+      ? `Customer ${selectedCustomerId.slice(0, 6)}`
+      : null;
+
+  const activeFolder = useMemo(() => {
+    if (!selectedCustomerId) return null;
+    return folders.find((f) => f.customerId === selectedCustomerId) || null;
+  }, [folders, selectedCustomerId]);
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row text-center sm:text-start items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Files</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {selectedCustomerId ? selectedCustomerLabel : "Files"}
+          </h1>
           <p className="text-gray-600 mt-1">
-            {filesData?.total ?? 0} file
-            {(filesData?.total ?? 0) !== 1 ? "s" : ""} •{" "}
-            {customerFileService.formatFileSize(filesData?.totalSize ?? 0)}{" "}
-            total
+            {selectedCustomerId ? (
+              <>
+                {activeFolder?.fileCount ?? 0} file
+                {(activeFolder?.fileCount ?? 0) !== 1 ? "s" : ""} •{" "}
+                {customerFileService.formatFileSize(
+                  activeFolder?.totalSize ?? 0,
+                )}
+              </>
+            ) : (
+              <>
+                {filesData?.total ?? 0} file
+                {(filesData?.total ?? 0) !== 1 ? "s" : ""} •{" "}
+                {customerFileService.formatFileSize(filesData?.totalSize ?? 0)}{" "}
+                total
+              </>
+            )}
           </p>
+
+          {selectedCustomerId && (
+            <div className="mt-3 flex items-center justify-center sm:justify-start">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedCustomerId(null)}
+                className="h-8 transition-all hover:bg-gray-100"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to folders
+              </Button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Files List */}
-      <PageView
-        data={paginatedItems}
-        searchValue={searchTerm}
-        onSearchChange={setSearchTerm}
-        searchPlaceholder="Search files..."
-        view={view}
-        onViewChange={setView}
-        renderGridItem={renderGridItem}
-        gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(320px,1fr))]"
-        renderTableView={(data) => (
-          <TableView
-            data={data}
-            columns={fileColumns}
-            getRowKey={(file) => file.id}
-            onRowClick={(file) =>
-              file.fileType === "image" && handlePreview(file)
-            }
-            rowClassName="cursor-pointer"
-          />
-        )}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={goToPage}
-        startIndex={startIndex}
-        endIndex={endIndex}
-        totalItems={files.length}
-        emptyIcon={<FileText className="h-12 w-12 text-gray-300" />}
-        emptyTitle={emptyTitle}
-        emptyDescription={emptyDescription}
-        headerActions={
-          <div className="flex items-center gap-2 w-full md:w-auto">
-            <Select value={fileTypeFilter} onValueChange={setFileTypeFilter}>
-              <SelectTrigger className="w-full md:w-40">
-                <Filter className="h-4 w-4 mr-2" />
-                <SelectValue placeholder="All types" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All types</SelectItem>
-                <SelectItem value="image">Images</SelectItem>
-                <SelectItem value="pdf">PDFs</SelectItem>
-                <SelectItem value="document">Documents</SelectItem>
-                <SelectItem value="other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        }
-      />
+      {!selectedCustomerId ? (
+        <PageView
+          data={paginatedFolders}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search customers or files..."
+          view="grid"
+          onViewChange={() => null}
+          hideViewToggle
+          renderGridItem={(folder) => renderFolderCard(folder)}
+          gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]"
+          currentPage={folderPage}
+          totalPages={folderTotalPages}
+          onPageChange={goToFolderPage}
+          startIndex={folderStartIndex}
+          endIndex={folderEndIndex}
+          totalItems={folders.length}
+          emptyIcon={<Folder className="h-12 w-12 text-gray-300" />}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
+          headerActions={
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Select value={fileTypeFilter} onValueChange={setFileTypeFilter}>
+                <SelectTrigger className="w-full md:w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="image">Images</SelectItem>
+                  <SelectItem value="pdf">PDFs</SelectItem>
+                  <SelectItem value="document">Documents</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
+      ) : (
+        <PageView
+          data={paginatedItems}
+          searchValue={searchTerm}
+          onSearchChange={setSearchTerm}
+          searchPlaceholder="Search files in this folder..."
+          view={view}
+          onViewChange={setView}
+          renderGridItem={renderGridItem}
+          gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(320px,1fr))]"
+          renderTableView={(data) => (
+            <TableView
+              data={data}
+              columns={fileColumns}
+              getRowKey={(file) => file.id}
+              onRowClick={(file) =>
+                file.fileType === "image" && handlePreview(file)
+              }
+              rowClassName="cursor-pointer"
+            />
+          )}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={goToPage}
+          startIndex={startIndex}
+          endIndex={endIndex}
+          totalItems={activeFiles.length}
+          emptyIcon={<FileText className="h-12 w-12 text-gray-300" />}
+          emptyTitle={emptyTitle}
+          emptyDescription={emptyDescription}
+          headerActions={
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Select value={fileTypeFilter} onValueChange={setFileTypeFilter}>
+                <SelectTrigger className="w-full md:w-40">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="All types" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All types</SelectItem>
+                  <SelectItem value="image">Images</SelectItem>
+                  <SelectItem value="pdf">PDFs</SelectItem>
+                  <SelectItem value="document">Documents</SelectItem>
+                  <SelectItem value="other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          }
+        />
+      )}
 
       {/* Preview Dialog */}
       <FilePreviewDialog
