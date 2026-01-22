@@ -3,7 +3,7 @@
  * Create or edit a category
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -53,7 +53,14 @@ export function CategoryFormDialog({
   onClose,
 }: CategoryFormDialogProps) {
   const queryClient = useQueryClient();
-  const isEditing = !!category;
+  const [isEditing, setIsEditing] = useState(!!category);
+
+  // Update isEditing only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setIsEditing(!!category);
+    }
+  }, [open, category]);
 
   // Form setup
   const {

@@ -16,6 +16,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { StaffMember } from "@/types";
 
 interface StaffCardProps {
@@ -44,28 +55,6 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
       queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
     },
   });
-
-  const handleToggleVisibility = () => {
-    if (
-      confirm(
-        `${staff.isVisible ? "Hide" : "Show"} ${
-          staff.firstName
-        } from the booking widget?`
-      )
-    ) {
-      toggleVisibilityMutation.mutate();
-    }
-  };
-
-  const handleDelete = () => {
-    if (
-      confirm(
-        `Are you sure you want to remove ${staff.firstName} ${staff.lastName} from your staff?`
-      )
-    ) {
-      deleteStaffMutation.mutate();
-    }
-  };
 
   const initials = `${staff.firstName?.[0] || ""}${
     staff.lastName?.[0] || ""
@@ -102,18 +91,43 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
               )}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDelete}
-            disabled={
-              toggleVisibilityMutation.isPending ||
-              deleteStaffMutation.isPending
-            }
-            className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={
+                  toggleVisibilityMutation.isPending ||
+                  deleteStaffMutation.isPending
+                }
+                className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Remove Staff Member</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to remove{" "}
+                  <span className="font-medium text-gray-900">
+                    {staff.firstName} {staff.lastName}
+                  </span>{" "}
+                  from your staff? This will revoke their access and they will
+                  no longer appear in your store.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => deleteStaffMutation.mutate()}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Remove
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </CardHeader>
 
@@ -155,26 +169,50 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
         >
           <Link to={`/admin/staff/${staff.id}`}>View Details</Link>
         </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleToggleVisibility}
-          disabled={
-            toggleVisibilityMutation.isPending || deleteStaffMutation.isPending
-          }
-        >
-          {staff.isVisible ? (
-            <>
-              <EyeOff className="h-4 w-4 mr-1" />
-              Hide
-            </>
-          ) : (
-            <>
-              <Eye className="h-4 w-4 mr-1" />
-              Show
-            </>
-          )}
-        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={
+                toggleVisibilityMutation.isPending ||
+                deleteStaffMutation.isPending
+              }
+            >
+              {staff.isVisible ? (
+                <>
+                  <EyeOff className="h-4 w-4 mr-1" />
+                  Hide
+                </>
+              ) : (
+                <>
+                  <Eye className="h-4 w-4 mr-1" />
+                  Show
+                </>
+              )}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {staff.isVisible ? "Hide" : "Show"} Staff Member
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {staff.isVisible
+                  ? `Are you sure you want to hide ${staff.firstName} from the booking widget? Customers won't be able to see or book with them.`
+                  : `Show ${staff.firstName} in the booking widget so customers can see and book with them?`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => toggleVisibilityMutation.mutate()}
+              >
+                {staff.isVisible ? "Hide" : "Show"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardFooter>
     </Card>
   );

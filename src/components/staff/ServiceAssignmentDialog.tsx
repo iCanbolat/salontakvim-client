@@ -36,7 +36,15 @@ export function ServiceAssignmentDialog({
   onClose,
 }: ServiceAssignmentDialogProps) {
   const queryClient = useQueryClient();
-  const [selectedServiceIds, setSelectedServiceIds] = useState<number[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [staffSnapshot, setStaffSnapshot] = useState(staff);
+
+  // Update staff snapshot only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setStaffSnapshot(staff);
+    }
+  }, [open, staff]);
 
   // Fetch all services
   const { data: allServices, isLoading: servicesLoading } = useQuery({
@@ -65,7 +73,7 @@ export function ServiceAssignmentDialog({
 
   // Assign services mutation
   const assignServicesMutation = useMutation({
-    mutationFn: async (serviceIds: number[]) =>
+    mutationFn: async (serviceIds: string[]) =>
       staffService.assignServices(storeId, staff.id, { serviceIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({
@@ -85,11 +93,11 @@ export function ServiceAssignmentDialog({
     },
   });
 
-  const handleToggleService = (serviceId: number) => {
+  const handleToggleService = (serviceId: string) => {
     setSelectedServiceIds((prev) =>
       prev.includes(serviceId)
         ? prev.filter((id) => id !== serviceId)
-        : [...prev, serviceId]
+        : [...prev, serviceId],
     );
   };
 
@@ -115,21 +123,24 @@ export function ServiceAssignmentDialog({
     JSON.stringify([...(staffServices?.map((s) => s.id) || [])].sort());
 
   // Group services by category
-  const servicesByCategory = allServices?.reduce((acc, service) => {
-    const categoryId = service.categoryId || 0;
-    if (!acc[categoryId]) {
-      acc[categoryId] = [];
-    }
-    acc[categoryId].push(service);
-    return acc;
-  }, {} as Record<number, Service[]>);
+  const servicesByCategory = allServices?.reduce(
+    (acc, service) => {
+      const categoryKey = service.categoryId || "uncategorized";
+      if (!acc[categoryKey]) {
+        acc[categoryKey] = [];
+      }
+      acc[categoryKey].push(service);
+      return acc;
+    },
+    {} as Record<string, Service[]>,
+  );
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            Assign Services - {staff.firstName} {staff.lastName}
+            Assign Services - {staffSnapshot.firstName} {staffSnapshot.lastName}
           </DialogTitle>
           <DialogDescription>
             Select which services this staff member can provide. They will only
@@ -152,17 +163,18 @@ export function ServiceAssignmentDialog({
                       ([categoryId, services]) => (
                         <div key={categoryId} className="space-y-2">
                           {/* Category Header */}
-                          {categoryId !== "0" && services.length > 0 && (
-                            <h3 className="font-semibold text-sm text-gray-700">
-                              Category {categoryId}
-                            </h3>
-                          )}
+                          {categoryId !== "uncategorized" &&
+                            services.length > 0 && (
+                              <h3 className="font-semibold text-sm text-gray-700">
+                                Category {categoryId}
+                              </h3>
+                            )}
 
                           {/* Services */}
                           <div className="space-y-2">
                             {services.map((service) => {
                               const isSelected = selectedServiceIds.includes(
-                                service.id
+                                service.id,
                               );
                               return (
                                 <button
@@ -227,7 +239,7 @@ export function ServiceAssignmentDialog({
                             })}
                           </div>
                         </div>
-                      )
+                      ),
                     )
                   ) : (
                     <div className="text-center py-12">

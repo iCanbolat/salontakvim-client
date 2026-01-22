@@ -71,7 +71,7 @@ export default function NotificationSettings() {
 
   const handleUpdate = (
     field: keyof UpdateNotificationSettingsDto,
-    value: unknown
+    value: unknown,
   ) => {
     updateMutation.mutate({ [field]: value } as UpdateNotificationSettingsDto);
   };
@@ -159,7 +159,7 @@ export default function NotificationSettings() {
                 Email for customer replies
               </p>
             </div>
-
+            {/* 
             <div className="space-y-2">
               <Label>Email Provider</Label>
               <Select
@@ -178,13 +178,13 @@ export default function NotificationSettings() {
               <p className="text-sm text-muted-foreground">
                 Email delivery service
               </p>
-            </div>
+            </div> */}
           </div>
         </CardContent>
       </Card>
 
       {/* SMS Configuration */}
-      <Card>
+      {/* <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5" />
@@ -215,7 +215,7 @@ export default function NotificationSettings() {
             </p>
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Notification Types */}
       <Card>
@@ -409,8 +409,26 @@ export default function NotificationSettings() {
 
           <Separator />
 
-          {/* Staff Invitation */}
+          {/* Customer Feedback Request */}
           <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base">Customer Feedback Request</Label>
+                <p className="text-sm text-muted-foreground">
+                  Email is always sent; enable to also send via SMS
+                </p>
+              </div>
+              <Switch
+                checked={settings.feedbackRequestSmsEnabled}
+                onCheckedChange={(checked) =>
+                  handleUpdate("feedbackRequestSmsEnabled", checked)
+                }
+              />
+            </div>
+          </div>
+
+          {/* Staff Invitation */}
+          {/* <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <Label className="text-base">Staff Invitation</Label>
@@ -425,7 +443,7 @@ export default function NotificationSettings() {
                 }
               />
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 

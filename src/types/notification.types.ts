@@ -13,6 +13,7 @@ export interface NotificationSettings {
   appointmentCancellationChannel: NotificationChannel;
   appointmentRescheduledEnabled: boolean;
   appointmentRescheduledChannel: NotificationChannel;
+  feedbackRequestSmsEnabled: boolean;
   staffInvitationEnabled: boolean;
   senderEmail: string;
   senderName: string;
@@ -34,6 +35,7 @@ export interface UpdateNotificationSettingsDto {
   appointmentCancellationChannel?: NotificationChannel;
   appointmentRescheduledEnabled?: boolean;
   appointmentRescheduledChannel?: NotificationChannel;
+  feedbackRequestSmsEnabled?: boolean;
   staffInvitationEnabled?: boolean;
   senderEmail?: string;
   senderName?: string;

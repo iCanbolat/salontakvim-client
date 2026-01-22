@@ -17,6 +17,17 @@ import { staffService } from "@/services";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import type { StaffInvitation } from "@/types";
 
 interface InvitationCardProps {
@@ -73,16 +84,6 @@ export function InvitationCard({ invitation, storeId }: InvitationCardProps) {
     },
   });
 
-  const handleDelete = () => {
-    if (
-      confirm(
-        `Are you sure you want to delete the invitation for ${invitation.email}?`
-      )
-    ) {
-      deleteInvitationMutation.mutate();
-    }
-  };
-
   const config = statusConfig[invitation.status];
   const StatusIcon = config.icon;
 
@@ -126,15 +127,39 @@ export function InvitationCard({ invitation, storeId }: InvitationCardProps) {
 
             {/* Delete Button */}
             {invitation.status === "pending" && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                disabled={deleteInvitationMutation.isPending}
-                className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={deleteInvitationMutation.isPending}
+                    className="shrink-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Invitation</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Are you sure you want to delete the invitation for{" "}
+                      <span className="font-medium text-gray-900">
+                        {invitation.email}
+                      </span>
+                      ? This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => deleteInvitationMutation.mutate()}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Delete
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
           </div>
         </div>

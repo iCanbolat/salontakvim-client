@@ -3,7 +3,7 @@
  * Create or edit a location
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,7 +60,14 @@ export function LocationFormDialog({
   onClose,
 }: LocationFormDialogProps) {
   const queryClient = useQueryClient();
-  const isEditing = !!location;
+  const [isEditing, setIsEditing] = useState(!!location);
+
+  // Update isEditing only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setIsEditing(!!location);
+    }
+  }, [open, location]);
 
   // Form setup
   const {

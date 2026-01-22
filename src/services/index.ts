@@ -17,3 +17,5 @@ export * from "./customer-file.service";
 export * from "./notification.service";
 export * from "./activity.service";
 export * from "./widget-public.service";
+export * from "./coupon.service";
+export * from "./feedback.service";

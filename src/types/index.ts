@@ -11,6 +11,8 @@ export * from "./category.types";
 export * from "./staff.types";
 export * from "./location.types";
 export * from "./customer.types";
+export * from "./coupon.types";
+export * from "./feedback.types";
 
 // API Response wrapper
 export interface ApiResponse<T> {

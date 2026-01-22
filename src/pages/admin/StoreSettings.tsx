@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Loader2, AlertCircle, Building2, Save, X } from "lucide-react";
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Switch } from "@/components/ui/switch";
 
 // Validation schema
 const storeSettingsSchema = z.object({
@@ -70,6 +71,7 @@ export function StoreSettings() {
     handleSubmit,
     reset,
     setValue,
+    control,
     formState: { errors, isDirty },
   } = useForm<StoreSettingsFormData>({
     resolver: zodResolver(storeSettingsSchema),

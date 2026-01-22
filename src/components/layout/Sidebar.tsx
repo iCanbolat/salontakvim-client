@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   ChevronRight,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -81,6 +82,12 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
+    label: "Feedback",
+    href: "/admin/feedback",
+    icon: MessageSquare,
+    roles: ["admin"],
+  },
+  {
     label: "Widget Settings",
     href: "/admin/widget",
     icon: Puzzle,
@@ -129,6 +136,12 @@ const staffNavItems: NavItem[] = [
     label: "Files",
     href: "/staff/files",
     icon: FileText,
+    roles: ["staff"],
+  },
+  {
+    label: "Feedback",
+    href: "/staff/feedback",
+    icon: MessageSquare,
     roles: ["staff"],
   },
   {

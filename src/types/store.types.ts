@@ -22,6 +22,7 @@ export interface Store {
 
 export interface UpdateStoreDto {
   name?: string;
+  slug?: string;
   description?: string;
   logo?: string;
   email?: string;

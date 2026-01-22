@@ -8,5 +8,6 @@ export { AppointmentsList } from "../common/appointments-page/AppointmentsList";
 export { CustomersList as StaffCustomersList } from "../common/customers-page/CustomersList";
 export { CustomerDetails as StaffCustomerDetails } from "../common/customers-page/CustomerDetails";
 export { FilesList as StaffFilesList } from "../common/files-page/FilesList";
+export { FeedbackList as StaffFeedbackList } from "../common/feedback-page/FeedbackList";
 export * from "./StaffSchedule";
 export * from "./StaffProfile";

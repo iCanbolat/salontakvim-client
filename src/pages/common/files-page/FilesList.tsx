@@ -18,7 +18,6 @@ import {
   AlertCircle,
   FileText,
   Download,
-  Eye,
   Filter,
   Image,
   FileSpreadsheet,
@@ -54,6 +53,17 @@ import {
   type TableColumn,
 } from "@/components/common/page-view";
 import { FilePreviewDialog } from "@/components/customers/FilePreviewDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // File type colors
 const FILE_TYPE_COLORS: Record<string, string> = {
@@ -191,7 +201,7 @@ export function FilesList() {
     try {
       const { blob, fileName } = await customerFileService.downloadStoreFile(
         store!.id,
-        file.id
+        file.id,
       );
 
       const url = URL.createObjectURL(blob);
@@ -218,7 +228,7 @@ export function FilesList() {
         setIsPreviewLoading(true);
         const { blob } = await customerFileService.downloadStoreFile(
           store!.id,
-          file.id
+          file.id,
         );
         const url = URL.createObjectURL(blob);
         setPreviewImageUrl(url);
@@ -253,14 +263,6 @@ export function FilesList() {
       toast.error(message || "Failed to delete file");
     },
   });
-
-  const handleDelete = async (file: CustomerFile) => {
-    if (
-      window.confirm(`Are you sure you want to delete "${file.originalName}"?`)
-    ) {
-      deleteMutation.mutate(file);
-    }
-  };
 
   // Table columns
   const fileColumns: TableColumn<CustomerFile>[] = [
@@ -349,25 +351,12 @@ export function FilesList() {
     {
       key: "actions",
       header: "Actions",
-      headerClassName: "text-right w-[100px] md:w-[180px]",
-      cellClassName: "text-right w-[100px] md:w-[180px]",
+      headerClassName: "text-right w-[100px] md:w-[140px]",
+      cellClassName: "text-right w-[100px] md:w-[140px]",
       render: (file) => (
         <div className="flex items-center justify-end gap-1">
           {/* Tablet and Up: Direct Action Buttons */}
           <div className="hidden md:flex items-center gap-1">
-            {file.fileType === "image" && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handlePreview(file);
-                }}
-                title="Preview"
-              >
-                <Eye className="h-4 w-4" />
-              </Button>
-            )}
             <Button
               variant="ghost"
               size="icon"
@@ -390,23 +379,47 @@ export function FilesList() {
             >
               <User className="h-4 w-4" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(file);
-              }}
-              disabled={deleteMutation.isPending}
-              title="Delete"
-            >
-              {deleteMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Trash2 className="h-4 w-4" />
-              )}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                  disabled={deleteMutation.isPending}
+                  title="Delete"
+                >
+                  {deleteMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="h-4 w-4" />
+                  )}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete File</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete{" "}
+                    <span className="font-medium text-gray-900">
+                      {file.originalName}
+                    </span>
+                    ? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(file);
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
 
           {/* Mobile: Action Menu */}
@@ -418,12 +431,6 @@ export function FilesList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {file.fileType === "image" && (
-                  <DropdownMenuItem onClick={() => handlePreview(file)}>
-                    <Eye className="h-4 w-4 mr-2" />
-                    Preview
-                  </DropdownMenuItem>
-                )}
                 <DropdownMenuItem onClick={() => handleDownload(file)}>
                   <Download className="h-4 w-4 mr-2" />
                   Download
@@ -434,13 +441,41 @@ export function FilesList() {
                   <User className="h-4 w-4 mr-2" />
                   View Customer
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleDelete(file)}
-                  className="text-red-600 focus:text-red-600"
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Delete
-                </DropdownMenuItem>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <DropdownMenuItem
+                      onSelect={(e) => e.preventDefault()}
+                      className="text-red-600 focus:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete
+                    </DropdownMenuItem>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete File</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Are you sure you want to delete{" "}
+                        <span className="font-medium text-gray-900">
+                          {file.originalName}
+                        </span>
+                        ? This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteMutation.mutate(file);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -453,10 +488,10 @@ export function FilesList() {
   const renderGridItem = (file: CustomerFile) => (
     <div
       key={file.id}
-      className="border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
+      className="relative group border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
       onClick={() => file.fileType === "image" && handlePreview(file)}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 pr-8">
         <div className={`p-2 rounded-lg ${FILE_TYPE_COLORS[file.fileType]}`}>
           <FileTypeIcon fileType={file.fileType} />
         </div>
@@ -483,41 +518,29 @@ export function FilesList() {
           )}
         </div>
       </div>
-      <div className="flex items-center justify-between mt-3 pt-3 border-t">
-        <div className="flex items-center gap-1">
-          {file.fileType === "image" && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                handlePreview(file);
-              }}
-            >
-              <Eye className="h-4 w-4 mr-1" />
-              Preview
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleDownload(file);
-            }}
-          >
-            <Download className="h-4 w-4 mr-1" />
-            Download
-          </Button>
-        </div>
 
+      <div className="absolute top-2 right-2">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={(e) => e.stopPropagation()}
+            >
               <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDownload(file);
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Download
+            </DropdownMenuItem>
             <DropdownMenuItem
               onClick={(e) => {
                 e.stopPropagation();
@@ -527,16 +550,41 @@ export function FilesList() {
               <User className="h-4 w-4 mr-2" />
               View Customer
             </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-red-600 focus:text-red-600"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleDelete(file);
-              }}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </DropdownMenuItem>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <DropdownMenuItem
+                  onSelect={(e) => e.preventDefault()}
+                  className="text-red-600 focus:text-red-600"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </AlertDialogTrigger>
+              <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete File</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete{" "}
+                    <span className="font-medium text-gray-900">
+                      {file.originalName}
+                    </span>
+                    ? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMutation.mutate(file);
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

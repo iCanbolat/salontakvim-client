@@ -44,8 +44,7 @@ export function StaffDetails() {
   const [isServicesDialogOpen, setServicesDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setScheduleDialogOpen] = useState(false);
 
-  const parsedStaffId = Number(staffId);
-  const isValidStaffId = Number.isInteger(parsedStaffId) && parsedStaffId > 0;
+  const isValidStaffId = !!staffId && staffId !== "0";
 
   const {
     data: store,
@@ -57,20 +56,20 @@ export function StaffDetails() {
   });
 
   const staffQuery = useQuery({
-    queryKey: ["staff-member", store?.id, parsedStaffId],
-    queryFn: () => staffService.getStaffMember(store!.id, parsedStaffId),
+    queryKey: ["staff-member", store?.id, staffId],
+    queryFn: () => staffService.getStaffMember(store!.id, staffId!),
     enabled: Boolean(store?.id && isValidStaffId),
   });
 
   const staffServicesQuery = useQuery({
-    queryKey: ["staff-services", store?.id, parsedStaffId],
-    queryFn: () => staffService.getStaffServices(store!.id, parsedStaffId),
+    queryKey: ["staff-services", store?.id, staffId],
+    queryFn: () => staffService.getStaffServices(store!.id, staffId!),
     enabled: Boolean(store?.id && isValidStaffId),
   });
 
   const workingHoursQuery = useQuery({
-    queryKey: ["working-hours", store?.id, parsedStaffId],
-    queryFn: () => staffService.getWorkingHours(store!.id, parsedStaffId),
+    queryKey: ["working-hours", store?.id, staffId],
+    queryFn: () => staffService.getWorkingHours(store!.id, staffId!),
     enabled: Boolean(store?.id && isValidStaffId),
   });
 
@@ -170,7 +169,7 @@ export function StaffDetails() {
   const assignedServices = staffServicesQuery.data || [];
   const assignedServiceCount = assignedServices.length;
   const activeDayCount = workingHoursQuery.data?.filter(
-    (h) => h.isActive
+    (h) => h.isActive,
   ).length;
   const joinedDate = staff.createdAt
     ? new Date(staff.createdAt).toLocaleDateString()
@@ -447,7 +446,7 @@ function WorkingHoursSummary({
                 <p className="text-sm text-gray-600">
                   {isActive && entry
                     ? `${formatTime(entry.startTime)} - ${formatTime(
-                        entry.endTime
+                        entry.endTime,
                       )}`
                     : "Closed"}
                 </p>

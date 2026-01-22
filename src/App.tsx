@@ -24,6 +24,7 @@ import {
   Analytics,
   NotificationSettings,
   FilesList,
+  FeedbackList,
 } from "./pages/admin";
 import {
   StaffDashboard,
@@ -34,8 +35,10 @@ import {
   StaffCustomersList,
   StaffCustomerDetails,
   StaffFilesList,
+  StaffFeedbackList,
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
+import FeedbackPage from "./pages/public/FeedbackPage";
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -66,6 +69,7 @@ function App() {
                 element={<AcceptInvitationPage />}
               />
               <Route path="/book/:slug" element={<HostedWidgetPage />} />
+              <Route path="/feedback" element={<FeedbackPage />} />
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>
@@ -93,6 +97,7 @@ function App() {
                     element={<CustomerDetails />}
                   />
                   <Route path="/admin/files" element={<FilesList />} />
+                  <Route path="/admin/feedback" element={<FeedbackList />} />
                   <Route path="/admin/widget" element={<WidgetSettings />} />
                   <Route path="/admin/analytics" element={<Analytics />} />
                   <Route
@@ -123,6 +128,7 @@ function App() {
                     element={<StaffCustomerDetails />}
                   />
                   <Route path="/staff/files" element={<StaffFilesList />} />
+                  <Route path="/staff/feedback" element={<StaffFeedbackList />} />
                   <Route path="/staff/profile" element={<StaffProfile />} />
                 </Route>
               </Route>

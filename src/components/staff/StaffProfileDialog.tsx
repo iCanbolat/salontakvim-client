@@ -4,6 +4,7 @@
  */
 
 import { useForm } from "react-hook-form";
+import { useState, useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -35,7 +36,7 @@ import type { StaffMember, UpdateStaffProfileDto } from "@/types";
 const profileSchema = z.object({
   bio: z.string().max(500, "Bio too long").optional(),
   title: z.string().max(255, "Title too long").optional(),
-  locationId: z.number().int().positive().optional().nullable(),
+  locationId: z.string().optional().nullable(),
   isVisible: z.boolean(),
 });
 
@@ -55,6 +56,14 @@ export function StaffProfileDialog({
   onClose,
 }: StaffProfileDialogProps) {
   const queryClient = useQueryClient();
+  const [staffSnapshot, setStaffSnapshot] = useState(staff);
+
+  // Update staff snapshot only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setStaffSnapshot(staff);
+    }
+  }, [open, staff]);
 
   const {
     register,
@@ -68,7 +77,7 @@ export function StaffProfileDialog({
     defaultValues: {
       bio: staff.bio || "",
       title: staff.title || "",
-      locationId: staff.locationId,
+      locationId: staff.locationId ?? null,
       isVisible: staff.isVisible,
     },
   });
@@ -118,7 +127,7 @@ export function StaffProfileDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            Edit Profile - {staff.firstName} {staff.lastName}
+            Edit Profile - {staffSnapshot.firstName} {staffSnapshot.lastName}
           </DialogTitle>
           <DialogDescription>
             Update staff member profile information and visibility settings.
@@ -136,7 +145,7 @@ export function StaffProfileDialog({
               <Input
                 id="email"
                 type="email"
-                value={staff.email}
+                value={staffSnapshot.email}
                 disabled
                 className="bg-gray-50"
               />
@@ -180,12 +189,12 @@ export function StaffProfileDialog({
                   selectedLocationId === null ||
                   selectedLocationId === undefined
                     ? "none"
-                    : selectedLocationId.toString()
+                    : selectedLocationId
                 }
                 onValueChange={(value) => {
-                  const parsedValue =
-                    value === "none" ? undefined : parseInt(value, 10);
-                  setValue("locationId", parsedValue, { shouldDirty: true });
+                  setValue("locationId", value === "none" ? undefined : value, {
+                    shouldDirty: true,
+                  });
                 }}
                 disabled={updateMutation.isPending || locationsLoading}
               >
@@ -195,10 +204,7 @@ export function StaffProfileDialog({
                 <SelectContent>
                   <SelectItem value="none">No location</SelectItem>
                   {locations?.map((location) => (
-                    <SelectItem
-                      key={location.id}
-                      value={location.id.toString()}
-                    >
+                    <SelectItem key={location.id} value={location.id}>
                       {location.name}
                     </SelectItem>
                   ))}

@@ -82,7 +82,15 @@ export function AppointmentFormDialog({
 }: AppointmentFormDialogProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const isEditing = !!appointment;
+  const [isEditing, setIsEditing] = useState(!!appointment);
+
+  // Update isEditing only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setIsEditing(!!appointment);
+    }
+  }, [open, appointment]);
+
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
 
   // Fetch staff member record if user is staff
@@ -233,7 +241,7 @@ export function AppointmentFormDialog({
     if (!watchLocationId) return; // no filter when location not chosen
 
     const staffMatchesLocation = filteredStaff?.some(
-      (member) => member.id === watchStaffId
+      (member) => member.id === watchStaffId,
     );
 
     if (watchStaffId && !staffMatchesLocation) {
@@ -381,7 +389,7 @@ export function AppointmentFormDialog({
                     value && value !== "all" ? value : undefined,
                     {
                       shouldDirty: true,
-                    }
+                    },
                   )
                 }
               >
@@ -560,10 +568,10 @@ export function AppointmentFormDialog({
                         !watchServiceId || !watchStaffId
                           ? "Select service & staff"
                           : isAvailabilityLoading
-                          ? "Loading..."
-                          : availableTimes.length === 0
-                          ? "No availability"
-                          : "Select time"
+                            ? "Loading..."
+                            : availableTimes.length === 0
+                              ? "No availability"
+                              : "Select time"
                       }
                     />
                   </SelectTrigger>

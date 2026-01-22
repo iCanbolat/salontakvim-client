@@ -42,13 +42,7 @@ import type { InviteStaffDto } from "@/types";
 const inviteSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email too long"),
   title: z.string().max(255, "Title too long").optional(),
-  locationId: z.coerce
-    .number({
-      required_error: "Location is required",
-      invalid_type_error: "Location is required",
-    })
-    .int()
-    .positive("Location is required"),
+  locationId: z.string().min(1, "Location is required"),
 });
 
 type InviteFormData = z.infer<typeof inviteSchema>;
@@ -68,7 +62,7 @@ export function InviteStaffDialog({
   const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", storeId],
     queryFn: () => locationService.getLocations(storeId),
-    enabled: storeId > 0,
+    enabled: !!storeId && storeId !== "0",
   });
 
   const form = useForm<InviteFormData>({
@@ -77,7 +71,7 @@ export function InviteStaffDialog({
     defaultValues: {
       email: "",
       title: "",
-      locationId: undefined,
+      locationId: "",
     },
   });
 
@@ -159,8 +153,8 @@ export function InviteStaffDialog({
                       Location <span className="text-red-500">*</span>
                     </FormLabel>
                     <Select
-                      onValueChange={(value) => field.onChange(Number(value))}
-                      value={field.value ? String(field.value) : undefined}
+                      onValueChange={field.onChange}
+                      value={field.value}
                       disabled={inviteMutation.isPending || locationsLoading}
                     >
                       <FormControl>

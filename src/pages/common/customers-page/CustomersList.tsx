@@ -15,6 +15,7 @@ import {
   Phone,
   Calendar,
   MessageSquare,
+  Tag,
   X,
 } from "lucide-react";
 import { usePagination, useDebouncedSearch } from "@/hooks";
@@ -22,7 +23,7 @@ import { storeService, customerService } from "@/services";
 import type { CustomerWithStats } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CustomerCard, SmsDialog } from "@/components/customers";
+import { CustomerCard, SmsDialog, DiscountDialog } from "@/components/customers";
 import {
   PageView,
   TableView,
@@ -37,6 +38,7 @@ export function CustomersList() {
   const [view, setView] = useState<"grid" | "list">("grid");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
+  const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
 
   // Determine base path based on current location (admin or staff)
@@ -142,6 +144,15 @@ export function CustomersList() {
 
   const handleCloseSmsDialog = () => {
     setIsSmsDialogOpen(false);
+  };
+
+  const handleOpenDiscountDialog = () => {
+    setIsDiscountDialogOpen(true);
+  };
+
+  const handleCloseDiscountDialog = () => {
+    setIsDiscountDialogOpen(false);
+    setSelectedCustomers([]);
   };
 
   const handleSelectAllCustomers = () => {
@@ -254,8 +265,21 @@ export function CustomersList() {
               onClick={(e) => {
                 e.stopPropagation();
                 setSelectedCustomers([customer.id]);
+                handleOpenDiscountDialog();
+              }}
+              title="İndirim Tanımla"
+            >
+              <Tag className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setSelectedCustomers([customer.id]);
                 handleOpenSmsDialog();
               }}
+              title="SMS Gönder"
             >
               <MessageSquare className="h-4 w-4" />
             </Button>
@@ -334,11 +358,20 @@ export function CustomersList() {
               <Button
                 variant="default"
                 size="sm"
+                onClick={handleOpenDiscountDialog}
+                className="gap-2"
+              >
+                <Tag className="h-4 w-4" />
+                İndirim ({selectedCustomers.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={handleOpenSmsDialog}
                 className="gap-2"
               >
                 <MessageSquare className="h-4 w-4" />
-                Send SMS ({selectedCustomers.length})
+                SMS ({selectedCustomers.length})
               </Button>
               <Button
                 variant="ghost"
@@ -404,6 +437,13 @@ export function CustomersList() {
         selectedCustomers={selectedCustomersData}
         onSend={handleSendSms}
         isSending={isSendingSms}
+      />
+
+      <DiscountDialog
+        isOpen={isDiscountDialogOpen}
+        onClose={handleCloseDiscountDialog}
+        selectedCustomers={selectedCustomersData}
+        storeId={store.id}
       />
     </div>
   );
