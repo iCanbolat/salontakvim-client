@@ -122,9 +122,7 @@ export function StaffProfile() {
       );
     }
 
-    return (
-      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "N/A"
-    );
+    return `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "N/A";
   }, [staffMember, user?.firstName, user?.lastName]);
 
   const displayEmail = staffMember?.email ?? user?.email ?? "";
@@ -196,19 +194,11 @@ export function StaffProfile() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Name</Label>
-                <Input
-                  value={displayName}
-                  disabled
-                  className="bg-gray-50"
-                />
+                <Input value={displayName} disabled className="bg-gray-50" />
               </div>
               <div className="space-y-2">
                 <Label>Email</Label>
-                <Input
-                  value={displayEmail}
-                  disabled
-                  className="bg-gray-50"
-                />
+                <Input value={displayEmail} disabled className="bg-gray-50" />
               </div>
             </div>
           </CardContent>

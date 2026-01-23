@@ -28,11 +28,11 @@ export class StaffService {
    */
   async inviteStaff(
     storeId: string,
-    data: InviteStaffDto
+    data: InviteStaffDto,
   ): Promise<StaffInvitation> {
     const response = await axiosInstance.post<StaffInvitation>(
       `/stores/${storeId}/staff/invite`,
-      data
+      data,
     );
     return response.data;
   }
@@ -42,7 +42,7 @@ export class StaffService {
    */
   async getInvitations(storeId: string): Promise<StaffInvitation[]> {
     const response = await axiosInstance.get<StaffInvitation[]>(
-      `/stores/${storeId}/staff/invitations`
+      `/stores/${storeId}/staff/invitations`,
     );
     return response.data;
   }
@@ -52,7 +52,7 @@ export class StaffService {
    */
   async getInvitationByToken(token: string): Promise<StaffInvitationDetails> {
     const response = await axiosInstance.get<StaffInvitationDetails>(
-      `/staff/invitations/${token}`
+      `/staff/invitations/${token}`,
     );
     return response.data;
   }
@@ -62,11 +62,11 @@ export class StaffService {
    */
   async acceptInvitation(
     token: string,
-    data: AcceptStaffInvitationDto
+    data: AcceptStaffInvitationDto,
   ): Promise<{ user: { email: string } }> {
     const response = await axiosInstance.post<{ user: { email: string } }>(
       `/staff/invitations/${token}/accept`,
-      data
+      data,
     );
     return response.data;
   }
@@ -76,7 +76,7 @@ export class StaffService {
    */
   async deleteInvitation(storeId: string, invitationId: string): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/staff/invitations/${invitationId}`
+      `/stores/${storeId}/staff/invitations/${invitationId}`,
     );
   }
 
@@ -94,7 +94,7 @@ export class StaffService {
           serviceId?: string;
           locationId?: string;
           search?: string;
-        } = false
+        } = false,
   ): Promise<StaffMember[]> {
     const options =
       typeof includeHiddenOrOptions === "boolean"
@@ -110,7 +110,7 @@ export class StaffService {
           locationId: options.locationId,
           search: options.search,
         },
-      }
+      },
     );
     return response.data;
   }
@@ -120,7 +120,7 @@ export class StaffService {
    */
   async getStaffMember(storeId: string, staffId: string): Promise<StaffMember> {
     const response = await axiosInstance.get<StaffMember>(
-      `/stores/${storeId}/staff/${staffId}`
+      `/stores/${storeId}/staff/${staffId}`,
     );
     return response.data;
   }
@@ -131,11 +131,11 @@ export class StaffService {
   async updateStaffProfile(
     storeId: string,
     staffId: string,
-    data: UpdateStaffProfileDto
+    data: UpdateStaffProfileDto,
   ): Promise<StaffMember> {
     const response = await axiosInstance.patch<StaffMember>(
       `/stores/${storeId}/staff/${staffId}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -145,11 +145,11 @@ export class StaffService {
    */
   async createSelfStaffProfile(
     storeId: string,
-    data: UpdateStaffProfileDto
+    data: UpdateStaffProfileDto,
   ): Promise<StaffMember> {
     const response = await axiosInstance.post<StaffMember>(
       `/stores/${storeId}/staff/self`,
-      data
+      data,
     );
     return response.data;
   }
@@ -169,11 +169,11 @@ export class StaffService {
   async assignServices(
     storeId: string,
     staffId: string,
-    data: AssignServicesDto
+    data: AssignServicesDto,
   ): Promise<Service[]> {
     const response = await axiosInstance.post<Service[]>(
       `/stores/${storeId}/staff/${staffId}/services`,
-      data
+      data,
     );
     return response.data;
   }
@@ -183,7 +183,7 @@ export class StaffService {
    */
   async getStaffServices(storeId: string, staffId: string): Promise<Service[]> {
     const response = await axiosInstance.get<Service[]>(
-      `/stores/${storeId}/staff/${staffId}/services`
+      `/stores/${storeId}/staff/${staffId}/services`,
     );
     return response.data;
   }
@@ -194,10 +194,10 @@ export class StaffService {
   async removeServiceFromStaff(
     storeId: string,
     staffId: string,
-    serviceId: string
+    serviceId: string,
   ): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/staff/${staffId}/services/${serviceId}`
+      `/stores/${storeId}/staff/${staffId}/services/${serviceId}`,
     );
   }
 
@@ -209,11 +209,11 @@ export class StaffService {
   async createWorkingHours(
     storeId: string,
     staffId: string,
-    data: CreateWorkingHoursDto
+    data: CreateWorkingHoursDto,
   ): Promise<WorkingHours> {
     const response = await axiosInstance.post<WorkingHours>(
       `/stores/${storeId}/staff/${staffId}/working-hours`,
-      data
+      data,
     );
     return response.data;
   }
@@ -223,10 +223,10 @@ export class StaffService {
    */
   async getWorkingHours(
     storeId: string,
-    staffId: string
+    staffId: string,
   ): Promise<WorkingHours[]> {
     const response = await axiosInstance.get<WorkingHours[]>(
-      `/stores/${storeId}/staff/${staffId}/working-hours`
+      `/stores/${storeId}/staff/${staffId}/working-hours`,
     );
     return response.data;
   }
@@ -238,11 +238,11 @@ export class StaffService {
     storeId: string,
     staffId: string,
     workingHoursId: string,
-    data: UpdateWorkingHoursDto
+    data: UpdateWorkingHoursDto,
   ): Promise<WorkingHours> {
     const response = await axiosInstance.patch<WorkingHours>(
       `/stores/${storeId}/staff/${staffId}/working-hours/${workingHoursId}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -253,10 +253,10 @@ export class StaffService {
   async deleteWorkingHours(
     storeId: string,
     staffId: string,
-    workingHoursId: string
+    workingHoursId: string,
   ): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/staff/${staffId}/working-hours/${workingHoursId}`
+      `/stores/${storeId}/staff/${staffId}/working-hours/${workingHoursId}`,
     );
   }
 
@@ -268,11 +268,11 @@ export class StaffService {
   async createStaffBreak(
     storeId: string,
     staffId: string,
-    data: CreateStaffBreakDto
+    data: CreateStaffBreakDto,
   ): Promise<StaffBreak> {
     const response = await axiosInstance.post<StaffBreak>(
       `/stores/${storeId}/staff/${staffId}/breaks`,
-      data
+      data,
     );
     return response.data;
   }
@@ -282,10 +282,10 @@ export class StaffService {
    */
   async getStaffBreaks(
     storeId: string,
-    staffId: string
+    staffId: string,
   ): Promise<StaffBreak[]> {
     const response = await axiosInstance.get<StaffBreak[]>(
-      `/stores/${storeId}/staff/${staffId}/breaks`
+      `/stores/${storeId}/staff/${staffId}/breaks`,
     );
     return response.data;
   }
@@ -297,11 +297,11 @@ export class StaffService {
     storeId: string,
     staffId: string,
     breakId: string,
-    data: UpdateStaffBreakDto
+    data: UpdateStaffBreakDto,
   ): Promise<StaffBreak> {
     const response = await axiosInstance.patch<StaffBreak>(
       `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -312,10 +312,10 @@ export class StaffService {
   async deleteStaffBreak(
     storeId: string,
     staffId: string,
-    breakId: string
+    breakId: string,
   ): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`
+      `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`,
     );
   }
 }
