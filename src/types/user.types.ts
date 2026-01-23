@@ -56,6 +56,12 @@ export interface RegisterDto {
   firstName: string;
   lastName: string;
   phone?: string;
+  storeName: string;
+  storeSlug?: string;
+  createStaffProfile?: boolean;
+  staffTitle?: string;
+  staffBio?: string;
+  staffIsVisible?: boolean;
 }
 
 export interface RefreshTokenDto {

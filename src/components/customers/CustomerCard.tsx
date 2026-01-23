@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
 interface CustomerCardProps {
@@ -40,14 +39,14 @@ export function CustomerCard({
           <div className="flex-1" onClick={() => onView(customer)}>
             <div className="flex items-center gap-2 mb-1">
               <CardTitle className="text-lg">{fullName}</CardTitle>
-              {!customer.isActive && (
+              {/* {!customer.isActive && (
                 <Badge variant="secondary">Inactive</Badge>
               )}
               {customer.emailVerified && (
                 <Badge variant="outline" className="text-green-600">
                   Verified
                 </Badge>
-              )}
+              )} */}
             </div>
             <CardDescription>
               Customer #{customer.publicNumber || customer.id}

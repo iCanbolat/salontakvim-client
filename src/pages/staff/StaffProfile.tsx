@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -84,16 +84,50 @@ export function StaffProfile() {
     },
   });
 
+  const createMutation = useMutation({
+    mutationFn: async (data: UpdateStaffProfileDto) =>
+      staffService.createSelfStaffProfile(store!.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["my-staff-member", store?.id, user?.id],
+      });
+    },
+  });
+
   const onSubmit = (data: ProfileFormData) => {
-    if (!staffMember || !store) return;
+    if (!store) return;
     const payload: UpdateStaffProfileDto = {
       bio: data.bio || undefined,
       title: data.title || undefined,
     };
-    updateMutation.mutate(payload);
+
+    if (staffMember) {
+      updateMutation.mutate(payload);
+      return;
+    }
+
+    if (user?.role === "admin") {
+      createMutation.mutate(payload);
+    }
   };
 
   const isLoading = storeLoading || staffLoading;
+
+  const displayName = useMemo(() => {
+    if (staffMember) {
+      return (
+        `${staffMember.firstName ?? ""} ${staffMember.lastName ?? ""}`.trim() ||
+        "N/A"
+      );
+    }
+
+    return (
+      `${user?.firstName ?? ""} ${user?.lastName ?? ""}`.trim() || "N/A"
+    );
+  }, [staffMember, user?.firstName, user?.lastName]);
+
+  const displayEmail = staffMember?.email ?? user?.email ?? "";
 
   if (isLoading) {
     return (
@@ -103,7 +137,7 @@ export function StaffProfile() {
     );
   }
 
-  if (!staffMember) {
+  if (!staffMember && user?.role !== "admin") {
     return (
       <Alert variant="destructive">
         <AlertDescription>Staff record not found.</AlertDescription>
@@ -123,19 +157,23 @@ export function StaffProfile() {
         <div className="flex gap-3">
           <Button
             variant="outline"
-            disabled={!isDirty || updateMutation.isPending}
+            disabled={
+              !isDirty || updateMutation.isPending || createMutation.isPending
+            }
             onClick={() => reset()}
           >
             Reset
           </Button>
           <Button
             onClick={handleSubmit(onSubmit)}
-            disabled={!isDirty || updateMutation.isPending}
+            disabled={
+              !isDirty || updateMutation.isPending || createMutation.isPending
+            }
           >
-            {updateMutation.isPending && (
+            {(updateMutation.isPending || createMutation.isPending) && (
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
             )}
-            Save changes
+            {staffMember ? "Save changes" : "Create staff profile"}
           </Button>
         </div>
       </div>
@@ -159,11 +197,7 @@ export function StaffProfile() {
               <div className="space-y-2">
                 <Label>Name</Label>
                 <Input
-                  value={
-                    `${staffMember.firstName ?? ""} ${
-                      staffMember.lastName ?? ""
-                    }`.trim() || "N/A"
-                  }
+                  value={displayName}
                   disabled
                   className="bg-gray-50"
                 />
@@ -171,7 +205,7 @@ export function StaffProfile() {
               <div className="space-y-2">
                 <Label>Email</Label>
                 <Input
-                  value={staffMember.email}
+                  value={displayEmail}
                   disabled
                   className="bg-gray-50"
                 />
@@ -216,7 +250,7 @@ export function StaffProfile() {
         </Card>
       </div>
 
-      {updateMutation.isError && (
+      {(updateMutation.isError || createMutation.isError) && (
         <Alert variant="destructive">
           <AlertDescription>
             Failed to update profile. Please try again.

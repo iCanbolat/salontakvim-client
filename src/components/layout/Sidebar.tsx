@@ -20,6 +20,7 @@ import {
   ChevronRight,
   FileText,
   MessageSquare,
+  UserCog,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -109,6 +110,12 @@ const adminNavItems: NavItem[] = [
     label: "Settings",
     href: "/admin/settings",
     icon: Settings,
+    roles: ["admin"],
+  },
+  {
+    label: "My Profile",
+    href: "/admin/profile",
+    icon: UserCog,
     roles: ["admin"],
   },
 ];

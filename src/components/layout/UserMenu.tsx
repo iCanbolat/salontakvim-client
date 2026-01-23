@@ -69,7 +69,7 @@ export function UserMenu() {
         <DropdownMenuItem
           onClick={() =>
             navigate(
-              user?.role === "admin" ? "/admin/settings" : "/staff/profile"
+              user?.role === "admin" ? "/admin/profile" : "/staff/profile"
             )
           }
         >

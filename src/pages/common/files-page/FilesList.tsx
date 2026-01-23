@@ -225,6 +225,11 @@ export function FilesList() {
     return sortedFiles.filter((file) => file.customerId === selectedCustomerId);
   }, [sortedFiles, selectedCustomerId]);
 
+  const activeFolder = useMemo(() => {
+    if (!selectedCustomerId) return null;
+    return folders.find((f) => f.customerId === selectedCustomerId) || null;
+  }, [folders, selectedCustomerId]);
+
   // Sync search term from URL
   useEffect(() => {
     const initialSearch = searchParams.get("search");
@@ -765,10 +770,6 @@ export function FilesList() {
     );
   }
 
-  if (!store) {
-    return null;
-  }
-
   const selectedCustomer = selectedCustomerId
     ? customerMap.get(selectedCustomerId)
     : null;
@@ -781,10 +782,9 @@ export function FilesList() {
       ? `Customer ${selectedCustomerId.slice(0, 6)}`
       : null;
 
-  const activeFolder = useMemo(() => {
-    if (!selectedCustomerId) return null;
-    return folders.find((f) => f.customerId === selectedCustomerId) || null;
-  }, [folders, selectedCustomerId]);
+  if (!store) {
+    return null;
+  }
 
   return (
     <div className="space-y-6">

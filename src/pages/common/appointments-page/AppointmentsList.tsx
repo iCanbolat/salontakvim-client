@@ -15,6 +15,7 @@ import {
   AlertCircle,
   Calendar as CalendarIcon,
   X,
+  Users,
 } from "lucide-react";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
@@ -24,6 +25,7 @@ import { storeService, appointmentService, staffService } from "@/services";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover,
   PopoverContent,
@@ -66,6 +68,8 @@ export function AppointmentsList() {
     DateRange | undefined
   >();
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [isStaffPopoverOpen, setIsStaffPopoverOpen] = useState(false);
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const itemsPerPage = 8;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
@@ -87,6 +91,15 @@ export function AppointmentsList() {
       return staffMembers.find((s) => s.userId === user?.id);
     },
     enabled: !!store?.id && user?.role === "staff",
+  });
+
+  const { data: staffOptions = [], isLoading: staffOptionsLoading } = useQuery({
+    queryKey: ["staff-members", store?.id],
+    queryFn: () =>
+      staffService.getStaffMembers(store!.id, {
+        includeHidden: true,
+      }),
+    enabled: !!store?.id && user?.role === "admin",
   });
 
   // If navigated with startDate/endDate query params, initialize date filter.
@@ -145,6 +158,7 @@ export function AppointmentsList() {
       debouncedSearch,
       dateRange?.from,
       dateRange?.to,
+      selectedStaffIds,
       staffMember?.id,
     ],
     queryFn: () =>
@@ -158,6 +172,10 @@ export function AppointmentsList() {
           : undefined,
         endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
         staffId: user?.role === "staff" ? staffMember?.id : undefined,
+        staffIds:
+          user?.role === "admin" && selectedStaffIds.length > 0
+            ? selectedStaffIds
+            : undefined,
       }),
     enabled:
       !!store?.id &&
@@ -192,7 +210,7 @@ export function AppointmentsList() {
 
   useEffect(() => {
     setPage(1);
-  }, [activeTab, debouncedSearch, dateRange]);
+  }, [activeTab, debouncedSearch, dateRange, selectedStaffIds]);
 
   // Force grid view on screens smaller than xl if currently in list view
   useEffect(() => {
@@ -255,6 +273,37 @@ export function AppointmentsList() {
     }
   };
 
+  const handleStaffPopoverChange = (open: boolean) => {
+    setIsStaffPopoverOpen(open);
+  };
+
+  const handleToggleStaff = (staffId: string, checked: boolean) => {
+    setSelectedStaffIds((prev) =>
+      checked ? [...prev, staffId] : prev.filter((id) => id !== staffId),
+    );
+  };
+
+  const handleClearStaffSelection = () => {
+    setSelectedStaffIds([]);
+  };
+
+  const staffFilterLabel = useMemo(() => {
+    if (!selectedStaffIds.length) {
+      return "All staff";
+    }
+
+    if (selectedStaffIds.length === 1) {
+      const staff = staffOptions.find((s) => s.id === selectedStaffIds[0]);
+      const name =
+        staff?.fullName ||
+        [staff?.firstName, staff?.lastName].filter(Boolean).join(" ") ||
+        "Staff";
+      return name;
+    }
+
+    return `${selectedStaffIds.length} staff selected`;
+  }, [selectedStaffIds, staffOptions]);
+
   // Filter tabs configuration
   const filterTabs: FilterTab<AppointmentFilter>[] = useMemo(
     () => [
@@ -266,21 +315,21 @@ export function AppointmentsList() {
       { value: "no_show", label: "No Show", count: statusCounts.no_show },
       { value: "expired", label: "Expired", count: statusCounts.expired },
     ],
-    [statusCounts]
+    [statusCounts],
   );
 
   // Empty state message
   const emptyTitle = debouncedSearch
     ? `No appointments matching "${debouncedSearch}"`
     : activeTab !== "all"
-    ? `No appointments with status "${activeTab}"`
-    : "No appointments";
+      ? `No appointments with status "${activeTab}"`
+      : "No appointments";
 
   const emptyDescription = debouncedSearch
     ? "Try adjusting your search keywords or filters"
     : activeTab === "all"
-    ? "Create your first appointment to get started"
-    : "No appointments match this status filter";
+      ? "Create your first appointment to get started"
+      : "No appointments match this status filter";
 
   if (isInitialLoading) {
     return (
@@ -398,7 +447,84 @@ export function AppointmentsList() {
           )
         }
         headerActions={
-          <div className="flex w-full md:w-auto">
+          <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
+            {user?.role === "admin" && (
+              <Popover
+                open={isStaffPopoverOpen}
+                onOpenChange={handleStaffPopoverChange}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={selectedStaffIds.length ? "secondary" : "outline"}
+                    size="lg"
+                    className="justify-start gap-2 text-left font-normal"
+                  >
+                    <Users className="h-4 w-4 shrink-0" />
+                    <span className="truncate">{staffFilterLabel}</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-0" align="end">
+                  <div className="flex items-center justify-between border-b px-3 py-2">
+                    <span className="text-sm font-medium">Filter by staff</span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleClearStaffSelection}
+                      disabled={!selectedStaffIds.length}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto p-3 space-y-2">
+                    {staffOptionsLoading && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Loading staff...
+                      </div>
+                    )}
+                    {!staffOptionsLoading && staffOptions.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        No staff members found.
+                      </p>
+                    )}
+                    {!staffOptionsLoading &&
+                      staffOptions.map((staff) => {
+                        const name =
+                          staff.fullName ||
+                          [staff.firstName, staff.lastName]
+                            .filter(Boolean)
+                            .join(" ") ||
+                          "Staff";
+                        const isChecked = selectedStaffIds.includes(staff.id);
+                        return (
+                          <label
+                            key={staff.id}
+                            className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50 cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={isChecked}
+                              onCheckedChange={(checked) =>
+                                handleToggleStaff(staff.id, checked === true)
+                              }
+                            />
+                            <div className="flex flex-col">
+                              <span className="text-sm font-medium">
+                                {name}
+                              </span>
+                              {staff.title && (
+                                <span className="text-xs text-muted-foreground">
+                                  {staff.title}
+                                </span>
+                              )}
+                            </div>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            )}
+
             <Popover
               open={isDatePopoverOpen}
               onOpenChange={handleDatePopoverChange}
@@ -411,7 +537,7 @@ export function AppointmentsList() {
                     "justify-start gap-2 text-left font-normal relative",
                     dateRange?.from
                       ? "w-full md:w-[calc(15rem-2.25rem)] border"
-                      : "w-full md:w-60"
+                      : "w-full md:w-60",
                   )}
                 >
                   <CalendarIcon className="h-4 w-4 shrink-0" />

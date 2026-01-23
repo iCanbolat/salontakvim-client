@@ -2,7 +2,7 @@
  * Register Page
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -33,9 +33,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 export function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false);
+  const [slugEdited, setSlugEdited] = useState(false);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
 
@@ -47,10 +50,36 @@ export function RegisterPage() {
       firstName: "",
       lastName: "",
       phone: "",
+      storeName: "",
+      storeSlug: "",
       password: "",
       confirmPassword: "",
+      createStaffProfile: false,
+      staffTitle: "",
+      staffBio: "",
+      staffIsVisible: true,
     },
   });
+
+  const slugify = (input: string) =>
+    input
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .replace(/-{2,}/g, "-");
+
+  const watchedStoreName = form.watch("storeName");
+  const watchedCreateStaff = form.watch("createStaffProfile");
+
+  useEffect(() => {
+    if (!slugEdited) {
+      form.setValue("storeSlug", slugify(watchedStoreName || ""), {
+        shouldValidate: false,
+        shouldDirty: !!watchedStoreName,
+      });
+    }
+  }, [watchedStoreName, slugEdited, form]);
 
   const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
@@ -81,6 +110,153 @@ export function RegisterPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
+              {/* Store Details */}
+              <div className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="storeName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store Name *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Your business name"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="storeSlug"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Store URL *</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="my-store-name"
+                          disabled={isLoading}
+                          {...field}
+                          onChange={(e) => {
+                            setSlugEdited(true);
+                            field.onChange(e);
+                          }}
+                          onBlur={(e) => {
+                            if (!e.target.value) {
+                              setSlugEdited(false);
+                            }
+                            field.onBlur();
+                          }}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Optional: Create staff profile for the owner */}
+              <div className="space-y-3 rounded-lg border p-4 bg-gray-50/60">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="font-medium text-sm text-gray-900">
+                      Add yourself as staff (optional)
+                    </p>
+                    <p className="text-xs text-gray-600">
+                      Create a staff profile so you can be booked or assigned in
+                      your own store.
+                    </p>
+                  </div>
+                  <FormField
+                    control={form.control}
+                    name="createStaffProfile"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-col items-center space-y-1">
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            disabled={isLoading}
+                            aria-label="Create staff profile"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {watchedCreateStaff && (
+                  <div className="grid grid-cols-1 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="staffTitle"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Staff Title *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g. Owner / Lead Stylist"
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="staffBio"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Bio (optional)</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Short intro, specialties, languages..."
+                              rows={3}
+                              disabled={isLoading}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="staffIsVisible"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                          <div className="space-y-1">
+                            <FormLabel className="text-sm font-medium">
+                              Publicly visible in booking
+                            </FormLabel>
+                            <p className="text-xs text-gray-600">
+                              If off, you can still assign yourself internally,
+                              but customers won’t see you in the widget.
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              disabled={isLoading}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Email */}
               <FormField
                 control={form.control}
@@ -155,7 +331,7 @@ export function RegisterPage() {
                         value={formatTurkishPhone(field.value || "")}
                         onChange={(e) =>
                           field.onChange(
-                            normalizeTurkishPhoneInput(e.target.value)
+                            normalizeTurkishPhoneInput(e.target.value),
                           )
                         }
                         onBlur={field.onBlur}
@@ -207,7 +383,7 @@ export function RegisterPage() {
               />
             </CardContent>
 
-            <CardFooter className="flex flex-col space-y-4">
+            <CardFooter className="flex flex-col space-y-4 mt-5">
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
                   <>

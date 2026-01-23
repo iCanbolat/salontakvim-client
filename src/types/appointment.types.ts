@@ -102,6 +102,7 @@ export interface AppointmentFilters {
   status?: AppointmentStatus;
   serviceId?: string;
   staffId?: string;
+  staffIds?: string[];
   locationId?: string;
   customerId?: string;
   page?: number;

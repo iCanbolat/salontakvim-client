@@ -99,6 +99,12 @@ const adminNavItems: NavItem[] = [
     icon: Settings,
     roles: ["admin"],
   },
+  {
+    label: "My Profile",
+    href: "/admin/profile",
+    icon: UserCog,
+    roles: ["admin"],
+  },
 ];
 
 const staffNavItems: NavItem[] = [

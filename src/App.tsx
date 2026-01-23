@@ -3,9 +3,10 @@
  */
 
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { AuthProvider, NotificationProvider, useAuth } from "./contexts";
+import { queryClient } from "./lib/queryClient";
 import { MainLayout } from "./components/layout";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { LoginPage, RegisterPage } from "./pages/auth";
@@ -39,17 +40,6 @@ import {
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
-
-// Create a client for React Query
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: true,
-      retry: 1,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-    },
-  },
-});
 
 function App() {
   return (
@@ -104,6 +94,7 @@ function App() {
                     path="/admin/notifications"
                     element={<NotificationSettings />}
                   />
+                  <Route path="/admin/profile" element={<StaffProfile />} />
                   <Route path="/admin/settings" element={<StoreSettings />} />
                 </Route>
 
@@ -128,7 +119,10 @@ function App() {
                     element={<StaffCustomerDetails />}
                   />
                   <Route path="/staff/files" element={<StaffFilesList />} />
-                  <Route path="/staff/feedback" element={<StaffFeedbackList />} />
+                  <Route
+                    path="/staff/feedback"
+                    element={<StaffFeedbackList />}
+                  />
                   <Route path="/staff/profile" element={<StaffProfile />} />
                 </Route>
               </Route>

@@ -141,6 +141,20 @@ export class StaffService {
   }
 
   /**
+   * Create staff profile for the current admin user
+   */
+  async createSelfStaffProfile(
+    storeId: string,
+    data: UpdateStaffProfileDto
+  ): Promise<StaffMember> {
+    const response = await axiosInstance.post<StaffMember>(
+      `/stores/${storeId}/staff/self`,
+      data
+    );
+    return response.data;
+  }
+
+  /**
    * Delete a staff member
    */
   async deleteStaffMember(storeId: string, staffId: string): Promise<void> {
