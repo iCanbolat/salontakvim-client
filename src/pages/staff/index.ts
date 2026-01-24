@@ -2,11 +2,12 @@
  * Staff page exports
  */
 
-export * from "./StaffDashboard";
 export * from "./AcceptInvitationPage";
-export { AppointmentsList } from "../common/appointments-page/AppointmentsList";
-export { CustomersList as StaffCustomersList } from "../common/customers-page/CustomersList";
-export { CustomerDetails as StaffCustomerDetails } from "../common/customers-page/CustomerDetails";
+export { StaffManagement } from "./StaffManagement";
+export { StaffDetails } from "./StaffDetails";
+export { AppointmentsList } from "../appointments";
+export { CustomersList as StaffCustomersList } from "../customers";
+export { CustomerDetails as StaffCustomerDetails } from "../customers/CustomerDetails";
 export { FilesList as StaffFilesList } from "../common/files-page/FilesList";
 export { FeedbackList as StaffFeedbackList } from "../common/feedback-page/FeedbackList";
 export * from "./StaffSchedule";

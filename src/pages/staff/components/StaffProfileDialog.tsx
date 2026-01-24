@@ -1,0 +1,303 @@
+/**
+ * Staff Profile Dialog Component
+ * Form for editing staff member profile information
+ */
+
+import { useForm, type SubmitHandler } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { staffService, locationService } from "@/services";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogBody,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import type { StaffMember, UpdateStaffProfileDto } from "@/types";
+
+const profileSchema = z.object({
+  bio: z.string().max(500, "Bio too long").optional(),
+  title: z.string().max(255, "Title too long").optional(),
+  locationId: z.string().optional().nullable(),
+  isVisible: z.boolean(),
+  role: z.enum(["admin", "staff"] as const),
+});
+
+type ProfileFormData = z.infer<typeof profileSchema>;
+
+interface StaffProfileDialogProps {
+  storeId: string;
+  staff: StaffMember;
+  open: boolean;
+  onClose: () => void;
+}
+
+export function StaffProfileDialog({
+  storeId,
+  staff,
+  open,
+  onClose,
+}: StaffProfileDialogProps) {
+  const queryClient = useQueryClient();
+  const [staffSnapshot, setStaffSnapshot] = useState(staff);
+
+  // Update staff snapshot only when dialog opens to prevent flickering on close
+  useEffect(() => {
+    if (open) {
+      setStaffSnapshot(staff);
+    }
+  }, [open, staff]);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty },
+    watch,
+    setValue,
+  } = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    mode: "onChange",
+    defaultValues: {
+      bio: staff.bio || "",
+      title: staff.title || "",
+      locationId: staff.locationId ?? null,
+      isVisible: staff.isVisible,
+      role: staff.role === "admin" ? "admin" : "staff",
+    },
+  });
+
+  const isVisible = watch("isVisible");
+  const role = watch("role");
+  const selectedLocationId = watch("locationId");
+
+  const { data: locations, isLoading: locationsLoading } = useQuery({
+    queryKey: ["locations", storeId],
+    queryFn: () => locationService.getLocations(storeId),
+    enabled: open,
+    staleTime: 1000 * 60 * 5,
+  });
+
+  // Update profile mutation
+  const updateMutation = useMutation({
+    mutationFn: async (data: UpdateStaffProfileDto) =>
+      staffService.updateStaffProfile(storeId, staff.id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-member", storeId, staff.id],
+      });
+      toast.success("Profile updated", {
+        description: "Staff member profile has been updated successfully.",
+      });
+      onClose();
+    },
+  });
+
+  const onSubmit: SubmitHandler<ProfileFormData> = (data) => {
+    const updateData: UpdateStaffProfileDto = {
+      bio: data.bio || undefined,
+      title: data.title || undefined,
+      locationId: data.locationId || undefined,
+      isVisible: data.isVisible,
+      role: data.role,
+    };
+    updateMutation.mutate(updateData);
+  };
+
+  const handleClose = () => {
+    if (!updateMutation.isPending) {
+      updateMutation.reset();
+      onClose();
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-[500px]">
+        <DialogHeader>
+          <DialogTitle>
+            Edit Profile - {staffSnapshot.firstName} {staffSnapshot.lastName}
+          </DialogTitle>
+          <DialogDescription>
+            Update staff member profile information and visibility settings.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="flex flex-col flex-1 min-h-0"
+        >
+          <DialogBody className="space-y-4">
+            {/* Email (Read-only) */}
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input
+                id="email"
+                type="email"
+                value={staffSnapshot.email}
+                disabled
+                className="bg-gray-50"
+              />
+            </div>
+
+            {/* Title */}
+            <div className="space-y-2">
+              <Label htmlFor="title">Job Title</Label>
+              <Input
+                id="title"
+                type="text"
+                placeholder="e.g. Senior Stylist, Nail Technician"
+                {...register("title")}
+                disabled={updateMutation.isPending}
+              />
+              {errors.title && (
+                <p className="text-sm text-red-600">{errors.title.message}</p>
+              )}
+            </div>
+
+            {/* Bio */}
+            <div className="space-y-2">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                placeholder="Tell customers about this staff member's experience and specialties..."
+                rows={4}
+                {...register("bio")}
+                disabled={updateMutation.isPending}
+              />
+              {errors.bio && (
+                <p className="text-sm text-red-600">{errors.bio.message}</p>
+              )}
+            </div>
+
+            {/* Location Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="locationId">Location (Optional)</Label>
+              <Select
+                value={
+                  selectedLocationId === null ||
+                  selectedLocationId === undefined
+                    ? "none"
+                    : selectedLocationId
+                }
+                onValueChange={(value) => {
+                  setValue("locationId", value === "none" ? undefined : value, {
+                    shouldDirty: true,
+                  });
+                }}
+                disabled={updateMutation.isPending || locationsLoading}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">No location</SelectItem>
+                  {locations?.map((location) => (
+                    <SelectItem key={location.id} value={location.id}>
+                      {location.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-gray-500">
+                Choose which branch this staff member belongs to.
+              </p>
+              {errors.locationId && (
+                <p className="text-sm text-red-600">
+                  {errors.locationId.message}
+                </p>
+              )}
+            </div>
+
+            {/* Visibility Toggle */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="visibility">Visible in Booking Widget</Label>
+                <p className="text-sm text-gray-600">
+                  Show this staff member to customers when booking
+                </p>
+              </div>
+              <Switch
+                id="visibility"
+                checked={isVisible}
+                onCheckedChange={(checked: boolean) =>
+                  setValue("isVisible", checked, { shouldDirty: true })
+                }
+                disabled={updateMutation.isPending}
+              />
+            </div>
+
+            {/* Role Toggle */}
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="space-y-0.5">
+                <Label htmlFor="role">Admin Access</Label>
+                <p className="text-sm text-gray-600">
+                  Grant this staff member admin privileges for the store
+                </p>
+              </div>
+              <Switch
+                id="role"
+                checked={role === "admin"}
+                onCheckedChange={(checked: boolean) =>
+                  setValue("role", checked ? "admin" : "staff", {
+                    shouldDirty: true,
+                  })
+                }
+                disabled={updateMutation.isPending}
+              />
+            </div>
+
+            {/* Error Alert */}
+            {updateMutation.isError && (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  Failed to update profile. Please try again.
+                </AlertDescription>
+              </Alert>
+            )}
+          </DialogBody>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-2 px-6 pb-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={updateMutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={!isDirty || updateMutation.isPending}
+            >
+              {updateMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Save Changes
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

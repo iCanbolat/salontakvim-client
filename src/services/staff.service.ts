@@ -155,6 +155,27 @@ export class StaffService {
   }
 
   /**
+   * Upload staff avatar
+   */
+  async uploadStaffAvatar(
+    storeId: string,
+    staffId: string,
+    file: File,
+  ): Promise<{ avatarUrl: string }> {
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await axiosInstance.post<{ avatarUrl: string }>(
+      `/stores/${storeId}/staff/${staffId}/avatar`,
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+      },
+    );
+    return response.data;
+  }
+
+  /**
    * Delete a staff member
    */
   async deleteStaffMember(storeId: string, staffId: string): Promise<void> {

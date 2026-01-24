@@ -1,9 +1,10 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts";
 import { staffService, storeService } from "@/services";
 import type { UpdateStaffProfileDto } from "@/types";
@@ -14,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,8 +30,11 @@ const profileSchema = z.object({
 type ProfileFormData = z.infer<typeof profileSchema>;
 
 export function StaffProfile() {
-  const { user } = useAuth();
+  const { user, refetchUser } = useAuth();
   const queryClient = useQueryClient();
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
 
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["my-store"],
@@ -81,6 +86,9 @@ export function StaffProfile() {
       queryClient.invalidateQueries({
         queryKey: ["my-staff-member", store?.id, user?.id],
       });
+      toast.success("Profile updated", {
+        description: "Your profile changes have been saved.",
+      });
     },
   });
 
@@ -91,6 +99,56 @@ export function StaffProfile() {
       queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
       queryClient.invalidateQueries({
         queryKey: ["my-staff-member", store?.id, user?.id],
+      });
+      toast.success("Profile created", {
+        description: "Your staff profile has been created.",
+      });
+    },
+  });
+
+  const avatarMutation = useMutation({
+    mutationFn: async (file: File) =>
+      staffService.uploadStaffAvatar(store!.id, staffMember!.id, file),
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["my-staff-member", store?.id, user?.id],
+      });
+
+      if (data?.avatarUrl && staffMember) {
+        queryClient.setQueryData(
+          ["my-staff-member", store?.id, user?.id],
+          (previous: typeof staffMember | null | undefined) =>
+            previous ? { ...previous, avatar: data.avatarUrl } : previous,
+        );
+        queryClient.setQueryData(
+          ["staff-member", store?.id, staffMember.id],
+          (previous: typeof staffMember | null | undefined) =>
+            previous ? { ...previous, avatar: data.avatarUrl } : previous,
+        );
+        queryClient.setQueryData(
+          ["staff", store?.id],
+          (previous: (typeof staffMember)[] | undefined) =>
+            Array.isArray(previous)
+              ? previous.map((member) =>
+                  member.id === staffMember.id
+                    ? { ...member, avatar: data.avatarUrl }
+                    : member,
+                )
+              : previous,
+        );
+      }
+
+      refetchUser();
+      setAvatarFile(null);
+      setAvatarPreview(data?.avatarUrl ?? null);
+      toast.success("Avatar updated", {
+        description: "Your profile photo has been updated.",
+      });
+    },
+    onError: () => {
+      toast.error("Avatar upload failed", {
+        description: "Please try again with a valid image.",
       });
     },
   });
@@ -112,6 +170,31 @@ export function StaffProfile() {
     }
   };
 
+  const handleAvatarSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (avatarPreview?.startsWith("blob:")) {
+      URL.revokeObjectURL(avatarPreview);
+    }
+
+    setAvatarFile(file);
+    setAvatarPreview(URL.createObjectURL(file));
+  };
+
+  const handleAvatarUpload = () => {
+    if (!avatarFile || !store || !staffMember) return;
+    avatarMutation.mutate(avatarFile);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (avatarPreview?.startsWith("blob:")) {
+        URL.revokeObjectURL(avatarPreview);
+      }
+    };
+  }, [avatarPreview]);
+
   const isLoading = storeLoading || staffLoading;
 
   const displayName = useMemo(() => {
@@ -126,6 +209,15 @@ export function StaffProfile() {
   }, [staffMember, user?.firstName, user?.lastName]);
 
   const displayEmail = staffMember?.email ?? user?.email ?? "";
+  const displayAvatar =
+    avatarPreview || staffMember?.avatar || user?.avatar || "";
+  const displayInitials = displayName
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
 
   if (isLoading) {
     return (
@@ -191,6 +283,58 @@ export function StaffProfile() {
             <CardDescription>Account information (read-only)</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-4">
+                <Avatar className="h-16 w-16">
+                  <AvatarImage
+                    src={displayAvatar || undefined}
+                    alt={displayName}
+                  />
+                  <AvatarFallback>{displayInitials || "ST"}</AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    Profile Photo
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    PNG, JPG, GIF, or WebP up to 5MB
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleAvatarSelect}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={!staffMember || avatarMutation.isPending}
+                >
+                  Choose Photo
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleAvatarUpload}
+                  disabled={
+                    !staffMember ||
+                    !avatarFile ||
+                    avatarMutation.isPending ||
+                    !store
+                  }
+                >
+                  {avatarMutation.isPending && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  Upload
+                </Button>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Name</Label>

@@ -3,6 +3,8 @@
  * Matches backend staff schema
  */
 
+import type { UserRole } from "./user.types";
+
 export interface StaffMember {
   id: string;
   userId: string;
@@ -20,6 +22,7 @@ export interface StaffMember {
   firstName?: string;
   lastName?: string;
   avatar?: string;
+  role?: UserRole;
 }
 
 export type DayOfWeek =
@@ -76,6 +79,7 @@ export interface UpdateStaffProfileDto {
   title?: string;
   locationId?: string;
   isVisible?: boolean;
+  role?: UserRole;
 }
 
 export interface AssignServicesDto {

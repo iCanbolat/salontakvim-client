@@ -55,7 +55,7 @@ import {
   TableView,
   type TableColumn,
 } from "@/components/common/page-view";
-import { FilePreviewDialog } from "@/components/customers/FilePreviewDialog";
+import { FilePreviewDialog } from "@/pages/customers/components/FilePreviewDialog";
 import {
   AlertDialog,
   AlertDialogAction,

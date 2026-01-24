@@ -3,13 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { format, parseISO, isToday, isFuture, compareAsc } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TimeOffStatusBadge } from "@/components/staff/TimeOffStatusBadge";
+import { TimeOffStatusBadge } from "./components/TimeOffStatusBadge";
 import { Loader2, Plus, Calendar, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { breakService, staffService, storeService } from "@/services";
 import type { StaffBreak } from "@/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { TimeOffDialog } from "@/components/staff/TimeOffDialog";
+import { TimeOffDialog } from "./components/TimeOffDialog";
 
 type SummaryCard = {
   title: string;
@@ -57,10 +57,11 @@ export function StaffSchedule() {
 
     const nextUpcoming = [...breaks]
       .filter(
-        (b) => isFuture(parseISO(b.startDate)) || isToday(parseISO(b.startDate))
+        (b) =>
+          isFuture(parseISO(b.startDate)) || isToday(parseISO(b.startDate)),
       )
       .sort((a, b) =>
-        compareAsc(parseISO(a.startDate), parseISO(b.startDate))
+        compareAsc(parseISO(a.startDate), parseISO(b.startDate)),
       )[0];
 
     return [
@@ -87,9 +88,9 @@ export function StaffSchedule() {
   const formattedBreaks: StaffBreak[] = useMemo(
     () =>
       breaks.sort((a, b) =>
-        compareAsc(parseISO(a.startDate), parseISO(b.startDate))
+        compareAsc(parseISO(a.startDate), parseISO(b.startDate)),
       ),
-    [breaks]
+    [breaks],
   );
 
   if (isLoading) {
@@ -172,14 +173,14 @@ export function StaffSchedule() {
                   ? format(parseISO(req.startDate), "MMM d, yyyy")
                   : `${format(parseISO(req.startDate), "MMM d")} - ${format(
                       parseISO(req.endDate),
-                      "MMM d, yyyy"
+                      "MMM d, yyyy",
                     )}`;
 
               const timeLabel =
                 req.startTime && req.endTime
                   ? `${req.startTime.substring(0, 5)} - ${req.endTime.substring(
                       0,
-                      5
+                      5,
                     )}`
                   : "Full day";
 

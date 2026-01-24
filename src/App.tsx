@@ -10,11 +10,10 @@ import { queryClient } from "./lib/queryClient";
 import { MainLayout } from "./components/layout";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
 import { LoginPage, RegisterPage } from "./pages/auth";
+import { DashboardPage } from "./pages/dashboard";
 import {
-  AdminDashboard,
   StoreSettings,
   ServicesList,
-  CategoriesList,
   StaffList,
   StaffDetails,
   LocationsList,
@@ -28,7 +27,6 @@ import {
   FeedbackList,
 } from "./pages/admin";
 import {
-  StaffDashboard,
   AcceptInvitationPage,
   AppointmentsList as StaffAppointmentsList,
   StaffSchedule,
@@ -65,16 +63,13 @@ function App() {
               <Route element={<MainLayout />}>
                 {/* Admin routes */}
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                  <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                  <Route path="/admin/dashboard" element={<DashboardPage />} />
                   <Route
                     path="/admin/appointments"
                     element={<AppointmentsList />}
                   />
                   <Route path="/admin/services" element={<ServicesList />} />
-                  <Route
-                    path="/admin/categories"
-                    element={<CategoriesList />}
-                  />
+
                   <Route path="/admin/staff" element={<StaffList />} />
                   <Route
                     path="/admin/staff/:staffId"
@@ -100,7 +95,7 @@ function App() {
 
                 {/* Staff routes */}
                 <Route element={<ProtectedRoute allowedRoles={["staff"]} />}>
-                  <Route path="/staff/dashboard" element={<StaffDashboard />} />
+                  <Route path="/staff/dashboard" element={<DashboardPage />} />
                   <Route
                     path="/staff/appointments"
                     element={<StaffAppointmentsList />}
