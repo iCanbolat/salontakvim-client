@@ -19,11 +19,19 @@ export class AppointmentService {
    */
   async getAppointments(
     storeId: string,
-    filters?: AppointmentFilters
+    filters?: AppointmentFilters,
   ): Promise<PaginatedAppointmentsResponse> {
+    // Normalize array filters for reliable serialization across browsers/axios
+    const params: Record<string, any> = { ...filters };
+
+    if (filters?.staffIds?.length) {
+      // Send as comma-separated list so the API DTO can parse it regardless of [] array notation
+      params.staffIds = filters.staffIds.join(",");
+    }
+
     const response = await axiosInstance.get<PaginatedAppointmentsResponse>(
       `/stores/${storeId}/appointments`,
-      { params: filters }
+      { params },
     );
     return response.data;
   }
@@ -33,7 +41,7 @@ export class AppointmentService {
    */
   async getAppointment(storeId: string, id: string): Promise<Appointment> {
     const response = await axiosInstance.get<Appointment>(
-      `/stores/${storeId}/appointments/${id}`
+      `/stores/${storeId}/appointments/${id}`,
     );
     return response.data;
   }
@@ -43,11 +51,11 @@ export class AppointmentService {
    */
   async createAppointment(
     storeId: string,
-    data: CreateAppointmentDto
+    data: CreateAppointmentDto,
   ): Promise<Appointment> {
     const response = await axiosInstance.post<Appointment>(
       `/stores/${storeId}/appointments`,
-      data
+      data,
     );
     return response.data;
   }
@@ -58,11 +66,11 @@ export class AppointmentService {
   async updateAppointment(
     storeId: string,
     id: string,
-    data: UpdateAppointmentDto
+    data: UpdateAppointmentDto,
   ): Promise<Appointment> {
     const response = await axiosInstance.patch<Appointment>(
       `/stores/${storeId}/appointments/${id}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -73,11 +81,11 @@ export class AppointmentService {
   async updateAppointmentStatus(
     storeId: string,
     id: string,
-    data: UpdateAppointmentStatusDto
+    data: UpdateAppointmentStatusDto,
   ): Promise<Appointment> {
     const response = await axiosInstance.patch<Appointment>(
       `/stores/${storeId}/appointments/${id}/status`,
-      data
+      data,
     );
     return response.data;
   }
@@ -106,7 +114,7 @@ export class AppointmentService {
       `/stores/${storeId}/availability`,
       {
         params: query,
-      }
+      },
     );
 
     return response.data;
