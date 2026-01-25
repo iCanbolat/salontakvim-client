@@ -74,11 +74,11 @@ export function ServiceCard({ service, storeId, onEdit }: ServiceCardProps) {
               </CardDescription>
             )}
           </div>
-          {service.color && (
+          {service.categoryColor && (
             <div
               className="w-4 h-4 rounded-full ml-2 shrink-0"
-              style={{ backgroundColor: service.color }}
-              title={service.color}
+              style={{ backgroundColor: service.categoryColor }}
+              title={service.categoryColor}
             />
           )}
         </div>

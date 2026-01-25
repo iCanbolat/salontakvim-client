@@ -24,7 +24,7 @@ export interface Service {
   capacity: number;
   bufferTimeBefore: number;
   bufferTimeAfter: number;
-  color?: string; // hex color
+  categoryColor?: string;
   image?: string;
   isVisible: boolean;
   showBringingAnyoneOption: boolean;
@@ -44,7 +44,6 @@ export interface CreateServiceDto {
   capacity?: number;
   bufferTimeBefore?: number;
   bufferTimeAfter?: number;
-  color?: string;
   image?: string;
   isVisible?: boolean;
   showBringingAnyoneOption?: boolean;
@@ -61,7 +60,6 @@ export interface UpdateServiceDto {
   capacity?: number;
   bufferTimeBefore?: number;
   bufferTimeAfter?: number;
-  color?: string;
   image?: string;
   isVisible?: boolean;
   showBringingAnyoneOption?: boolean;

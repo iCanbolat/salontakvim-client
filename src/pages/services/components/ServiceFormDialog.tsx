@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -32,6 +31,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -45,11 +53,6 @@ const serviceSchema = z.object({
     .max(10, "Maximum capacity is 10"),
   bufferTimeBefore: z.number().min(0).optional(),
   bufferTimeAfter: z.number().min(0).optional(),
-  color: z
-    .string()
-    .regex(/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/, "Invalid hex color")
-    .optional()
-    .or(z.literal("")),
   isVisible: z.boolean(),
   showBringingAnyoneOption: z.boolean(),
   allowRecurring: z.boolean(),
@@ -88,14 +91,7 @@ export function ServiceFormDialog({
   });
 
   // Form setup
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors, isDirty },
-  } = useForm<ServiceFormData>({
+  const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
       name: "",
@@ -105,18 +101,17 @@ export function ServiceFormDialog({
       capacity: 1,
       bufferTimeBefore: 0,
       bufferTimeAfter: 0,
-      color: "#3B82F6",
       isVisible: true,
       showBringingAnyoneOption: false,
       allowRecurring: false,
     },
   });
 
-  // Watch form values for controlled components
-  const isVisible = watch("isVisible");
-  const showBringingAnyoneOption = watch("showBringingAnyoneOption");
-  const allowRecurring = watch("allowRecurring");
-  const categoryId = watch("categoryId");
+  const {
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = form;
 
   // Reset form when service changes
   useEffect(() => {
@@ -130,7 +125,6 @@ export function ServiceFormDialog({
         capacity: service.capacity,
         bufferTimeBefore: service.bufferTimeBefore,
         bufferTimeAfter: service.bufferTimeAfter,
-        color: service.color || "#3B82F6",
         isVisible: service.isVisible,
         showBringingAnyoneOption: service.showBringingAnyoneOption,
         allowRecurring: service.allowRecurring,
@@ -144,7 +138,6 @@ export function ServiceFormDialog({
         capacity: 1,
         bufferTimeBefore: 0,
         bufferTimeAfter: 0,
-        color: "#3B82F6",
         isVisible: true,
         showBringingAnyoneOption: false,
         allowRecurring: false,
@@ -182,7 +175,6 @@ export function ServiceFormDialog({
       capacity: data.capacity,
       bufferTimeBefore: data.bufferTimeBefore || 0,
       bufferTimeAfter: data.bufferTimeAfter || 0,
-      color: data.color || undefined,
       isVisible: data.isVisible,
       showBringingAnyoneOption: data.showBringingAnyoneOption,
       allowRecurring: data.allowRecurring,
@@ -211,277 +203,326 @@ export function ServiceFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col flex-1 min-h-0"
-        >
-          <DialogBody className="space-y-6">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">
-                Basic Information
-              </h3>
+        <Form {...form}>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            <DialogBody className="space-y-6">
+              {/* Basic Information */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Basic Information
+                </h3>
 
-              {/* Name */}
-              <div className="space-y-2">
-                <Label htmlFor="name">
-                  Service Name <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  id="name"
-                  {...register("name")}
-                  placeholder="e.g., Haircut, Manicure"
-                />
-                {errors.name && (
-                  <p className="text-sm text-red-600">{errors.name.message}</p>
-                )}
-              </div>
-
-              {/* Description */}
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  {...register("description")}
-                  placeholder="Brief description of the service..."
-                  rows={3}
-                />
-                {errors.description && (
-                  <p className="text-sm text-red-600">
-                    {errors.description.message}
-                  </p>
-                )}
-              </div>
-
-              {/* Category */}
-              <div className="space-y-2">
-                <Label htmlFor="categoryId">Category</Label>
-                <Select
-                  value={categoryId || "none"}
-                  onValueChange={(value) =>
-                    setValue(
-                      "categoryId",
-                      value === "none" ? undefined : value,
-                      { shouldDirty: true },
-                    )
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">No category</SelectItem>
-                    {categories?.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Pricing & Duration */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">
-                Pricing & Duration
-              </h3>
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Duration */}
-                <div className="space-y-2">
-                  <Label htmlFor="duration">
-                    Duration (minutes) <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="duration"
-                    type="number"
-                    {...register("duration", { valueAsNumber: true })}
-                    min="1"
-                  />
-                  {errors.duration && (
-                    <p className="text-sm text-red-600">
-                      {errors.duration.message}
-                    </p>
+                {/* Name */}
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Service Name <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="e.g., Haircut, Manicure"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                </div>
+                />
 
-                {/* Price */}
-                <div className="space-y-2">
-                  <Label htmlFor="price">
-                    Price <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    {...register("price", { valueAsNumber: true })}
-                    min="0"
-                  />
-                  {errors.price && (
-                    <p className="text-sm text-red-600">
-                      {errors.price.message}
-                    </p>
+                {/* Description */}
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Brief description of the service..."
+                          rows={3}
+                          {...field}
+                          value={field.value || ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
                   )}
+                />
+
+                {/* Category */}
+                <FormField
+                  control={form.control}
+                  name="categoryId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category</FormLabel>
+                      <Select
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? undefined : value)
+                        }
+                        value={field.value || "none"}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-1/2">
+                            <SelectValue placeholder="Select a category" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No category</SelectItem>
+                          {categories?.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Pricing & Duration */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Pricing & Duration
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Duration */}
+                  <FormField
+                    control={form.control}
+                    name="duration"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Duration (minutes){" "}
+                          <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Price */}
+                  <FormField
+                    control={form.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Price <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min="0"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseFloat(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
               </div>
-            </div>
 
-            {/* Capacity & Buffer Times */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">
-                Capacity & Scheduling
-              </h3>
+              {/* Capacity & Buffer Times */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">
+                  Capacity & Scheduling
+                </h3>
 
-              <div className="grid grid-cols-3 gap-4">
-                {/* Capacity */}
-                <div className="space-y-2">
-                  <Label htmlFor="capacity">
-                    Capacity <span className="text-red-500">*</span>
-                  </Label>
-                  <Input
-                    id="capacity"
-                    type="number"
-                    {...register("capacity", { valueAsNumber: true })}
-                    min="1"
-                    max="10"
+                <div className="grid grid-cols-3 gap-4">
+                  {/* Capacity */}
+                  <FormField
+                    control={form.control}
+                    name="capacity"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Capacity <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="1"
+                            max="10"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  {errors.capacity && (
-                    <p className="text-sm text-red-600">
-                      {errors.capacity.message}
-                    </p>
-                  )}
-                </div>
 
-                {/* Buffer Before */}
-                <div className="space-y-2">
-                  <Label htmlFor="bufferTimeBefore">Buffer Before (min)</Label>
-                  <Input
-                    id="bufferTimeBefore"
-                    type="number"
-                    {...register("bufferTimeBefore", { valueAsNumber: true })}
-                    min="0"
+                  {/* Buffer Before */}
+                  <FormField
+                    control={form.control}
+                    name="bufferTimeBefore"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Buffer Before (min)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                            value={field.value || 0}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
 
-                {/* Buffer After */}
-                <div className="space-y-2">
-                  <Label htmlFor="bufferTimeAfter">Buffer After (min)</Label>
-                  <Input
-                    id="bufferTimeAfter"
-                    type="number"
-                    {...register("bufferTimeAfter", { valueAsNumber: true })}
-                    min="0"
+                  {/* Buffer After */}
+                  <FormField
+                    control={form.control}
+                    name="bufferTimeAfter"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Buffer After (min)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            min="0"
+                            {...field}
+                            onChange={(e) =>
+                              field.onChange(parseInt(e.target.value) || 0)
+                            }
+                            value={field.value || 0}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
                 </div>
               </div>
-            </div>
 
-            {/* Appearance */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">Appearance</h3>
+              {/* Settings */}
+              <div className="space-y-4">
+                <h3 className="text-sm font-medium text-gray-900">Settings</h3>
 
-              {/* Color */}
-              <div className="space-y-2">
-                <Label htmlFor="color">Color</Label>
-                <div className="flex items-center gap-3">
-                  <Input
-                    id="color"
-                    type="color"
-                    {...register("color")}
-                    className="w-20 h-10"
-                  />
-                  <Input
-                    {...register("color")}
-                    placeholder="#3B82F6"
-                    className="flex-1"
-                  />
-                </div>
-                {errors.color && (
-                  <p className="text-sm text-red-600">{errors.color.message}</p>
+                {/* Visibility */}
+                <FormField
+                  control={form.control}
+                  name="isVisible"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Visible to customers</FormLabel>
+                        <FormDescription>
+                          Show this service in the booking widget
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Bring Anyone Option */}
+                <FormField
+                  control={form.control}
+                  name="showBringingAnyoneOption"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Allow bringing anyone</FormLabel>
+                        <FormDescription>
+                          Customer can bring additional people
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+
+                {/* Recurring Appointments */}
+                <FormField
+                  control={form.control}
+                  name="allowRecurring"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-lg border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel>Allow recurring appointments</FormLabel>
+                        <FormDescription>
+                          Enable repeat bookings for this service
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </DialogBody>
+
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                disabled={isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={!isDirty || isPending}>
+                {isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    {isEditing ? "Updating..." : "Creating..."}
+                  </>
+                ) : isEditing ? (
+                  "Update Service"
+                ) : (
+                  "Create Service"
                 )}
-              </div>
-            </div>
-
-            {/* Settings */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-medium text-gray-900">Settings</h3>
-
-              {/* Visibility */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Visible to customers</Label>
-                  <p className="text-sm text-gray-500">
-                    Show this service in the booking widget
-                  </p>
-                </div>
-                <Switch
-                  checked={isVisible}
-                  onCheckedChange={(checked) =>
-                    setValue("isVisible", checked, { shouldDirty: true })
-                  }
-                />
-              </div>
-
-              {/* Bring Anyone Option */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Allow bringing anyone</Label>
-                  <p className="text-sm text-gray-500">
-                    Customer can bring additional people
-                  </p>
-                </div>
-                <Switch
-                  checked={showBringingAnyoneOption}
-                  onCheckedChange={(checked) =>
-                    setValue("showBringingAnyoneOption", checked, {
-                      shouldDirty: true,
-                    })
-                  }
-                />
-              </div>
-
-              {/* Recurring Appointments */}
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label>Allow recurring appointments</Label>
-                  <p className="text-sm text-gray-500">
-                    Enable repeat bookings for this service
-                  </p>
-                </div>
-                <Switch
-                  checked={allowRecurring}
-                  onCheckedChange={(checked) =>
-                    setValue("allowRecurring", checked, { shouldDirty: true })
-                  }
-                />
-              </div>
-            </div>
-          </DialogBody>
-
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={isPending}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={!isDirty || isPending}>
-              {isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  {isEditing ? "Updating..." : "Creating..."}
-                </>
-              ) : isEditing ? (
-                "Update Service"
-              ) : (
-                "Create Service"
-              )}
-            </Button>
-          </DialogFooter>
-        </form>
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

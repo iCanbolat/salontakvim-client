@@ -128,6 +128,31 @@ export function useAppointmentForm({
     enabled: open,
   });
 
+  // Fetch ALL staff for the selected service to filter available locations
+  const { data: allStaffForService } = useQuery({
+    queryKey: ["staff-for-service", storeId, watchServiceId],
+    queryFn: () =>
+      staffService.getStaffMembers(storeId, {
+        includeHidden: false,
+        serviceId: watchServiceId || undefined,
+      }),
+    enabled: open && !!watchServiceId,
+  });
+
+  const filteredLocations = useMemo(() => {
+    if (!watchServiceId || !allStaffForService || !locations) return locations;
+
+    const availableLocationIds = new Set(
+      allStaffForService
+        .map((s) => s.locationId)
+        .filter((id): id is string => Boolean(id)),
+    );
+
+    return locations.filter((location) =>
+      availableLocationIds.has(location.id),
+    );
+  }, [locations, allStaffForService, watchServiceId]);
+
   const selectedService = useMemo(
     () => services?.find((s) => s.id === watchServiceId),
     [services, watchServiceId],
@@ -180,7 +205,7 @@ export function useAppointmentForm({
       reset({
         serviceId: appointment.serviceId || "",
         staffId: appointment.staffId || "",
-        locationId: appointment.locationId,
+        locationId: appointment.locationId || undefined,
         guestFirstName: appointment.guestInfo?.firstName || "",
         guestLastName: appointment.guestInfo?.lastName || "",
         guestEmail: appointment.guestInfo?.email || "",
@@ -205,7 +230,14 @@ export function useAppointmentForm({
         customerNotes: "",
       });
     }
-  }, [appointment, reset, open, currentStaffMember]);
+  }, [appointment, reset, open]); // Removed currentStaffMember to prevent re-resetting on data load
+
+  // Set default staff if current user is staff and no staff selected
+  useEffect(() => {
+    if (open && !isEditing && currentStaffMember?.id && !watchStaffId) {
+      setValue("staffId", currentStaffMember.id);
+    }
+  }, [currentStaffMember, open, isEditing, watchStaffId, setValue]);
 
   // If a location is selected, ensure staff belongs to that location
   useEffect(() => {
@@ -306,7 +338,7 @@ export function useAppointmentForm({
     },
     data: {
       services,
-      locations,
+      locations: filteredLocations,
       staff,
       availableSlots,
       availableTimes,

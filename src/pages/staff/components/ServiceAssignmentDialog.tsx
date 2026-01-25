@@ -3,11 +3,11 @@
  * Allows admins to assign/remove services for staff members
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, CheckCircle2, Circle } from "lucide-react";
 import { toast } from "sonner";
-import { staffService, serviceService } from "@/services";
+import { staffService, serviceService, categoryService } from "@/services";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import type { StaffMember, Service } from "@/types";
+import type { StaffMember, Service, Category } from "@/types";
 
 interface ServiceAssignmentDialogProps {
   storeId: string;
@@ -52,6 +52,18 @@ export function ServiceAssignmentDialog({
     queryFn: () => serviceService.getServices(storeId),
     enabled: open,
   });
+
+  // Fetch categories
+  const { data: categories } = useQuery({
+    queryKey: ["categories", storeId],
+    queryFn: () => categoryService.getCategories(storeId),
+    enabled: open,
+  });
+
+  const categoryMap = useMemo(() => {
+    if (!categories) return new Map<string, Category>();
+    return new Map(categories.map((c) => [c.id, c]));
+  }, [categories]);
 
   // Fetch staff's assigned services
   const {
@@ -163,12 +175,25 @@ export function ServiceAssignmentDialog({
                       ([categoryId, services]) => (
                         <div key={categoryId} className="space-y-2">
                           {/* Category Header */}
-                          {categoryId !== "uncategorized" &&
-                            services.length > 0 && (
-                              <h3 className="font-semibold text-sm text-gray-700">
-                                Category {categoryId}
-                              </h3>
-                            )}
+                          {categoryId !== "uncategorized" ? (
+                            <h3 className="font-semibold text-sm text-gray-700 flex items-center gap-2">
+                              {categoryMap.get(categoryId)?.color && (
+                                <div
+                                  className="w-2 h-2 rounded-full"
+                                  style={{
+                                    backgroundColor:
+                                      categoryMap.get(categoryId)?.color,
+                                  }}
+                                />
+                              )}
+                              {categoryMap.get(categoryId)?.name ||
+                                `Category ${categoryId}`}
+                            </h3>
+                          ) : (
+                            <h3 className="font-semibold text-sm text-gray-500">
+                              Uncategorized
+                            </h3>
+                          )}
 
                           {/* Services */}
                           <div className="space-y-2">
@@ -205,11 +230,12 @@ export function ServiceAssignmentDialog({
                                       <p className="font-medium text-gray-900">
                                         {service.name}
                                       </p>
-                                      {service.color && (
+                                      {service.categoryColor && (
                                         <div
                                           className="w-3 h-3 rounded-full border border-gray-300"
                                           style={{
-                                            backgroundColor: service.color,
+                                            backgroundColor:
+                                              service.categoryColor,
                                           }}
                                         />
                                       )}

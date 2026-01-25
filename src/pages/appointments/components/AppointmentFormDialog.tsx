@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Controller } from "react-hook-form";
 import { useAppointmentForm } from "../hooks/useAppointmentForm";
 import type { Appointment } from "@/types";
 
@@ -68,17 +69,15 @@ export function AppointmentFormDialog({
 
   const {
     register,
+    control,
     formState: { errors, isDirty },
   } = form;
 
-  const { onSubmit, setValue, watch } = actions;
+  const { onSubmit, watch, setValue } = actions;
 
-  // Watch form values for controlled components
   const watchServiceId = watch("serviceId");
-  const watchLocationId = watch("locationId");
-  const watchStaffId = watch("staffId");
   const watchDate = watch("date");
-  const watchTime = watch("time");
+  const watchStaffId = watch("staffId");
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -96,28 +95,29 @@ export function AppointmentFormDialog({
 
         <form onSubmit={onSubmit} className="flex flex-col flex-1 min-h-0">
           <DialogBody className="space-y-4">
-            {/* Service Selection */}
             <div className="space-y-2">
               <Label htmlFor="serviceId">
                 Service <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={watchServiceId || undefined}
-                onValueChange={(value) =>
-                  setValue("serviceId", value, { shouldDirty: true })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a service" />
-                </SelectTrigger>
-                <SelectContent>
-                  {services?.map((service) => (
-                    <SelectItem key={service.id} value={service.id}>
-                      {service.name} - ${service.price} ({service.duration} min)
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="serviceId"
+                control={control}
+                render={({ field }) => (
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a service" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {services?.map((service) => (
+                        <SelectItem key={service.id} value={service.id}>
+                          {service.name} - ${service.price} ({service.duration}{" "}
+                          min)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.serviceId && (
                 <p className="text-sm text-red-600">
                   {errors.serviceId.message}
@@ -125,64 +125,65 @@ export function AppointmentFormDialog({
               )}
             </div>
 
-            {/* Location Selection (Optional) */}
             <div className="space-y-2">
               <Label htmlFor="locationId">Location (optional)</Label>
-              <Select
-                value={watchLocationId || ""}
-                onValueChange={(value) =>
-                  setValue(
-                    "locationId",
-                    value && value !== "all" ? value : undefined,
-                    {
-                      shouldDirty: true,
-                    },
-                  )
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All locations</SelectItem>
-                  {locations?.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="locationId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || "all"}
+                    onValueChange={(value) =>
+                      field.onChange(value === "all" ? undefined : value)
+                    }
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All locations</SelectItem>
+                      {locations?.map((location) => (
+                        <SelectItem key={location.id} value={location.id}>
+                          {location.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
 
-            {/* Staff Selection */}
             <div className="space-y-2">
               <Label htmlFor="staffId">
                 Staff Member <span className="text-red-500">*</span>
               </Label>
-              <Select
-                value={watchStaffId || undefined}
-                onValueChange={(value) =>
-                  setValue("staffId", value, { shouldDirty: true })
-                }
-                disabled={user?.role === "staff"}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a staff member" />
-                </SelectTrigger>
-                <SelectContent>
-                  {staff?.map((member) => (
-                    <SelectItem key={member.id} value={member.id}>
-                      {member.firstName} {member.lastName}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Controller
+                name="staffId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value}
+                    onValueChange={field.onChange}
+                    disabled={user?.role === "staff"}
+                  >
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Select a staff member" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {staff?.map((member) => (
+                        <SelectItem key={member.id} value={member.id}>
+                          {member.firstName} {member.lastName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
               {errors.staffId && (
                 <p className="text-sm text-red-600">{errors.staffId.message}</p>
               )}
             </div>
 
-            {/* Customer Information */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="guestFirstName">
@@ -245,7 +246,6 @@ export function AppointmentFormDialog({
               </div>
             </div>
 
-            {/* Date & Time */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">
@@ -296,40 +296,47 @@ export function AppointmentFormDialog({
                 <Label htmlFor="time">
                   Time <span className="text-red-500">*</span>
                 </Label>
-                <Select
-                  value={watchTime}
-                  onValueChange={(value) =>
-                    setValue("time", value, { shouldDirty: true })
-                  }
-                  disabled={
-                    !watchServiceId ||
-                    !watchStaffId ||
-                    !watchDate ||
-                    isAvailabilityLoading ||
-                    availableTimes.length === 0
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue
-                      placeholder={
-                        !watchServiceId || !watchStaffId
-                          ? "Select service & staff"
-                          : isAvailabilityLoading
-                            ? "Loading..."
-                            : availableTimes.length === 0
-                              ? "No availability"
-                              : "Select time"
+                <Controller
+                  name="time"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value}
+                      onValueChange={field.onChange}
+                      disabled={
+                        !watchServiceId ||
+                        !watchStaffId ||
+                        !watchDate ||
+                        isAvailabilityLoading ||
+                        availableTimes.length === 0
                       }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableSlots.map((slot) => (
-                      <SelectItem key={slot.startTime} value={slot.startTime}>
-                        {slot.startTime} – {slot.endTime}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue
+                          placeholder={
+                            !watchServiceId || !watchStaffId
+                              ? "Select service & staff"
+                              : isAvailabilityLoading
+                                ? "Loading..."
+                                : availableTimes.length === 0
+                                  ? "No availability"
+                                  : "Select time"
+                          }
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSlots.map((slot) => (
+                          <SelectItem
+                            key={slot.startTime}
+                            value={slot.startTime}
+                          >
+                            {slot.startTime} – {slot.endTime}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
                 {isAvailabilityError && (
                   <p className="text-sm text-red-600">
                     Failed to load availability
@@ -356,7 +363,7 @@ export function AppointmentFormDialog({
                 )}
               </div>
             </div>
-            {/* Customer Notes */}
+
             <div className="space-y-2">
               <Label htmlFor="customerNotes">Customer Notes</Label>
               <Textarea

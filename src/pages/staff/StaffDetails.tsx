@@ -44,7 +44,14 @@ export function StaffDetails() {
     isValidStaffId,
   } = state;
 
-  const { store, staff, staffServices, workingHours, staffDisplayName } = data;
+  const {
+    store,
+    staff,
+    staffServices,
+    workingHours,
+    categories,
+    staffDisplayName,
+  } = data;
 
   if (isLoading && !staff) {
     return (
@@ -165,7 +172,10 @@ export function StaffDetails() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <AssignedServicesList services={staffServices || []} />
+                  <AssignedServicesList
+                    services={staffServices || []}
+                    categories={categories || []}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

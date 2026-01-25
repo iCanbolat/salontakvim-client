@@ -18,10 +18,10 @@ export const getServiceColumns = ({
     header: "Service",
     render: (service) => (
       <div className="flex items-center gap-2">
-        {service.color && (
+        {service.categoryColor && (
           <span
             className="h-3 w-3 rounded-full border border-border"
-            style={{ backgroundColor: service.color }}
+            style={{ backgroundColor: service.categoryColor }}
             aria-label="Service color"
           />
         )}

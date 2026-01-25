@@ -38,6 +38,7 @@ export function AssignedServicesList({
       return [] as Array<{
         key: string;
         title: string;
+        color?: string;
         position: number;
         services: Service[];
       }>;
@@ -45,7 +46,13 @@ export function AssignedServicesList({
 
     const grouped = new Map<
       string,
-      { key: string; title: string; position: number; services: Service[] }
+      {
+        key: string;
+        title: string;
+        color?: string;
+        position: number;
+        services: Service[];
+      }
     >();
 
     services.forEach((service) => {
@@ -59,6 +66,7 @@ export function AssignedServicesList({
             (categoryId === "uncategorized"
               ? "Kategorisiz"
               : `Kategori #${categoryId}`),
+          color: category?.color,
           position: category?.position ?? Number.MAX_SAFE_INTEGER,
           services: [],
         });
@@ -120,14 +128,6 @@ export function AssignedServicesList({
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Assigned Services
-          </h3>
-          <p className="text-sm text-gray-600">
-            Services assigned to the staff member and their key features
-          </p>
-        </div>
         {onManageAssignments && (
           <Button variant="outline" size="sm" onClick={onManageAssignments}>
             Manage Services
@@ -138,7 +138,13 @@ export function AssignedServicesList({
       {groupedServices.map((group) => (
         <div key={group.key} className="space-y-3">
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600">
+            <div
+              className="flex h-8 w-8 items-center justify-center rounded-full text-white"
+              style={{
+                backgroundColor: group.color || "#F3F4F6",
+                color: group.color ? "white" : "#4B5563",
+              }}
+            >
               <Layers className="h-4 w-4" />
             </div>
             <div>
@@ -161,10 +167,10 @@ export function AssignedServicesList({
                         <p className="font-medium text-gray-900">
                           {service.name}
                         </p>
-                        {service.color && (
+                        {service.categoryColor && (
                           <span
                             className="h-3 w-3 rounded-full border border-gray-200"
-                            style={{ backgroundColor: service.color }}
+                            style={{ backgroundColor: service.categoryColor }}
                             aria-label="service color"
                           />
                         )}
