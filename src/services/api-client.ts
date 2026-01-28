@@ -38,7 +38,7 @@ class ApiClient {
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error) => Promise.reject(error),
     );
 
     // Response interceptor - handle errors and token refresh
@@ -55,7 +55,7 @@ class ApiClient {
           "/auth/register",
           "/auth/refresh",
         ].some(
-          (path) => requestUrl.startsWith(path) || requestUrl.includes(path)
+          (path) => requestUrl.startsWith(path) || requestUrl.includes(path),
         );
 
         // Do not try to refresh or redirect when auth endpoints intentionally return 4xx
@@ -90,7 +90,7 @@ class ApiClient {
         }
 
         return Promise.reject(error);
-      }
+      },
     );
   }
 
@@ -107,6 +107,14 @@ class ApiClient {
     const { accessToken, refreshToken: newRefreshToken } = response.data;
     localStorage.setItem("accessToken", accessToken);
     localStorage.setItem("refreshToken", newRefreshToken);
+
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("auth:token-refreshed", {
+          detail: { accessToken },
+        }),
+      );
+    }
 
     return accessToken;
   }

@@ -22,13 +22,13 @@ export const feedbackService = {
   async checkFeedbackStatus(
     storeId: string,
     appointmentId: string,
-    token?: string
+    token?: string,
   ): Promise<FeedbackCheckResponse> {
     const params = new URLSearchParams();
     if (token) params.append("token", token);
-    
+
     const response = await axiosInstance.get<FeedbackCheckResponse>(
-      `/stores/${storeId}/feedback/check/${appointmentId}?${params.toString()}`
+      `/stores/${storeId}/feedback/check/${appointmentId}?${params.toString()}`,
     );
     return response.data;
   },
@@ -38,11 +38,11 @@ export const feedbackService = {
    */
   async submitPublicFeedback(
     storeId: string,
-    data: CreateFeedbackDto & { token?: string }
+    data: CreateFeedbackDto & { token?: string },
   ): Promise<Feedback> {
     const response = await axiosInstance.post<Feedback>(
       `/stores/${storeId}/feedback/submit`,
-      data
+      data,
     );
     return response.data;
   },
@@ -52,11 +52,11 @@ export const feedbackService = {
    */
   async createFeedback(
     storeId: string,
-    data: CreateFeedbackDto
+    data: CreateFeedbackDto,
   ): Promise<Feedback> {
     const response = await axiosInstance.post<Feedback>(
       `/stores/${storeId}/feedback`,
-      data
+      data,
     );
     return response.data;
   },
@@ -66,20 +66,18 @@ export const feedbackService = {
    */
   async getFeedback(
     storeId: string,
-    filters?: FeedbackFilters
+    filters?: FeedbackFilters,
   ): Promise<FeedbackWithDetails[]> {
     const params = new URLSearchParams();
 
     if (filters?.customerId) params.append("customerId", filters.customerId);
     if (filters?.staffId) params.append("staffId", filters.staffId);
     if (filters?.serviceId) params.append("serviceId", filters.serviceId);
-    if (filters?.isPublic !== undefined)
-      params.append("isPublic", String(filters.isPublic));
     if (filters?.limit) params.append("limit", String(filters.limit));
     if (filters?.offset) params.append("offset", String(filters.offset));
 
     const response = await axiosInstance.get<FeedbackWithDetails[]>(
-      `/stores/${storeId}/feedback?${params.toString()}`
+      `/stores/${storeId}/feedback?${params.toString()}`,
     );
     return response.data;
   },
@@ -94,7 +92,7 @@ export const feedbackService = {
       serviceId?: string;
       limit?: number;
       offset?: number;
-    }
+    },
   ): Promise<FeedbackWithDetails[]> {
     const params = new URLSearchParams();
 
@@ -104,7 +102,7 @@ export const feedbackService = {
     if (options?.offset) params.append("offset", String(options.offset));
 
     const response = await axiosInstance.get<FeedbackWithDetails[]>(
-      `/stores/${storeId}/feedback/public?${params.toString()}`
+      `/stores/${storeId}/feedback/public?${params.toString()}`,
     );
     return response.data;
   },
@@ -114,10 +112,10 @@ export const feedbackService = {
    */
   async getFeedbackById(
     storeId: string,
-    feedbackId: string
+    feedbackId: string,
   ): Promise<FeedbackWithDetails> {
     const response = await axiosInstance.get<FeedbackWithDetails>(
-      `/stores/${storeId}/feedback/${feedbackId}`
+      `/stores/${storeId}/feedback/${feedbackId}`,
     );
     return response.data;
   },
@@ -128,11 +126,11 @@ export const feedbackService = {
   async updateFeedback(
     storeId: string,
     feedbackId: string,
-    data: UpdateFeedbackDto
+    data: UpdateFeedbackDto,
   ): Promise<Feedback> {
     const response = await axiosInstance.patch<Feedback>(
       `/stores/${storeId}/feedback/${feedbackId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -143,11 +141,11 @@ export const feedbackService = {
   async respondToFeedback(
     storeId: string,
     feedbackId: string,
-    data: RespondToFeedbackDto
+    data: RespondToFeedbackDto,
   ): Promise<Feedback> {
     const response = await axiosInstance.post<Feedback>(
       `/stores/${storeId}/feedback/${feedbackId}/respond`,
-      data
+      data,
     );
     return response.data;
   },
@@ -167,7 +165,7 @@ export const feedbackService = {
     options?: {
       staffId?: string;
       serviceId?: string;
-    }
+    },
   ): Promise<FeedbackStats> {
     const params = new URLSearchParams();
 
@@ -175,7 +173,7 @@ export const feedbackService = {
     if (options?.serviceId) params.append("serviceId", options.serviceId);
 
     const response = await axiosInstance.get<FeedbackStats>(
-      `/stores/${storeId}/feedback/stats?${params.toString()}`
+      `/stores/${storeId}/feedback/stats?${params.toString()}`,
     );
     return response.data;
   },
@@ -185,7 +183,7 @@ export const feedbackService = {
    */
   async getPublicFeedbackStats(storeId: string): Promise<FeedbackStats> {
     const response = await axiosInstance.get<FeedbackStats>(
-      `/stores/${storeId}/feedback/stats/public`
+      `/stores/${storeId}/feedback/stats/public`,
     );
     return response.data;
   },

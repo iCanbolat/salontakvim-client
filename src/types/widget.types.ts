@@ -1,10 +1,7 @@
 export type WidgetLayout = "list" | "steps";
 
 export interface SidebarMenuItems {
-  service: boolean;
   extras: boolean;
-  dateTime: boolean;
-  customerInfo: boolean;
   payment: boolean;
 }
 
@@ -14,12 +11,10 @@ export interface WidgetSettings {
   layout: WidgetLayout;
   showCompanyEmail: boolean;
   companyEmail?: string;
-  publicToken: string;
+  /** @deprecated No longer used - domain check + embed token is now the security mechanism */
+  publicToken?: string;
   allowedDomains: string[];
   sidebarMenuItems: SidebarMenuItems;
-  lastNameRequired: boolean;
-  emailRequired: boolean;
-  phoneRequired: boolean;
   primaryColor: string;
   secondaryColor: string;
   sidebarBackgroundColor: string;
@@ -41,9 +36,6 @@ export interface UpdateWidgetSettingsDto {
   showCompanyEmail?: boolean;
   companyEmail?: string;
   sidebarMenuItems?: SidebarMenuItems;
-  lastNameRequired?: boolean;
-  emailRequired?: boolean;
-  phoneRequired?: boolean;
   primaryColor?: string;
   secondaryColor?: string;
   sidebarBackgroundColor?: string;
@@ -62,6 +54,13 @@ export interface WidgetEmbedCode {
   embedCode: string;
   scriptUrl: string;
   iframeCode: string;
+}
+
+export interface WidgetSecurityStatus {
+  blocked: boolean;
+  blockedAt: string | null;
+  reason: string | null;
+  ttlSeconds: number | null;
 }
 
 export interface WidgetEmbedBootstrap {
@@ -93,14 +92,6 @@ export interface WidgetPublicSidebarMenuItems {
   payment?: boolean;
 }
 
-export interface WidgetPublicFieldRequirements {
-  employeeRequired: boolean;
-  locationRequired: boolean;
-  lastNameRequired: boolean;
-  emailRequired: boolean;
-  phoneRequired: boolean;
-}
-
 export interface WidgetPublicStyling {
   primaryColor: string;
   secondaryColor: string;
@@ -126,7 +117,6 @@ export interface WidgetPublicConfig {
   showCompanyEmail: boolean;
   companyEmail?: string;
   sidebarMenuItems: WidgetPublicSidebarMenuItems;
-  fieldRequirements: WidgetPublicFieldRequirements;
   styling: WidgetPublicStyling;
   settings: WidgetPublicSettings;
 }

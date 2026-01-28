@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   keepPreviousData,
   useQuery,
@@ -33,7 +33,7 @@ export function useAppointments() {
     useState<Appointment | null>(null);
   const [activeTab, setActiveTab] = useState<AppointmentFilter>("all");
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTermState] = useState("");
   const [view, setView] = useState<"grid" | "list" | "calendar">("grid");
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [pendingDateRange, setPendingDateRange] = useState<
@@ -42,6 +42,10 @@ export function useAppointments() {
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const [isStaffPopoverOpen, setIsStaffPopoverOpen] = useState(false);
   const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+  const [urlSearchOverride, setUrlSearchOverride] = useState<string | null>(
+    null,
+  );
+  const skipSearchParamSync = useRef(false);
 
   const isMobile = useMediaQuery("(max-width: 767px)");
   const itemsPerPage = 8;
@@ -49,6 +53,7 @@ export function useAppointments() {
     minLength: 2,
     delay: 400,
   });
+  const searchFilter = (urlSearchOverride ?? debouncedSearch) || undefined;
 
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -78,9 +83,17 @@ export function useAppointments() {
 
   // Sync with search params
   useEffect(() => {
+    if (skipSearchParamSync.current) {
+      skipSearchParamSync.current = false;
+      return;
+    }
+
     const initialSearch = searchParams.get("search");
-    if (initialSearch && initialSearch !== searchTerm) {
-      setSearchTerm(initialSearch);
+    const normalizedSearch = initialSearch?.trim() ?? "";
+
+    if (normalizedSearch !== searchTerm) {
+      setSearchTermState(normalizedSearch);
+      setUrlSearchOverride(normalizedSearch || null);
     }
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
@@ -100,21 +113,27 @@ export function useAppointments() {
     });
   }, [searchParams]);
 
-  // Keep URL in sync with searchTerm
-  useEffect(() => {
-    const current = new URLSearchParams(searchParams);
-    if (searchTerm) {
-      current.set("search", searchTerm);
+  const handleSearchChange = (value: string) => {
+    skipSearchParamSync.current = true;
+    setUrlSearchOverride(null);
+    setSearchTermState(value);
+
+    const normalized = value.trim();
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (normalized) {
+      nextParams.set("search", normalized);
     } else {
-      current.delete("search");
+      nextParams.delete("search");
     }
-    const nextSearch = current.toString();
+
+    const nextSearch = nextParams.toString();
     const prevSearch = searchParams.toString();
 
     if (nextSearch !== prevSearch) {
-      setSearchParams(current, { replace: true });
+      setSearchParams(nextParams, { replace: true });
     }
-  }, [searchTerm, setSearchParams, searchParams]);
+  };
 
   const statusFilter = activeTab === "all" ? undefined : activeTab;
 
@@ -129,7 +148,7 @@ export function useAppointments() {
       store?.id,
       page,
       statusFilter,
-      debouncedSearch,
+      searchFilter,
       dateRange?.from,
       dateRange?.to,
       selectedStaffIds,
@@ -140,7 +159,7 @@ export function useAppointments() {
         page,
         limit: itemsPerPage,
         status: statusFilter,
-        search: debouncedSearch || undefined,
+        search: searchFilter,
         startDate: dateRange?.from
           ? format(dateRange.from, "yyyy-MM-dd")
           : undefined,
@@ -186,7 +205,7 @@ export function useAppointments() {
   // Reset page on filter change
   useEffect(() => {
     setPage(1);
-  }, [activeTab, debouncedSearch, dateRange, selectedStaffIds]);
+  }, [activeTab, searchFilter, dateRange, selectedStaffIds]);
 
   // Force grid view on mobile
   useEffect(() => {
@@ -334,7 +353,7 @@ export function useAppointments() {
       setEditingAppointment,
       setStatusUpdateAppointment,
       setActiveTab,
-      setSearchTerm,
+      setSearchTerm: handleSearchChange,
       setView,
       setPage,
       setPendingDateRange,

@@ -7,6 +7,9 @@ export function invalidateAfterAppointmentChange(
   // Appointments list for this store
   queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
 
+  // Recent appointments for dashboard
+  queryClient.invalidateQueries({ queryKey: ["recent-appointments", storeId] });
+
   // Customers list for this store (any search/page)
   queryClient.invalidateQueries({
     predicate: (query) => {

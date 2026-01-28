@@ -162,7 +162,7 @@ export function CustomerProfileContent({
         <CardHeader>
           <CardTitle>Appointment History</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="max-h-84 overflow-y-auto">
           {appointments && appointments.length > 0 ? (
             <div className="space-y-3">
               {appointments.map((appointment, index) => (

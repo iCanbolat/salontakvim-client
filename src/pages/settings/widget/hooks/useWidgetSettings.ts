@@ -44,6 +44,13 @@ export function useWidgetSettings() {
     enabled: !!store?.id,
   });
 
+  // Get widget security status
+  const { data: securityStatus } = useQuery({
+    queryKey: ["widgetSecurityStatus", store?.id],
+    queryFn: () => widgetService.getWidgetSecurityStatus(store!.id),
+    enabled: !!store?.id,
+  });
+
   useEffect(() => {
     if (settings?.allowedDomains) {
       setDomainsInput(settings.allowedDomains.join("\n"));
@@ -95,6 +102,19 @@ export function useWidgetSettings() {
     },
     onError: () => {
       toast.error("Failed to update allowed domains");
+    },
+  });
+
+  const unblockMutation = useMutation({
+    mutationFn: () => widgetService.unblockWidgetAccess(store!.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["widgetSecurityStatus", store?.id],
+      });
+      toast.success("Widget access unblocked");
+    },
+    onError: () => {
+      toast.error("Failed to unblock widget access");
     },
   });
 
@@ -172,11 +192,13 @@ export function useWidgetSettings() {
       handleRegenerateKey: () => regenerateMutation.mutate(),
       handleUpdateDomains: (domains: string[]) =>
         updateAllowedDomainsMutation.mutate(domains),
+      handleUnblockWidget: () => unblockMutation.mutate(),
     },
     data: {
       store,
       settings,
       embedCode,
+      securityStatus,
       previewSettings,
     },
   };

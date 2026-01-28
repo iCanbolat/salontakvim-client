@@ -19,7 +19,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Star,
@@ -56,7 +55,7 @@ function StarRating({
             disabled={disabled}
             className={cn(
               "p-1 transition-colors",
-              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+              disabled ? "cursor-not-allowed opacity-50" : "cursor-pointer",
             )}
             onMouseEnter={() => !disabled && setHovered(star)}
             onMouseLeave={() => !disabled && setHovered(0)}
@@ -67,7 +66,7 @@ function StarRating({
                 "h-8 w-8 transition-colors",
                 (hovered || value) >= star
                   ? "fill-yellow-400 text-yellow-400"
-                  : "text-gray-300"
+                  : "text-gray-300",
               )}
             />
           </button>
@@ -90,7 +89,6 @@ export default function FeedbackPage() {
   const [cleanlinessRating, setCleanlinessRating] = useState(0);
   const [valueRating, setValueRating] = useState(0);
   const [comment, setComment] = useState("");
-  const [isPublic, setIsPublic] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
   // Check if feedback can be submitted
@@ -100,7 +98,12 @@ export default function FeedbackPage() {
     error: checkError,
   } = useQuery({
     queryKey: ["feedback-check", storeId, appointmentId, token],
-    queryFn: () => feedbackService.checkFeedbackStatus(storeId!, appointmentId!, token || undefined),
+    queryFn: () =>
+      feedbackService.checkFeedbackStatus(
+        storeId!,
+        appointmentId!,
+        token || undefined,
+      ),
     enabled: !!storeId && !!appointmentId,
     retry: false,
   });
@@ -129,7 +132,6 @@ export default function FeedbackPage() {
       cleanlinessRating: cleanlinessRating || undefined,
       valueRating: valueRating || undefined,
       comment: comment.trim() || undefined,
-      isPublic,
       token: token || undefined,
     };
 
@@ -167,7 +169,9 @@ export default function FeedbackPage() {
           <CardContent className="pt-6">
             <div className="text-center space-y-4">
               <Loader2 className="h-8 w-8 animate-spin mx-auto text-blue-600" />
-              <p className="text-gray-600">Geri bildirim durumu kontrol ediliyor...</p>
+              <p className="text-gray-600">
+                Geri bildirim durumu kontrol ediliyor...
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -188,7 +192,7 @@ export default function FeedbackPage() {
               <div
                 className={cn(
                   "mx-auto w-16 h-16 rounded-full flex items-center justify-center",
-                  isAlreadySubmitted ? "bg-green-100" : "bg-yellow-100"
+                  isAlreadySubmitted ? "bg-green-100" : "bg-yellow-100",
                 )}
               >
                 {isAlreadySubmitted ? (
@@ -206,10 +210,10 @@ export default function FeedbackPage() {
                 {isAlreadySubmitted
                   ? "Bu randevu için geri bildirim zaten gönderilmiş. Teşekkür ederiz!"
                   : reason === "Appointment not found"
-                  ? "Randevu bulunamadı."
-                  : reason === "Appointment is not completed"
-                  ? "Sadece tamamlanmış randevular için geri bildirim gönderilebilir."
-                  : reason}
+                    ? "Randevu bulunamadı."
+                    : reason === "Appointment is not completed"
+                      ? "Sadece tamamlanmış randevular için geri bildirim gönderilebilir."
+                      : reason}
               </p>
             </div>
           </CardContent>
@@ -232,8 +236,8 @@ export default function FeedbackPage() {
                 Teşekkürler!
               </h2>
               <p className="text-gray-600">
-                Geri bildiriminiz başarıyla gönderildi. Değerli görüşleriniz için
-                teşekkür ederiz.
+                Geri bildiriminiz başarıyla gönderildi. Değerli görüşleriniz
+                için teşekkür ederiz.
               </p>
               {checkResult.appointmentDetails?.storeName && (
                 <p className="text-sm text-gray-500">
@@ -261,9 +265,7 @@ export default function FeedbackPage() {
               {checkResult.appointmentDetails.storeName}
             </h1>
           )}
-          <p className="text-gray-600">
-            Deneyiminizi bizimle paylaşın
-          </p>
+          <p className="text-gray-600">Deneyiminizi bizimle paylaşın</p>
         </div>
 
         {/* Form */}
@@ -328,17 +330,6 @@ export default function FeedbackPage() {
                 <p className="text-sm text-gray-500 text-right">
                   {comment.length}/1000
                 </p>
-              </div>
-
-              {/* Public toggle */}
-              <div className="flex items-center justify-between rounded-lg border p-4">
-                <div className="space-y-1">
-                  <Label>Yorumu Herkese Açık Yap</Label>
-                  <p className="text-sm text-gray-500">
-                    Diğer müşterilerin görmesine izin ver
-                  </p>
-                </div>
-                <Switch checked={isPublic} onCheckedChange={setIsPublic} />
               </div>
 
               {/* Error message */}

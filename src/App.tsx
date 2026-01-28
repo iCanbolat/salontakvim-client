@@ -38,6 +38,7 @@ import {
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
+import CancelAppointmentPage from "./pages/public/CancelAppointmentPage";
 
 function App() {
   return (
@@ -58,6 +59,10 @@ function App() {
               />
               <Route path="/book/:slug" element={<HostedWidgetPage />} />
               <Route path="/feedback" element={<FeedbackPage />} />
+              <Route
+                path="/appointments/cancel"
+                element={<CancelAppointmentPage />}
+              />
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>

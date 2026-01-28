@@ -91,6 +91,33 @@ export class AppointmentService {
   }
 
   /**
+   * Get appointment details by public token
+   */
+  async getAppointmentByToken(token: string): Promise<Appointment> {
+    const response = await axiosInstance.get<Appointment>(
+      `/public/appointments/cancel-details`,
+      {
+        params: { token },
+      },
+    );
+    return response.data;
+  }
+
+  /**
+   * Cancel appointment by public token
+   */
+  async cancelAppointmentByToken(
+    token: string,
+    reason?: string,
+  ): Promise<Appointment> {
+    const response = await axiosInstance.post<Appointment>(
+      `/public/appointments/cancel`,
+      { token, reason },
+    );
+    return response.data;
+  }
+
+  /**
    * Delete appointment
    */
   async deleteAppointment(storeId: string, id: string): Promise<void> {

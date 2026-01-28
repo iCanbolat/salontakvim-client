@@ -67,9 +67,10 @@ export function WidgetSettings() {
     handleResetChanges,
     handleRegenerateKey,
     handleUpdateDomains,
+    handleUnblockWidget,
   } = actions;
 
-  const { store, settings, embedCode, previewSettings } = data;
+  const { store, settings, embedCode, securityStatus, previewSettings } = data;
 
   // Helper to get current value (pending or original)
   const getCurrentValue = <K extends keyof WidgetSettingsType>(
@@ -121,6 +122,16 @@ export function WidgetSettings() {
       )
     ) {
       handleRegenerateKey();
+    }
+  };
+
+  const onUnblockWidget = () => {
+    if (
+      confirm(
+        "Unblock widget access? This will re-enable public access immediately.",
+      )
+    ) {
+      handleUnblockWidget();
     }
   };
 
@@ -350,10 +361,7 @@ export function WidgetSettings() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {[
-                    { key: "service", label: "Service Selection" },
                     { key: "extras", label: "Extras Selection" },
-                    { key: "dateTime", label: "Date & Time Selection" },
-                    { key: "customerInfo", label: "Customer Information" },
                     { key: "payment", label: "Payment" },
                   ].map((item) => (
                     <div
@@ -371,39 +379,6 @@ export function WidgetSettings() {
                             ...(pendingChanges.sidebarMenuItems || {}),
                             [item.key]: checked,
                           })
-                        }
-                      />
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Field Requirements</CardTitle>
-                  <CardDescription>
-                    Set which customer fields are required
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {[
-                    { key: "lastNameRequired", label: "Last Name Required" },
-                    { key: "emailRequired", label: "Email Required" },
-                    { key: "phoneRequired", label: "Phone Required" },
-                  ].map((item) => (
-                    <div
-                      key={item.key}
-                      className="flex items-center justify-between"
-                    >
-                      <Label>{item.label}</Label>
-                      <Switch
-                        checked={
-                          getCurrentValue(
-                            item.key as keyof WidgetSettingsType,
-                          ) as boolean
-                        }
-                        onCheckedChange={(checked) =>
-                          handleUpdate(item.key as any, checked)
                         }
                       />
                     </div>
@@ -660,6 +635,28 @@ export function WidgetSettings() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {securityStatus?.blocked && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="space-y-1">
+                        <div>
+                          Widget access is temporarily disabled due to
+                          suspicious activity.
+                        </div>
+                        {securityStatus.blockedAt && (
+                          <div className="text-xs text-muted-foreground">
+                            Blocked at: {securityStatus.blockedAt}
+                          </div>
+                        )}
+                        {securityStatus.ttlSeconds && (
+                          <div className="text-xs text-muted-foreground">
+                            Auto-unlock in about{" "}
+                            {Math.ceil(securityStatus.ttlSeconds / 60)} minutes
+                          </div>
+                        )}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   <div className="flex gap-2">
                     <Input
                       value={settings.widgetKey}
@@ -684,6 +681,11 @@ export function WidgetSettings() {
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Regenerate Key
                     </Button>
+                    {securityStatus?.blocked && (
+                      <Button variant="outline" onClick={onUnblockWidget}>
+                        Unlock Widget
+                      </Button>
+                    )}
                   </div>
                   <Alert>
                     <AlertCircle className="h-4 w-4" />

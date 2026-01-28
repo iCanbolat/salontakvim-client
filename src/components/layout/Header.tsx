@@ -39,11 +39,12 @@ export function Header({ onMenuClick }: HeaderProps) {
     useNotifications();
   const navigate = useNavigate();
   const [isMarkingAll, setIsMarkingAll] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const maxVisibleNotifications = 8;
 
   const visibleNotifications = useMemo(
     () => notifications.slice(0, maxVisibleNotifications),
-    [notifications]
+    [notifications],
   );
 
   const getNotificationConfig = (type: string) => {
@@ -102,7 +103,7 @@ export function Header({ onMenuClick }: HeaderProps) {
   const handleNotificationClick = async (
     id: string,
     isRead: boolean,
-    url?: string
+    url?: string,
   ) => {
     try {
       if (!isRead) {
@@ -111,6 +112,8 @@ export function Header({ onMenuClick }: HeaderProps) {
     } catch (error) {
       console.error("Failed to mark notification as read", error);
     }
+
+    setIsDropdownOpen(false);
 
     if (url) {
       navigate(url);
@@ -148,7 +151,7 @@ export function Header({ onMenuClick }: HeaderProps) {
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-4">
-          <DropdownMenu>
+          <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
@@ -219,13 +222,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                           key={notification.id}
                           className={cn(
                             "flex w-full flex-col gap-2 px-4 py-3 text-left transition-colors hover:bg-gray-50 border-b last:border-b-0",
-                            !notification.isRead && "bg-blue-50/50"
+                            !notification.isRead && "bg-blue-50/50",
                           )}
                           onClick={() =>
                             handleNotificationClick(
                               notification.id,
                               notification.isRead,
-                              notification.metadata?.url as string | undefined
+                              notification.metadata?.url as string | undefined,
                             )
                           }
                         >
@@ -233,7 +236,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                             <div
                               className={cn(
                                 "shrink-0 p-2 rounded-full mt-0.5",
-                                config.bgColor
+                                config.bgColor,
                               )}
                             >
                               <Icon className={cn("h-4 w-4", config.color)} />
@@ -255,7 +258,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                                   new Date(notification.createdAt),
                                   {
                                     addSuffix: true,
-                                  }
+                                  },
                                 )}
                               </div>
                             </div>

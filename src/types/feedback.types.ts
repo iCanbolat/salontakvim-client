@@ -22,7 +22,6 @@ export interface Feedback {
   storeResponse?: string | null;
   respondedAt?: string | null;
   respondedBy?: string | null;
-  isPublic: boolean;
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -79,7 +78,6 @@ export interface CreateFeedbackDto {
   cleanlinessRating?: number;
   valueRating?: number;
   comment?: string;
-  isPublic?: boolean;
 }
 
 /**
@@ -87,7 +85,6 @@ export interface CreateFeedbackDto {
  */
 export interface UpdateFeedbackDto {
   comment?: string;
-  isPublic?: boolean;
 }
 
 /**
@@ -104,7 +101,6 @@ export interface FeedbackFilters {
   customerId?: string;
   staffId?: string;
   serviceId?: string;
-  isPublic?: boolean;
   limit?: number;
   offset?: number;
 }

@@ -41,36 +41,48 @@ const STATUS_OPTIONS: {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   description: string;
+  colorClass: string;
+  iconClass: string;
 }[] = [
   {
     value: "pending",
     label: "Beklemede",
     icon: Clock,
     description: "Randevu onay bekliyor",
+    colorClass: "bg-yellow-100 text-yellow-800 border-yellow-300",
+    iconClass: "text-yellow-600",
   },
   {
     value: "confirmed",
     label: "Onaylandı",
     icon: CheckCircle2,
     description: "Randevu onaylandı",
+    colorClass: "bg-blue-100 text-blue-800 border-blue-300",
+    iconClass: "text-blue-600",
   },
   {
     value: "completed",
     label: "Tamamlandı",
     icon: CheckCircle2,
     description: "Randevu başarıyla tamamlandı",
+    colorClass: "bg-green-100 text-green-800 border-green-300",
+    iconClass: "text-green-600",
   },
   {
     value: "cancelled",
     label: "İptal Edildi",
     icon: XCircle,
     description: "Randevu iptal edildi",
+    colorClass: "bg-red-100 text-red-800 border-red-300",
+    iconClass: "text-red-600",
   },
   {
     value: "no_show",
     label: "Gelmedi",
     icon: UserX,
     description: "Müşteri randevuya gelmedi",
+    colorClass: "bg-gray-100 text-gray-800 border-gray-300",
+    iconClass: "text-gray-600",
   },
 ];
 
@@ -81,11 +93,11 @@ export function AppointmentStatusDialog({
 }: AppointmentStatusDialogProps) {
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus>(
-    appointment.status
+    appointment.status,
   );
   const [cancellationReason, setCancellationReason] = useState("");
   const [internalNotes, setInternalNotes] = useState(
-    appointment.internalNotes || ""
+    appointment.internalNotes || "",
   );
 
   const updateStatusMutation = useMutation({
@@ -97,12 +109,12 @@ export function AppointmentStatusDialog({
       return appointmentService.updateAppointmentStatus(
         appointment.storeId,
         appointment.id,
-        data
+        data,
       );
     },
     onSuccess: () => {
       invalidateAfterAppointmentChange(queryClient, appointment.storeId);
-      toast.success("Randevu durumu güncellendi");
+      // toast.success("Randevu durumu güncellendi");
       onOpenChange(false);
     },
     onError: (error: Error) => {
@@ -139,10 +151,10 @@ export function AppointmentStatusDialog({
     selectedStatus === "cancelled" || selectedStatus === "no_show";
 
   const currentStatusOption = STATUS_OPTIONS.find(
-    (opt) => opt.value === appointment.status
+    (opt) => opt.value === appointment.status,
   );
   const selectedStatusOption = STATUS_OPTIONS.find(
-    (opt) => opt.value === selectedStatus
+    (opt) => opt.value === selectedStatus,
   );
 
   return (
@@ -151,47 +163,65 @@ export function AppointmentStatusDialog({
         <DialogHeader>
           <DialogTitle>Randevu Durumunu Güncelle</DialogTitle>
           <DialogDescription>
-            Randevu #{appointment.id} için yeni durum seçin
+            Randevu #{appointment.publicNumber} için yeni durum seçin
           </DialogDescription>
         </DialogHeader>
 
         <DialogBody>
           <div className="space-y-4">
             {/* Current Status */}
-            <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
+            {/* <div
+              className={`flex items-center gap-3 p-4 border rounded-lg ${
+                currentStatusOption?.colorClass || "bg-muted"
+              }`}
+            >
               {currentStatusOption && (
                 <>
-                  <currentStatusOption.icon className="h-5 w-5 text-muted-foreground" />
+                  <currentStatusOption.icon
+                    className={`h-6 w-6 ${currentStatusOption.iconClass}`}
+                  />
                   <div>
-                    <p className="text-sm font-medium">Mevcut Durum</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-xs font-bold uppercase tracking-wider opacity-70">
+                      Mevcut Durum
+                    </p>
+                    <p className="text-lg font-bold">
                       {currentStatusOption.label}
                     </p>
                   </div>
                 </>
               )}
-            </div>
+            </div> */}
 
             {/* Status Selection */}
             <div className="space-y-2">
-              <Label htmlFor="status">Yeni Durum</Label>
+              <Label htmlFor="status" className="font-semibold">
+                Yeni Durum
+              </Label>
               <Select
                 value={selectedStatus}
                 onValueChange={(value) =>
                   setSelectedStatus(value as AppointmentStatus)
                 }
               >
-                <SelectTrigger id="status">
+                <SelectTrigger className="w-full h-14! font-medium" id="status">
                   <SelectValue placeholder="Durum seçin" />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((option) => (
                     <SelectItem key={option.value} value={option.value}>
-                      <div className="flex items-center gap-2">
-                        <option.icon className="h-4 w-4" />
-                        <div>
-                          <p className="font-medium">{option.label}</p>
-                          <p className="text-xs text-muted-foreground">
+                      <div className="flex items-center gap-3 ">
+                        <div
+                          className={`p-2 rounded-full ${option.colorClass.split(" ")[0]} ${option.iconClass}`}
+                        >
+                          <option.icon className="h-4 w-4" />
+                        </div>
+                        <div className="text-start">
+                          <p
+                            className={`font-bold ${option.colorClass.split(" ")[1]}`}
+                          >
+                            {option.label}
+                          </p>
+                          <p className={`text-xs ${option.iconClass}`}>
                             {option.description}
                           </p>
                         </div>
@@ -258,22 +288,26 @@ export function AppointmentStatusDialog({
 
             {/* Status Change Preview */}
             {selectedStatus !== appointment.status && selectedStatusOption && (
-              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+              <div
+                className={`p-4 border rounded-lg transition-all duration-300 ${selectedStatusOption.colorClass}`}
+              >
+                <div className="flex items-start gap-3">
+                  <AlertCircle
+                    className={`h-5 w-5 mt-0.5 ${selectedStatusOption.iconClass}`}
+                  />
                   <div className="text-sm">
-                    <p className="font-medium text-blue-900">
-                      Durum değiştirilecek
-                    </p>
-                    <p className="text-blue-700 mt-1">
-                      <span className="font-medium">
+                    <p className="font-bold">Durum değiştirilecek</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="px-2 py-0.5 bg-white/50 rounded text-xs font-semibold">
                         {currentStatusOption?.label}
                       </span>
-                      {" → "}
-                      <span className="font-medium">
+                      <span className="font-bold text-lg leading-none">→</span>
+                      <span
+                        className={`px-2 py-0.5 rounded text-xs font-bold border ${selectedStatusOption.colorClass}`}
+                      >
                         {selectedStatusOption.label}
                       </span>
-                    </p>
+                    </div>
                   </div>
                 </div>
               </div>

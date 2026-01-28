@@ -12,17 +12,21 @@ import {
   MessageSquare,
   ThumbsUp,
   ThumbsDown,
-  Eye,
-  EyeOff,
   Send,
   MoreHorizontal,
   Filter,
   Search,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
 import { toast } from "sonner";
-import { storeService, feedbackService, staffService, serviceService } from "@/services";
+import {
+  storeService,
+  feedbackService,
+  staffService,
+  serviceService,
+} from "@/services";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -71,7 +75,8 @@ function StarDisplay({
   rating: number | null | undefined;
   size?: "sm" | "md" | "lg";
 }) {
-  if (rating === null || rating === undefined) return <span className="text-gray-400">-</span>;
+  if (rating === null || rating === undefined)
+    return <span className="text-gray-400">-</span>;
 
   const sizeClass = {
     sm: "h-3 w-3",
@@ -89,8 +94,8 @@ function StarDisplay({
             rating >= star
               ? "fill-yellow-400 text-yellow-400"
               : rating >= star - 0.5
-              ? "fill-yellow-200 text-yellow-400"
-              : "text-gray-200"
+                ? "fill-yellow-200 text-yellow-400"
+                : "text-gray-200",
           )}
         />
       ))}
@@ -242,7 +247,9 @@ export function FeedbackList() {
       feedbackService.deleteFeedback(store!.id, feedbackId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["feedback", store?.id] });
-      queryClient.invalidateQueries({ queryKey: ["feedback-stats", store?.id] });
+      queryClient.invalidateQueries({
+        queryKey: ["feedback-stats", store?.id],
+      });
       toast.success("Geri bildirim silindi");
     },
     onError: () => {
@@ -257,8 +264,10 @@ export function FeedbackList() {
 
     const term = searchTerm.toLowerCase();
     return feedbackList.filter((f) => {
-      const customerName = `${f.customer?.firstName || ""} ${f.customer?.lastName || ""}`.toLowerCase();
-      const staffName = `${f.staff?.firstName || ""} ${f.staff?.lastName || ""}`.toLowerCase();
+      const customerName =
+        `${f.customer?.firstName || ""} ${f.customer?.lastName || ""}`.toLowerCase();
+      const staffName =
+        `${f.staff?.firstName || ""} ${f.staff?.lastName || ""}`.toLowerCase();
       const serviceName = f.service?.name?.toLowerCase() || "";
       const comment = f.comment?.toLowerCase() || "";
 
@@ -327,7 +336,8 @@ export function FeedbackList() {
           Müşteri Geri Bildirimleri
         </h1>
         <p className="text-muted-foreground">
-          Müşterilerinizin randevu sonrası gönderdiği değerlendirmeleri görüntüleyin
+          Müşterilerinizin randevu sonrası gönderdiği değerlendirmeleri
+          görüntüleyin
         </p>
       </div>
 
@@ -341,9 +351,7 @@ export function FeedbackList() {
         />
         <StatsCard
           title="Ortalama Puan"
-          value={
-            <StarDisplay rating={stats?.averageOverallRating} size="lg" />
-          }
+          value={<StarDisplay rating={stats?.averageOverallRating} size="lg" />}
           icon={Star}
         />
         <StatsCard
@@ -487,25 +495,12 @@ export function FeedbackList() {
                           {format(
                             new Date(feedback.createdAt),
                             "d MMMM yyyy, HH:mm",
-                            { locale: tr }
+                            { locale: tr },
                           )}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Badge variant={feedback.isPublic ? "default" : "secondary"}>
-                        {feedback.isPublic ? (
-                          <>
-                            <Eye className="h-3 w-3 mr-1" />
-                            Herkese Açık
-                          </>
-                        ) : (
-                          <>
-                            <EyeOff className="h-3 w-3 mr-1" />
-                            Gizli
-                          </>
-                        )}
-                      </Badge>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon">
@@ -515,7 +510,9 @@ export function FeedbackList() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>İşlemler</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleView(feedback)}>
+                          <DropdownMenuItem
+                            onClick={() => handleView(feedback)}
+                          >
                             <Eye className="h-4 w-4 mr-2" />
                             Detayları Gör
                           </DropdownMenuItem>
@@ -540,7 +537,9 @@ export function FeedbackList() {
                   {/* Rating */}
                   <div className="flex items-center gap-6 flex-wrap">
                     <div>
-                      <span className="text-xs text-muted-foreground">Genel</span>
+                      <span className="text-xs text-muted-foreground">
+                        Genel
+                      </span>
                       <StarDisplay rating={feedback.overallRating} />
                     </div>
                     {feedback.serviceRating && (
@@ -609,7 +608,7 @@ export function FeedbackList() {
                           {format(
                             new Date(feedback.respondedAt),
                             "d MMMM yyyy, HH:mm",
-                            { locale: tr }
+                            { locale: tr },
                           )}
                         </p>
                       )}
@@ -710,7 +709,7 @@ export function FeedbackList() {
                     {format(
                       new Date(selectedFeedback.createdAt),
                       "d MMMM yyyy, HH:mm",
-                      { locale: tr }
+                      { locale: tr },
                     )}
                   </p>
                 </div>
@@ -721,19 +720,28 @@ export function FeedbackList() {
                   <span className="text-xs text-muted-foreground block mb-1">
                     Genel Değerlendirme
                   </span>
-                  <StarDisplay rating={selectedFeedback.overallRating} size="md" />
+                  <StarDisplay
+                    rating={selectedFeedback.overallRating}
+                    size="md"
+                  />
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block mb-1">
                     Hizmet Kalitesi
                   </span>
-                  <StarDisplay rating={selectedFeedback.serviceRating} size="md" />
+                  <StarDisplay
+                    rating={selectedFeedback.serviceRating}
+                    size="md"
+                  />
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block mb-1">
                     Personel
                   </span>
-                  <StarDisplay rating={selectedFeedback.staffRating} size="md" />
+                  <StarDisplay
+                    rating={selectedFeedback.staffRating}
+                    size="md"
+                  />
                 </div>
                 <div>
                   <span className="text-xs text-muted-foreground block mb-1">
@@ -748,7 +756,10 @@ export function FeedbackList() {
                   <span className="text-xs text-muted-foreground block mb-1">
                     Fiyat/Performans
                   </span>
-                  <StarDisplay rating={selectedFeedback.valueRating} size="md" />
+                  <StarDisplay
+                    rating={selectedFeedback.valueRating}
+                    size="md"
+                  />
                 </div>
               </div>
 
@@ -757,7 +768,9 @@ export function FeedbackList() {
                   <span className="text-xs text-muted-foreground block mb-1">
                     Hizmet
                   </span>
-                  <Badge variant="outline">{selectedFeedback.service.name}</Badge>
+                  <Badge variant="outline">
+                    {selectedFeedback.service.name}
+                  </Badge>
                 </div>
               )}
 
@@ -799,10 +812,12 @@ export function FeedbackList() {
               Kapat
             </Button>
             {selectedFeedback && (
-              <Button onClick={() => {
-                setViewDialogOpen(false);
-                handleRespond(selectedFeedback);
-              }}>
+              <Button
+                onClick={() => {
+                  setViewDialogOpen(false);
+                  handleRespond(selectedFeedback);
+                }}
+              >
                 Yanıtla
               </Button>
             )}
