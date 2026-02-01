@@ -34,14 +34,19 @@ import {
   FILE_TYPE_COLORS,
   FileIcon,
 } from "./FileUploadDialog";
-import { useCustomerFiles } from "../hooks/useCustomerFiles";
+import { useCustomerFiles } from "./useCustomerFiles";
 
 interface CustomerFilesProps {
   storeId: string;
   customerId: string;
+  isReadOnly?: boolean;
 }
 
-export function CustomerFiles({ storeId, customerId }: CustomerFilesProps) {
+export function CustomerFiles({
+  storeId,
+  customerId,
+  isReadOnly = false,
+}: CustomerFilesProps) {
   const { state, actions, data, isLoading, error, isDeleting, fileInputRef } =
     useCustomerFiles({ storeId, customerId });
 
@@ -73,10 +78,15 @@ export function CustomerFiles({ storeId, customerId }: CustomerFilesProps) {
               </p>
             ) : null}
           </div>
-          <Button onClick={() => actions.setIsUploadDialogOpen(true)} size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Upload Files
-          </Button>
+          {!isReadOnly && (
+            <Button
+              onClick={() => actions.setIsUploadDialogOpen(true)}
+              size="sm"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Upload Files
+            </Button>
+          )}
         </div>
       </CardHeader>
 
@@ -229,13 +239,15 @@ export function CustomerFiles({ storeId, customerId }: CustomerFilesProps) {
                         <Download className="h-4 w-4 mr-2" />
                         Download
                       </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => actions.setDeleteFileId(file.id)}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </DropdownMenuItem>
+                      {!isReadOnly && (
+                        <DropdownMenuItem
+                          onClick={() => actions.setDeleteFileId(file.id)}
+                          className="text-red-600"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

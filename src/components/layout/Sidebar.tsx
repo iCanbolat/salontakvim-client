@@ -77,7 +77,7 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Files",
+    label: "Folders",
     href: "/admin/files",
     icon: FileText,
     roles: ["admin"],

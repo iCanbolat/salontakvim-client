@@ -13,11 +13,13 @@ import { Button } from "@/components/ui/button";
 interface AppointmentsListTableProps {
   appointments: Appointment[];
   onEdit: (appointment: Appointment) => void;
+  onRowClick?: (appointment: Appointment) => void;
 }
 
 export function AppointmentsListTable({
   appointments,
   onEdit,
+  onRowClick,
 }: AppointmentsListTableProps) {
   const columns: TableColumn<Appointment>[] = [
     {
@@ -115,7 +117,8 @@ export function AppointmentsListTable({
       data={appointments}
       columns={columns}
       getRowKey={(appointment) => appointment.id}
-      onRowClick={onEdit}
+      onRowClick={onRowClick}
+      rowClassName="cursor-pointer"
     />
   );
 }

@@ -13,6 +13,7 @@ export interface Store {
   email?: string;
   phone?: string;
   currency: string;
+  storeImages?: string[];
   totalAppointments: number;
   totalCustomers: number;
   isActive: boolean;

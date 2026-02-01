@@ -1,4 +1,15 @@
-import { Loader2, AlertCircle, Building2, Save, X } from "lucide-react";
+import { useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  Loader2,
+  AlertCircle,
+  Building2,
+  Save,
+  X,
+  ImagePlus,
+  Trash2,
+} from "lucide-react";
+import { toast } from "sonner";
 import {
   Card,
   CardContent,
@@ -12,6 +23,7 @@ import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { useStoreSettings } from "./hooks/useStoreSettings";
+import { storeService } from "@/services/store.service";
 
 export function StoreSettings() {
   const { state, actions, data, form } = useStoreSettings();
@@ -23,6 +35,89 @@ export function StoreSettings() {
     setValue,
     formState: { errors, isDirty },
   } = form;
+
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = useState(false);
+
+  const uploadImageMutation = useMutation({
+    mutationFn: (file: File) => storeService.uploadStoreImage(store!.id, file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    },
+  });
+
+  const deleteImageMutation = useMutation({
+    mutationFn: (imageUrl: string) =>
+      storeService.deleteStoreImage(store!.id, imageUrl),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    },
+  });
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const fileList = Array.from(files);
+    const currentCount = store?.storeImages?.length || 0;
+
+    if (currentCount + fileList.length > 5) {
+      toast.error(
+        `En fazla 5 resim yükleyebilirsiniz. (Mevcut: ${currentCount})`,
+      );
+      return;
+    }
+
+    // Validate files
+    for (const file of fileList) {
+      if (!file.type.startsWith("image/")) {
+        toast.error(`${file.name} geçerli bir resim dosyası değil.`);
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`${file.name} boyutu 5MB'dan büyük olamaz.`);
+        return;
+      }
+    }
+
+    setIsUploading(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    try {
+      for (const file of fileList) {
+        try {
+          await uploadImageMutation.mutateAsync(file);
+          successCount++;
+        } catch (err) {
+          console.error(`Upload failed for ${file.name}:`, err);
+          failCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`${successCount} resim başarıyla yüklendi.`);
+      }
+      if (failCount > 0) {
+        toast.error(`${failCount} resim yüklenirken hata oluştu.`);
+      }
+    } finally {
+      setIsUploading(false);
+      e.target.value = ""; // Reset input
+    }
+  };
+
+  const handleDeleteImage = async (imageUrl: string) => {
+    if (!confirm("Bu resmi silmek istediğinizden emin misiniz?")) return;
+
+    try {
+      await deleteImageMutation.mutateAsync(imageUrl);
+      toast.success("Resim başarıyla silindi.");
+    } catch (err) {
+      console.error("Image delete failed:", err);
+      toast.error("Resim silinemedi. Lütfen tekrar deneyin.");
+    }
+  };
 
   if (isLoading) {
     return (
@@ -245,6 +340,84 @@ export function StoreSettings() {
                     : "Your store is currently inactive"}
                 </p>
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Store Photos Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Store Photos</CardTitle>
+            <CardDescription>
+              Add photos to showcase your store on the booking page (max 5
+              photos)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Photo Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                {store.storeImages?.map((imageUrl, index) => (
+                  <div
+                    key={index}
+                    className="relative aspect-square rounded-lg overflow-hidden bg-gray-100 group"
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`Store photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteImage(imageUrl)}
+                      disabled={deleteImageMutation.isPending}
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50"
+                      aria-label="Delete photo"
+                    >
+                      {deleteImageMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                ))}
+
+                {/* Upload Button */}
+                {(!store.storeImages || store.storeImages.length < 5) && (
+                  <label
+                    className={`relative aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors ${
+                      isUploading ? "opacity-50 pointer-events-none" : ""
+                    }`}
+                  >
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={handleImageUpload}
+                      className="sr-only"
+                      disabled={isUploading}
+                    />
+                    {isUploading ? (
+                      <Loader2 className="h-8 w-8 text-gray-400 animate-spin" />
+                    ) : (
+                      <>
+                        <ImagePlus className="h-8 w-8 text-gray-400" />
+                        <span className="mt-2 text-xs text-gray-500">
+                          Add Photo
+                        </span>
+                      </>
+                    )}
+                  </label>
+                )}
+              </div>
+
+              {store.storeImages && store.storeImages.length >= 5 && (
+                <p className="text-sm text-gray-500">
+                  Maximum 5 photos reached. Delete existing photos to add new
+                  ones.
+                </p>
+              )}
             </div>
           </CardContent>
         </Card>

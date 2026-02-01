@@ -22,20 +22,21 @@ export function CustomerDetails() {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
-        <Button
-          type="button"
-          variant="ghost"
-          className="px-0 text-blue-600 hover:text-blue-700"
-          onClick={() => navigate(-1)}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to customers
-        </Button>
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Customer Details</h1>
           <p className="text-gray-600 mt-1">
             Review this customer's activity, spending, and appointment history.
           </p>
         </div>
+        <Button
+          size="sm"
+          className="h-8 w-fit transition-all hover:bg-gray-100"
+          variant="outline"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft className="h-5 w-5" />
+          Back to Customers
+        </Button>
       </div>
 
       {isLoading ? (

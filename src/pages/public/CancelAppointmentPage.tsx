@@ -144,11 +144,6 @@ export default function CancelAppointmentPage() {
               </p>
             </div>
           </div>
-          <Link to="/">
-            <Button className="w-full h-12 rounded-xl text-base font-semibold">
-              Ana Sayfaya Dön
-            </Button>
-          </Link>
         </div>
       </div>
     );

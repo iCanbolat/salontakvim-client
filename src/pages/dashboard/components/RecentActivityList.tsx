@@ -5,6 +5,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Link } from "react-router-dom";
 import {
   Calendar,
   CalendarPlus,
@@ -24,6 +25,7 @@ import { tr } from "date-fns/locale";
 
 interface RecentActivityListProps {
   activities: RecentActivity[];
+  showViewAll?: boolean;
 }
 
 function getActivityIcon(activity: RecentActivity) {
@@ -65,7 +67,10 @@ function getActivityIcon(activity: RecentActivity) {
   return { icon: Bell, color: "bg-gray-100 text-gray-600" };
 }
 
-export function RecentActivityList({ activities }: RecentActivityListProps) {
+export function RecentActivityList({
+  activities,
+  showViewAll = true,
+}: RecentActivityListProps) {
   if (activities.length === 0) {
     return (
       <Card>
@@ -87,9 +92,18 @@ export function RecentActivityList({ activities }: RecentActivityListProps) {
       <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <CardTitle>Son Aktiviteler</CardTitle>
-          <span className="text-xs bg-gray-100 px-2.5 py-1 rounded-full text-gray-500 font-medium">
-            Canlı
-          </span>
+          {showViewAll ? (
+            <Link
+              to="/admin/notifications?tab=activities"
+              className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
+            >
+              Tümünü gör
+            </Link>
+          ) : (
+            <span className="text-xs bg-gray-100 px-2.5 py-1 rounded-full text-gray-500 font-medium">
+              Canlı
+            </span>
+          )}
         </div>
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden p-0 px-6 pb-6">

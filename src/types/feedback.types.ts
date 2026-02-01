@@ -19,9 +19,6 @@ export interface Feedback {
   cleanlinessRating?: number | null;
   valueRating?: number | null;
   comment?: string | null;
-  storeResponse?: string | null;
-  respondedAt?: string | null;
-  respondedBy?: string | null;
   isVerified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -88,21 +85,23 @@ export interface UpdateFeedbackDto {
 }
 
 /**
- * Respond to feedback DTO
- */
-export interface RespondToFeedbackDto {
-  storeResponse: string;
-}
-
-/**
  * Feedback filters for list query
  */
 export interface FeedbackFilters {
   customerId?: string;
   staffId?: string;
   serviceId?: string;
+  search?: string;
+  page?: number;
   limit?: number;
-  offset?: number;
+}
+
+export interface PaginatedFeedbackResponse {
+  data: FeedbackWithDetails[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }
 
 /**

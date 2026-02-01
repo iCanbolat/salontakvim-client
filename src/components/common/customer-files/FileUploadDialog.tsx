@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -10,7 +10,6 @@ import {
   Image,
   Loader2,
   Plus,
-  Eye,
   X,
   ChevronLeft,
   ChevronRight,
@@ -103,6 +102,7 @@ export function FileUploadDialog({
   initialFiles = [],
   onSuccess,
 }: FileUploadDialogProps) {
+  const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedPreviewIndex, setSelectedPreviewIndex] = useState<number>(0);
 
@@ -122,8 +122,6 @@ export function FileUploadDialog({
   useEffect(() => {
     if (isOpen && initialFiles.length > 0) {
       const currentFiles = form.getValues("files");
-      // Avoid duplicates or just replace? Usually adding is expected from drop but replace might be cleaner if it opens fresh.
-      // Given handleDrop in CustomerFiles adds to queue, we'll follow that.
       form.setValue("files", [...currentFiles, ...initialFiles]);
     }
   }, [isOpen, initialFiles, form]);
@@ -144,13 +142,19 @@ export function FileUploadDialog({
           {
             description: description || undefined,
             tags,
-          }
+          },
         );
         results.push(result);
       }
       return results;
     },
     onSuccess: (results) => {
+      queryClient.invalidateQueries({
+        queryKey: ["admin-activities", storeId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["activities", storeId],
+      });
       toast.success(`${results.length} dosya başarıyla yüklendi`);
       resetForm();
       onSuccess?.();
@@ -214,7 +218,7 @@ export function FileUploadDialog({
         <Form {...form}>
           <form
             onSubmit={form.handleSubmit((values) =>
-              uploadMutation.mutate(values)
+              uploadMutation.mutate(values),
             )}
             className="flex flex-col h-full overflow-hidden"
           >
@@ -272,7 +276,7 @@ export function FileUploadDialog({
                               "text-xs flex items-center justify-between p-2 rounded group transition-colors cursor-pointer",
                               selectedPreviewIndex === idx
                                 ? "bg-primary/10 border border-primary/20"
-                                : "bg-muted/50 hover:bg-muted"
+                                : "bg-muted/50 hover:bg-muted",
                             )}
                             onClick={() => setSelectedPreviewIndex(idx)}
                           >
@@ -280,7 +284,7 @@ export function FileUploadDialog({
                               <div
                                 className={cn(
                                   "p-1 rounded shrink-0",
-                                  FILE_TYPE_COLORS[getFileType(file)]
+                                  FILE_TYPE_COLORS[getFileType(file)],
                                 )}
                               >
                                 <FileIcon
@@ -294,40 +298,42 @@ export function FileUploadDialog({
                                 </p>
                                 <p className="text-[10px] text-muted-foreground">
                                   {customerFileService.formatFileSize(
-                                    file.size
+                                    file.size,
                                   )}
                                 </p>
                               </div>
                             </div>
-                            <button
+                            <Button
                               type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
                               onClick={(e) => {
                                 e.stopPropagation();
                                 removeFileFromQueue(idx);
                               }}
-                              className="opacity-0 group-hover:opacity-100 text-destructive p-1 hover:bg-destructive/10 rounded shrink-0 ml-2"
                             >
                               <X className="h-3 w-3" />
-                            </button>
+                            </Button>
                           </div>
                         ))
                       )}
                     </div>
                   </div>
 
-                  {/* Description & Tags */}
-                  <div className="space-y-4 pt-4 border-t">
+                  {/* Form Fields */}
+                  <div className="space-y-4">
                     <FormField
                       control={form.control}
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Açıklama (Opsiyonel)</FormLabel>
+                          <FormLabel>Açıklama</FormLabel>
                           <FormControl>
                             <Textarea
+                              placeholder="Dosya hakkında kısa bir not..."
+                              className="resize-none h-24"
                               {...field}
-                              placeholder="Dosya hakkında notlar..."
-                              className="h-24 resize-none"
                             />
                           </FormControl>
                           <FormMessage />
@@ -343,12 +349,13 @@ export function FileUploadDialog({
                           <FormLabel>Etiketler</FormLabel>
                           <FormControl>
                             <Input
+                              placeholder="fatura, sözleşme, rapor..."
                               {...field}
-                              placeholder="virgül ile ayırın (örn: fatura, rontgen)"
                             />
                           </FormControl>
                           <FormDescription>
-                            Dosyaları kolayca bulmak için etiketler ekleyin.
+                            Virgül ile ayırarak birden fazla etiket
+                            ekleyebilirsiniz.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -358,176 +365,110 @@ export function FileUploadDialog({
                 </div>
 
                 {/* Right Side: Preview */}
-                <div className="flex-1 flex flex-col min-w-0">
-                  <div className="relative flex-1 bg-black/5 rounded-lg border overflow-hidden flex items-center justify-center">
-                    {filesToUpload.length > 0 ? (
-                      <>
+                <div className="flex-1 bg-muted/30 rounded-lg flex flex-col overflow-hidden">
+                  {filesToUpload.length > 0 ? (
+                    <>
+                      <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
+                        <span className="text-xs font-medium truncate max-w-[200px]">
+                          {filesToUpload[selectedPreviewIndex].name}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={selectedPreviewIndex === 0}
+                            onClick={() =>
+                              setSelectedPreviewIndex((prev) => prev - 1)
+                            }
+                          >
+                            <ChevronLeft className="h-4 w-4" />
+                          </Button>
+                          <span className="text-[10px] tabular-nums">
+                            {selectedPreviewIndex + 1} / {filesToUpload.length}
+                          </span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            disabled={
+                              selectedPreviewIndex === filesToUpload.length - 1
+                            }
+                            onClick={() =>
+                              setSelectedPreviewIndex((prev) => prev + 1)
+                            }
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="flex-1 flex items-center justify-center p-6 min-h-0">
                         {getFileType(filesToUpload[selectedPreviewIndex]) ===
                         "image" ? (
                           <img
                             src={getFilePreviewUrl(
-                              filesToUpload[selectedPreviewIndex]
+                              filesToUpload[selectedPreviewIndex],
                             )}
                             alt="Preview"
-                            className="max-w-full max-h-full object-contain"
-                          />
-                        ) : getFileType(filesToUpload[selectedPreviewIndex]) ===
-                          "pdf" ? (
-                          <iframe
-                            src={getFilePreviewUrl(
-                              filesToUpload[selectedPreviewIndex]
-                            )}
-                            className="w-full h-full border-0"
-                            title="PDF Preview"
+                            className="max-w-full max-h-full object-contain rounded shadow-lg"
                           />
                         ) : (
-                          <div className="flex flex-col items-center gap-3 text-muted-foreground">
+                          <div className="text-center">
                             <div
                               className={cn(
-                                "p-4 rounded-lg",
+                                "p-8 rounded-2xl mb-4 inline-block shadow-sm",
                                 FILE_TYPE_COLORS[
                                   getFileType(
-                                    filesToUpload[selectedPreviewIndex]
+                                    filesToUpload[selectedPreviewIndex],
                                   )
-                                ]
+                                ],
                               )}
                             >
                               <FileIcon
                                 fileType={getFileType(
-                                  filesToUpload[selectedPreviewIndex]
+                                  filesToUpload[selectedPreviewIndex],
                                 )}
                                 className="h-16 w-16"
                               />
                             </div>
-                            <p className="font-medium text-center px-4">
-                              {filesToUpload[selectedPreviewIndex]?.name}
+                            <p className="font-semibold">
+                              {filesToUpload[selectedPreviewIndex].name}
                             </p>
-                            <span className="text-xs">
-                              Bu dosya türü için önizleme desteklenmiyor
-                            </span>
+                            <p className="text-sm text-muted-foreground mt-2">
+                              Bu dosya türü için önizleme desteklenmiyor.
+                            </p>
                           </div>
                         )}
-
-                        {/* Navigation */}
-                        {filesToUpload.length > 1 && (
-                          <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="icon"
-                              className="h-8 w-8 rounded-full shadow-md"
-                              onClick={() =>
-                                setSelectedPreviewIndex((prev) =>
-                                  prev > 0 ? prev - 1 : prev
-                                )
-                              }
-                              disabled={selectedPreviewIndex === 0}
-                            >
-                              <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <div className="bg-secondary px-3 py-1 rounded-full text-xs font-medium shadow-md flex items-center">
-                              {selectedPreviewIndex + 1} /{" "}
-                              {filesToUpload.length}
-                            </div>
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="icon"
-                              className="h-8 w-8 rounded-full shadow-md"
-                              onClick={() =>
-                                setSelectedPreviewIndex((prev) =>
-                                  prev < filesToUpload.length - 1
-                                    ? prev + 1
-                                    : prev
-                                )
-                              }
-                              disabled={
-                                selectedPreviewIndex ===
-                                filesToUpload.length - 1
-                              }
-                            >
-                              <ChevronRight className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center gap-3 text-muted-foreground">
-                        <Eye className="h-16 w-16 opacity-20" />
-                        <p>Önizleme için dosya seçin</p>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Thumbnail Strip */}
-                  {filesToUpload.length > 1 && (
-                    <div className="flex gap-2 mt-4 overflow-x-auto pb-2 min-h-[72px]">
-                      {filesToUpload.map((file, idx) => (
-                        <div
-                          key={idx}
-                          className={cn(
-                            "relative shrink-0 w-16 h-16 rounded border-2 transition-all cursor-pointer overflow-hidden",
-                            selectedPreviewIndex === idx
-                              ? "border-primary shadow-sm"
-                              : "border-transparent opacity-60 hover:opacity-100"
-                          )}
-                          onClick={() => setSelectedPreviewIndex(idx)}
-                        >
-                          {getFileType(file) === "image" ? (
-                            <img
-                              src={getFilePreviewUrl(file)}
-                              className="w-full h-full object-cover"
-                              alt=""
-                            />
-                          ) : (
-                            <div
-                              className={cn(
-                                "w-full h-full flex items-center justify-center",
-                                FILE_TYPE_COLORS[getFileType(file)]
-                              )}
-                            >
-                              <FileIcon
-                                fileType={getFileType(file)}
-                                className="h-6 w-6"
-                              />
-                            </div>
-                          )}
-                          <button
-                            type="button"
-                            className="absolute top-0 right-0 bg-destructive text-destructive-foreground rounded-bl hover:bg-destructive/90 p-0.5"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeFileFromQueue(idx);
-                            }}
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ))}
+                    </>
+                  ) : (
+                    <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-12 text-center">
+                      <Upload className="h-12 w-12 mb-4 opacity-10" />
+                      <p>Önizleme yapılacak dosya seçilmedi</p>
                     </div>
                   )}
                 </div>
               </div>
             </DialogBody>
 
-            <DialogFooter className="p-6 border-t bg-muted/30">
-              <Button type="button" variant="outline" onClick={resetForm}>
+            <DialogFooter className="p-6 border-t gap-2 bg-muted/10">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => resetForm()}
+                disabled={uploadMutation.isPending}
+              >
                 İptal
               </Button>
-              <Button
-                type="submit"
-                disabled={
-                  uploadMutation.isPending || filesToUpload.length === 0
-                }
-              >
-                {uploadMutation.isPending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Yükleniyor...
-                  </>
-                ) : (
-                  `${filesToUpload.length} Dosyayı Yükle`
+              <Button type="submit" disabled={uploadMutation.isPending}>
+                {uploadMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
+                {filesToUpload.length > 0
+                  ? `${filesToUpload.length} Dosyayı Yükle`
+                  : "Yükle"}
               </Button>
             </DialogFooter>
           </form>

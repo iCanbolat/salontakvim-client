@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppointmentStatusBadge } from "@/pages/appointments/components";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { CustomerFiles } from "./CustomerFiles";
+import { CustomerFiles } from "@/components/common/customer-files";
 
 interface CustomerProfileProps {
   profile: CustomerProfileType | null;
@@ -174,7 +174,7 @@ export function CustomerProfileContent({
                         <span className="font-medium">
                           {format(
                             new Date(appointment.startDateTime),
-                            "MMMM d, yyyy 'at' HH:mm"
+                            "MMMM d, yyyy 'at' HH:mm",
                           )}
                         </span>
                         <AppointmentStatusBadge status={appointment.status} />
@@ -228,4 +228,3 @@ export function CustomerProfileContent({
     </div>
   );
 }
-

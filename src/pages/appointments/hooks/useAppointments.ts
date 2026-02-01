@@ -6,7 +6,7 @@ import {
 } from "@tanstack/react-query";
 import { format } from "date-fns";
 import type { DateRange } from "react-day-picker";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useDebouncedSearch, useMediaQuery } from "@/hooks";
 import { storeService, appointmentService, staffService } from "@/services";
 import { useNotifications, useAuth } from "@/contexts";
@@ -22,6 +22,7 @@ export type AppointmentFilter = AppointmentStatus | "all";
 export function useAppointments() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const { latestNotification } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -219,6 +220,10 @@ export function useAppointments() {
     setEditingAppointment(appointment);
   };
 
+  const handleViewDetail = (appointment: Appointment) => {
+    navigate(`/${user?.role}/appointments/${appointment.id}`);
+  };
+
   const handleCloseDialog = () => {
     setIsCreateDialogOpen(false);
     setEditingAppointment(null);
@@ -360,6 +365,7 @@ export function useAppointments() {
       setIsDatePopoverOpen,
       setIsStaffPopoverOpen,
       handleEdit,
+      handleViewDetail,
       handleCloseDialog,
       handlePageChange,
       handleApplyDateRange,

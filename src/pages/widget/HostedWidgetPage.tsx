@@ -13,13 +13,28 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
   CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  Contact,
+  ImageIcon,
   Loader2,
   Mail,
   MapPin,
   Phone,
   ShieldCheck,
   Star,
+  Store,
+  X,
 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { PaginationControls } from "@/components/common/PaginationControls";
+import { usePagination } from "@/hooks/usePagination";
 import { feedbackService } from "@/services/feedback.service";
 import { widgetPublicService } from "@/services/widget-public.service";
 import type { FeedbackWithDetails } from "@/types/feedback.types";
@@ -44,6 +59,9 @@ export default function HostedWidgetPage() {
   const scriptRef = useRef<HTMLScriptElement | null>(null);
   const [widgetError, setWidgetError] = useState<string | null>(null);
   const [isWidgetReady, setIsWidgetReady] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState<number | null>(
+    null,
+  );
 
   const containerId = useMemo(
     () => `salontakvim-widget-host-${slug || "unknown"}`,
@@ -111,6 +129,20 @@ export default function HostedWidgetPage() {
     refetchOnMount: false,
   });
 
+  const {
+    currentPage,
+    totalPages,
+    paginatedItems: paginatedFeedbacks,
+    goToPage,
+    canGoNext,
+    canGoPrevious,
+    startIndex: feedbackStartIndex,
+    endIndex: feedbackEndIndex,
+  } = usePagination({
+    items: feedbacks || [],
+    itemsPerPage: 4,
+  });
+
   useEffect(() => {
     const handleWidgetReady = () => setIsWidgetReady(true);
     window.addEventListener("salontakvim:ready", handleWidgetReady);
@@ -167,7 +199,7 @@ export default function HostedWidgetPage() {
     script.src = bootstrap.loaderUrl;
     script.async = true;
     script.setAttribute("data-widget-key", config.widgetKey);
-    script.setAttribute("data-mode", "inline");
+    // script.setAttribute("data-mode", "inline");
     script.setAttribute("data-container", `#${containerId}`);
     script.setAttribute("data-salontakvim-hosted", "true");
     script.setAttribute("data-token", bootstrap.token);
@@ -180,6 +212,7 @@ export default function HostedWidgetPage() {
 
     scriptRef.current = script;
     document.body.appendChild(script);
+    console.log(script);
 
     return () => {
       if (scriptRef.current) {
@@ -273,20 +306,12 @@ export default function HostedWidgetPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-100">
-      <div className="max-w-6xl mx-auto px-4 py-10 md:py-12">
+      <div className="max-w-6xl mx-auto px-4 py-10 md:py-12 space-y-6">
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="flex items-center gap-4">
-            <Avatar className="h-14 w-14 ring-2 ring-slate-200 shadow-sm">
-              {config?.store.logo ? (
-                <AvatarImage
-                  src={config.store.logo}
-                  alt={`${config.store.name} logo`}
-                />
-              ) : null}
-              <AvatarFallback className="bg-slate-100 text-slate-700 font-semibold">
-                {getInitials(config?.store.name)}
-              </AvatarFallback>
-            </Avatar>
+            <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+              <Store className="h-8 w-8 text-blue-600" />
+            </div>
             <div className="space-y-1">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
                 Online Randevu
@@ -298,54 +323,33 @@ export default function HostedWidgetPage() {
                 {config?.store.description ||
                   "Size uygun hizmeti seçin, saati belirleyin ve randevunuzu hızlıca oluşturun."}
               </p>
-              <div className="flex flex-wrap gap-2 pt-1">
-                <Badge variant="secondary" className="bg-slate-900 text-white">
-                  Canlı Randevu
-                </Badge>
-                <Badge
-                  variant="outline"
-                  className="border-green-200 text-green-700 bg-green-50"
-                >
-                  Üyelik Gerekmez
-                </Badge>
-              </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge
-              variant="outline"
-              className="border-slate-300 text-slate-700 bg-white"
-            >
-              <ShieldCheck className="h-4 w-4 mr-1" /> Güvenli & Gizli
-            </Badge>
-            <Badge
-              variant="outline"
-              className="border-blue-200 text-blue-700 bg-blue-50"
-            >
-              SalonTakvim Altyapısıyla
-            </Badge>
           </div>
         </div>
 
-        <nav className="mt-6 flex flex-wrap items-center gap-3 text-sm">
-          <a
-            href="#booking"
+        <nav className="flex flex-wrap items-center gap-3 text-sm">
+          <button
+            onClick={() => {
+              const element = document.getElementById("booking");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:border-slate-300 hover:text-slate-900 transition"
           >
             Randevu Al
-          </a>
-          <a
-            href="#feedback"
+          </button>
+          <button
+            onClick={() => {
+              const element = document.getElementById("feedback");
+              if (element) {
+                element.scrollIntoView({ behavior: "smooth", block: "start" });
+              }
+            }}
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:border-slate-300 hover:text-slate-900 transition"
           >
             Müşteri Yorumları
-          </a>
-          <a
-            href="#contact"
-            className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:border-slate-300 hover:text-slate-900 transition"
-          >
-            Ulaşım & İletişim
-          </a>
+          </button>
         </nav>
 
         {isError && (
@@ -357,113 +361,200 @@ export default function HostedWidgetPage() {
           </Alert>
         )}
 
-        <div id="booking" className="mt-6 grid gap-6 lg:grid-cols-[320px,1fr]">
-          <Card className="shadow-lg border-slate-200/80 bg-white/95 backdrop-blur">
-            <CardHeader>
-              <CardTitle>İşletme Hakkında</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Randevunuzu oluşturmadan önce kısa bilgiler.
+        <Card className="shadow-lg border-slate-200/80 bg-white/95 backdrop-blur">
+          <CardHeader>
+            <CardTitle>İşletme Hakkında</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Randevunuzu oluşturmadan önce kısa bilgiler.
+            </p>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {isLoading ? (
+              <div className="space-y-3">
+                <div className="h-4 w-2/3 rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-full rounded bg-slate-200 animate-pulse" />
+                <div className="h-3 w-5/6 rounded bg-slate-200 animate-pulse" />
+              </div>
+            ) : (
+              <p className="text-sm leading-relaxed text-slate-700">
+                {config?.store.description ||
+                  "Bu sayfa üzerinden hizmetlerimizi inceleyebilir ve anında randevu oluşturabilirsiniz."}
               </p>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {isLoading ? (
-                <div className="space-y-3">
-                  <div className="h-4 w-2/3 rounded bg-slate-200 animate-pulse" />
-                  <div className="h-3 w-full rounded bg-slate-200 animate-pulse" />
-                  <div className="h-3 w-5/6 rounded bg-slate-200 animate-pulse" />
-                </div>
+            )}
+
+            {/* Store Images Gallery */}
+            {config?.store.storeImages &&
+              config.store.storeImages.length > 0 && (
+                <>
+                  <Separator />
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm font-medium text-slate-700">
+                      <div className="flex items-center gap-2">
+                        <ImageIcon className="h-4 w-4" />
+                        <span>Fotoğraflar</span>
+                      </div>
+                      <span className="text-xs text-slate-400">
+                        {config.store.storeImages.length} Fotoğraf
+                      </span>
+                    </div>
+                    <Carousel
+                      opts={{
+                        align: "start",
+                        loop: true,
+                      }}
+                      className="w-full"
+                    >
+                      <CarouselContent className="-ml-2">
+                        {config.store.storeImages.map((imageUrl, index) => (
+                          <CarouselItem key={index} className="pl-2 basis-1/3">
+                            <button
+                              onClick={() => setSelectedImageIndex(index)}
+                              className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100 hover:opacity-95 transition-opacity focus:outline-none"
+                            >
+                              <img
+                                src={imageUrl}
+                                alt={`${config.store.name} - Fotoğraf ${index + 1}`}
+                                className="w-full h-full object-cover"
+                              />
+                            </button>
+                          </CarouselItem>
+                        ))}
+                      </CarouselContent>
+                      {config.store.storeImages.length > 1 && (
+                        <div className="absolute right-8 bottom-4 flex gap-1">
+                          <CarouselPrevious className="static h-7 w-7 translate-y-0 bg-white/80 hover:bg-white" />
+                          <CarouselNext className="static h-7 w-7 translate-y-0 bg-white/80 hover:bg-white" />
+                        </div>
+                      )}
+                    </Carousel>
+                  </div>
+                </>
+              )}
+
+            <Separator />
+
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                <Contact className="h-4 w-4" />
+                <span>İletişim</span>
+              </div>
+              {contactItems.length ? (
+                contactItems.map(({ label, value, icon: Icon }) => (
+                  <div
+                    key={label}
+                    className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5"
+                  >
+                    <Icon className="h-4 w-4 text-slate-500" />
+                    <div>
+                      <p className="text-xs uppercase tracking-wide text-slate-500">
+                        {label === "Email"
+                          ? "E-posta"
+                          : label === "Phone"
+                            ? "Telefon"
+                            : label}
+                      </p>
+                      <p className="text-sm text-slate-800">{value}</p>
+                    </div>
+                  </div>
+                ))
               ) : (
-                <p className="text-sm leading-relaxed text-slate-700">
-                  {config?.store.description ||
-                    "Bu sayfa üzerinden hizmetlerimizi inceleyebilir ve anında randevu oluşturabilirsiniz."}
-                </p>
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5">
+                  <CalendarClock className="h-4 w-4 text-slate-500" />
+                  <p className="text-sm text-slate-700">
+                    Randevu detaylarını bir sonraki adımda onaylayacağız.
+                  </p>
+                </div>
               )}
 
               <Separator />
 
               <div className="space-y-3">
-                {contactItems.length ? (
-                  contactItems.map(({ label, value, icon: Icon }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5"
-                    >
-                      <Icon className="h-4 w-4 text-slate-500" />
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">
-                          {label === "Email"
-                            ? "E-posta"
-                            : label === "Phone"
-                              ? "Telefon"
-                              : label}
-                        </p>
-                        <p className="text-sm text-slate-800">{value}</p>
-                      </div>
-                    </div>
-                  ))
+                <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <MapPin className="h-4 w-4" />
+                  <span>Konumlar</span>
+                </div>
+                {locationsLoading ? (
+                  <div className="space-y-2">
+                    <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                    <div className="h-10 rounded-lg bg-slate-100 animate-pulse" />
+                  </div>
+                ) : locations &&
+                  locations.filter((l) => l.isVisible !== false).length > 0 ? (
+                  <div className="space-y-2">
+                    {locations
+                      .filter((location) => location.isVisible !== false)
+                      .map((location) => (
+                        <div
+                          key={location.id}
+                          className="group relative rounded-xl border border-slate-200/80 bg-slate-50 p-3 transition-colors hover:border-blue-200 hover:bg-blue-50/30"
+                        >
+                          <p className="text-xs font-bold text-slate-900 uppercase tracking-tight">
+                            {location.name}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                            {formatAddress(location)}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
                 ) : (
-                  <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5">
-                    <CalendarClock className="h-4 w-4 text-slate-500" />
-                    <p className="text-sm text-slate-700">
-                      Randevu detaylarını bir sonraki adımda onaylayacağız.
-                    </p>
-                  </div>
+                  <p className="text-xs text-slate-400 italic">
+                    Henüz konum bilgisi eklenmemiş.
+                  </p>
                 )}
+              </div>
 
-                <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5">
-                  <ShieldCheck className="h-4 w-4 text-blue-600" />
-                  <div>
-                    <p className="text-xs uppercase tracking-wide text-blue-600">
-                      Güvenli Randevu
-                    </p>
-                    <p className="text-sm text-slate-800">
-                      Bilgileriniz gizli tutulur ve yalnızca bu randevu için
-                      kullanılır.
-                    </p>
-                  </div>
+              <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 mt-4">
+                <ShieldCheck className="h-4 w-4 text-blue-600" />
+                <div>
+                  <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
+                    Güvenli Randevu
+                  </p>
+                  <p className="text-[11px] text-slate-600 leading-tight">
+                    Bilgileriniz Salontakvim altyapısıyla güvende.
+                  </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="shadow-xl border-slate-200/80 overflow-hidden">
-            <CardHeader className="bg-white/80 backdrop-blur border-b border-slate-200/70">
-              <CardTitle>Randevunuzu Planlayın</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Aşağıdaki panelden hizmet ve saati seçerek randevunuzu
-                tamamlayın.
-              </p>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="relative min-h-[720px] bg-linear-to-br from-white via-slate-50 to-slate-100">
-                <div
-                  id={containerId}
-                  ref={widgetMountRef}
-                  className="relative h-full"
-                />
+        <Card className="shadow-xl border-slate-200/80 overflow-hidden pb-0">
+          <CardHeader className="bg-white/80 backdrop-blur">
+            <CardTitle>Randevunuzu Planlayın</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              Aşağıdaki panelden hizmet ve saati seçerek randevunuzu tamamlayın.
+            </p>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="relative bg-linear-to-br from-white via-slate-50 to-slate-100">
+              <div
+                id={containerId}
+                ref={widgetMountRef}
+                className="relative h-full"
+              />
 
-                {!isWidgetReady && !widgetError && !isError && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-3 text-slate-600">
-                      <Loader2 className="h-5 w-5 animate-spin" />
-                      <p className="text-sm">Randevu paneli yükleniyor…</p>
-                    </div>
+              {!isWidgetReady && !widgetError && !isError && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex flex-col items-center gap-3 text-slate-600">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <p className="text-sm">Randevu paneli yükleniyor…</p>
                   </div>
-                )}
+                </div>
+              )}
 
-                {widgetError && (
-                  <div className="absolute inset-0 flex items-center justify-center px-6">
-                    <Alert variant="destructive" className="w-full max-w-xl">
-                      <AlertDescription>{widgetError}</AlertDescription>
-                    </Alert>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              {widgetError && (
+                <div className="absolute inset-0 flex items-center justify-center px-6">
+                  <Alert variant="destructive" className="w-full max-w-xl">
+                    <AlertDescription>{widgetError}</AlertDescription>
+                  </Alert>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-        <section id="feedback" className="mt-10">
+        <section id="feedback">
           <Card className="shadow-lg border-slate-200/80">
             <CardHeader>
               <CardTitle>Müşteri Yorumları</CardTitle>
@@ -478,40 +569,53 @@ export default function HostedWidgetPage() {
                   <div className="h-16 rounded-xl bg-slate-100 animate-pulse" />
                 </div>
               ) : feedbacks && feedbacks.length > 0 ? (
-                <div className="grid gap-4 md:grid-cols-2">
-                  {feedbacks.map((feedback) => (
-                    <div
-                      key={feedback.id}
-                      className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm"
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm font-semibold text-slate-900">
-                            {feedback.customer?.firstName || "Misafir"}{" "}
-                            {feedback.customer?.lastName || ""}
-                          </p>
-                          {feedback.service?.name && (
-                            <p className="text-xs text-slate-500">
-                              {feedback.service.name}
+                <div className="space-y-6">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {paginatedFeedbacks.map((feedback) => (
+                      <div
+                        key={feedback.id}
+                        className="rounded-xl border border-slate-200/80 bg-white p-4 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">
+                              {feedback.customer?.firstName || "Misafir"}{" "}
+                              {feedback.customer?.lastName || ""}
                             </p>
-                          )}
+                            {feedback.service?.name && (
+                              <p className="text-xs text-slate-500">
+                                {feedback.service.name}
+                              </p>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {renderStars(feedback.overallRating)}
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {renderStars(feedback.overallRating)}
-                        </div>
-                      </div>
-                      {feedback.comment && (
-                        <p className="mt-3 text-sm text-slate-700 leading-relaxed">
-                          “{feedback.comment}”
+                        {feedback.comment && (
+                          <p className="mt-3 text-sm text-slate-700 leading-relaxed">
+                            “{feedback.comment}”
+                          </p>
+                        )}
+                        <p className="mt-3 text-xs text-slate-400">
+                          {format(new Date(feedback.createdAt), "d MMMM yyyy", {
+                            locale: tr,
+                          })}
                         </p>
-                      )}
-                      <p className="mt-3 text-xs text-slate-400">
-                        {format(new Date(feedback.createdAt), "d MMMM yyyy", {
-                          locale: tr,
-                        })}
-                      </p>
-                    </div>
-                  ))}
+                      </div>
+                    ))}
+                  </div>
+
+                  <PaginationControls
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={goToPage}
+                    canGoPrevious={canGoPrevious}
+                    canGoNext={canGoNext}
+                    startIndex={feedbackStartIndex}
+                    endIndex={feedbackEndIndex}
+                    totalItems={feedbacks.length}
+                  />
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
@@ -521,80 +625,68 @@ export default function HostedWidgetPage() {
             </CardContent>
           </Card>
         </section>
-
-        <section id="contact" className="mt-10">
-          <Card className="shadow-lg border-slate-200/80">
-            <CardHeader>
-              <CardTitle>Ulaşım & İletişim</CardTitle>
-              <p className="text-sm text-muted-foreground">
-                Mağaza konum ve iletişim bilgileri.
-              </p>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2">
-                {contactItems.length ? (
-                  contactItems.map(({ label, value, icon: Icon }) => (
-                    <div
-                      key={label}
-                      className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-4 py-3"
-                    >
-                      <Icon className="h-4 w-4 text-slate-500" />
-                      <div>
-                        <p className="text-xs uppercase tracking-wide text-slate-500">
-                          {label}
-                        </p>
-                        <p className="text-sm text-slate-800">{value}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    İletişim bilgisi henüz eklenmemiş.
-                  </div>
-                )}
-              </div>
-
-              <div>
-                <h3 className="text-xs uppercase tracking-widest text-slate-500 font-semibold mb-3">
-                  Konumlar
-                </h3>
-                {locationsLoading ? (
-                  <div className="space-y-3">
-                    <div className="h-12 rounded-xl bg-slate-100 animate-pulse" />
-                    <div className="h-12 rounded-xl bg-slate-100 animate-pulse" />
-                  </div>
-                ) : locations && locations.length > 0 ? (
-                  <div className="space-y-3">
-                    {locations
-                      .filter((location) => location.isVisible !== false)
-                      .map((location) => (
-                        <div
-                          key={location.id}
-                          className="flex items-start gap-3 rounded-xl border border-slate-200/80 bg-white px-4 py-3"
-                        >
-                          <MapPin className="h-4 w-4 text-slate-500 mt-0.5" />
-                          <div>
-                            <p className="text-sm font-semibold text-slate-900">
-                              {location.name}
-                            </p>
-                            <p className="text-xs text-slate-500">
-                              {formatAddress(location) ||
-                                "Adres bilgisi eklenmemiş."}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-                    Konum bilgisi henüz paylaşılmamış.
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </section>
       </div>
+
+      {/* Image Lightbox Modal */}
+      {selectedImageIndex !== null && config?.store.storeImages && (
+        <div
+          className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center"
+          onClick={() => setSelectedImageIndex(null)}
+        >
+          <button
+            onClick={() => setSelectedImageIndex(null)}
+            className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+            aria-label="Kapat"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {config.store.storeImages.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) =>
+                    prev !== null && prev > 0
+                      ? prev - 1
+                      : (config.store.storeImages?.length ?? 1) - 1,
+                  );
+                }}
+                className="absolute left-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Önceki"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedImageIndex((prev) =>
+                    prev !== null &&
+                    prev < (config.store.storeImages?.length ?? 1) - 1
+                      ? prev + 1
+                      : 0,
+                  );
+                }}
+                className="absolute right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
+                aria-label="Sonraki"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            </>
+          )}
+
+          <img
+            src={config.store.storeImages[selectedImageIndex]}
+            alt={`${config.store.name} - Fotoğraf ${selectedImageIndex + 1}`}
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 text-white text-sm">
+            {selectedImageIndex + 1} / {config.store.storeImages.length}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

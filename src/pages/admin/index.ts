@@ -10,7 +10,7 @@ export { LocationsList } from "../locations";
 export { AppointmentsList } from "../appointments";
 export * from "../customers/CustomerDetails";
 export * from "../customers";
-export { FilesList } from "../common/files-page/FilesList";
+export { FilesList } from "../files-page/FilesList";
 export { FeedbackList } from "../common/feedback-page/FeedbackList";
 export { WidgetSettings } from "../settings/widget";
 export { Analytics } from "../analytics";

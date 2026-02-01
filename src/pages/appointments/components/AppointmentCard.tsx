@@ -5,6 +5,7 @@
 
 import { format } from "date-fns";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Clock,
@@ -42,6 +43,7 @@ interface AppointmentCardProps {
   storeId: string;
   onEdit: (appointment: Appointment) => void;
   onChangeStatus?: (appointment: Appointment) => void;
+  role?: "admin" | "staff";
 }
 
 export function AppointmentCard({
@@ -49,8 +51,10 @@ export function AppointmentCard({
   storeId,
   onEdit,
   onChangeStatus,
+  role = "admin",
 }: AppointmentCardProps) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -61,14 +65,29 @@ export function AppointmentCard({
     },
   });
 
-  const handleDelete = () => {
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (
       confirm(
-        "Are you sure you want to delete this appointment? This action cannot be undone."
+        "Are you sure you want to delete this appointment? This action cannot be undone.",
       )
     ) {
       deleteMutation.mutate();
     }
+  };
+
+  const handleCardClick = () => {
+    navigate(`/${role}/appointments/${appointment.id}`);
+  };
+
+  const handleEditClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(appointment);
+  };
+
+  const handleChangeStatusClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChangeStatus?.(appointment);
   };
 
   // Customer name
@@ -102,15 +121,18 @@ export function AppointmentCard({
   // Format date and time
   const appointmentDate = format(
     new Date(appointment.startDateTime),
-    "MMM d, yyyy"
+    "MMM d, yyyy",
   );
   const appointmentTime = `${format(
     new Date(appointment.startDateTime),
-    "HH:mm"
+    "HH:mm",
   )} - ${format(new Date(appointment.endDateTime), "HH:mm")}`;
 
   return (
-    <Card>
+    <Card
+      className="cursor-pointer hover:border-primary/50 transition-colors"
+      onClick={handleCardClick}
+    >
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
@@ -123,34 +145,36 @@ export function AppointmentCard({
             <AppointmentStatusBadge status={appointment.status} />
           </div>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(appointment)}>
-                <Edit className="h-4 w-4 mr-2" />
-                Edit
-              </DropdownMenuItem>
-              {onChangeStatus && (
-                <DropdownMenuItem onClick={() => onChangeStatus(appointment)}>
-                  <MessageSquare className="h-4 w-4 mr-2" />
-                  Change Status
+          <div onClick={(e) => e.stopPropagation()}>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={handleEditClick}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onClick={handleDelete}
-                className="text-red-600"
-                disabled={deleteMutation.isPending}
-              >
-                <Trash2 className="h-4 w-4 mr-2" />
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                {onChangeStatus && (
+                  <DropdownMenuItem onClick={handleChangeStatusClick}>
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Change Status
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={handleDelete}
+                  className="text-red-600"
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -242,22 +266,6 @@ export function AppointmentCard({
             </div>
           </div>
         </div>
-
-        {/* Customer Notes */}
-        {appointment.customerNotes && (
-          <div className="mt-3 p-2 bg-gray-50 rounded text-sm">
-            <p className="text-gray-600 text-xs mb-1">Customer Notes:</p>
-            <p className="text-gray-800">{appointment.customerNotes}</p>
-          </div>
-        )}
-
-        {/* Internal Notes */}
-        {appointment.internalNotes && (
-          <div className="mt-2 p-2 bg-blue-50 rounded text-sm">
-            <p className="text-blue-600 text-xs mb-1">Internal Notes:</p>
-            <p className="text-blue-800">{appointment.internalNotes}</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

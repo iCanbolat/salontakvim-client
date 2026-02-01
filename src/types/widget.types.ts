@@ -80,6 +80,7 @@ export interface WidgetPublicStoreInfo {
   email?: string;
   phone?: string;
   currency: string;
+  storeImages?: string[];
 }
 
 export interface WidgetPublicSidebarMenuItems {

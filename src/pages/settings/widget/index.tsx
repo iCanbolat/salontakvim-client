@@ -702,8 +702,8 @@ export function WidgetSettings() {
                 <CardHeader>
                   <CardTitle>JavaScript Embed Code</CardTitle>
                   <CardDescription>
-                    Add this code to your website before the closing
-                    &lt;/body&gt; tag
+                    Add this code where you want the widget to appear (usually
+                    before the closing &lt;/body&gt; tag)
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -711,13 +711,13 @@ export function WidgetSettings() {
                     <Textarea
                       value={embedCode?.embedCode || ""}
                       readOnly
-                      rows={3}
-                      className="font-mono text-sm"
+                      rows={10}
+                      className="font-mono text-xs leading-relaxed bg-slate-50"
                     />
                     <Button
                       variant="outline"
                       size="sm"
-                      className="absolute top-2 right-2"
+                      className="absolute top-3 right-3"
                       onClick={onCopyEmbed}
                       disabled={copiedEmbed}
                     >

@@ -26,6 +26,7 @@ import {
   FilesList,
   FeedbackList,
 } from "./pages/admin";
+import { AppointmentDetailPage } from "./pages/appointments/AppointmentDetail";
 import {
   AcceptInvitationPage,
   AppointmentsList as StaffAppointmentsList,
@@ -73,6 +74,10 @@ function App() {
                     path="/admin/appointments"
                     element={<AppointmentsList />}
                   />
+                  <Route
+                    path="/admin/appointments/:appointmentId"
+                    element={<AppointmentDetailPage />}
+                  />
                   <Route path="/admin/services" element={<ServicesList />} />
 
                   <Route path="/admin/staff" element={<StaffList />} />
@@ -104,6 +109,10 @@ function App() {
                   <Route
                     path="/staff/appointments"
                     element={<StaffAppointmentsList />}
+                  />
+                  <Route
+                    path="/staff/appointments/:appointmentId"
+                    element={<AppointmentDetailPage />}
                   />
                   <Route path="/staff/schedule" element={<StaffSchedule />} />
                   <Route
