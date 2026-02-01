@@ -7,8 +7,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -42,16 +40,6 @@ import type { Location } from "@/types/location.types";
 import type { WidgetPublicConfig } from "@/types/widget.types";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
-
-function getInitials(name?: string) {
-  if (!name) return "ST";
-  return name
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export default function HostedWidgetPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -307,7 +295,7 @@ export default function HostedWidgetPage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-100">
       <div className="max-w-6xl mx-auto px-4 py-10 md:py-12 space-y-6">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row items-center md:justify-between">
           <div className="flex items-center gap-4">
             <div className="mx-auto w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
               <Store className="h-8 w-8 text-blue-600" />
@@ -322,6 +310,14 @@ export default function HostedWidgetPage() {
               <p className="text-sm text-slate-600 max-w-xl">
                 {config?.store.description ||
                   "Size uygun hizmeti seçin, saati belirleyin ve randevunuzu hızlıca oluşturun."}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 mt-4">
+            <ShieldCheck className="h-4 w-4 text-blue-600" />
+            <div>
+              <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
+                Güvenli Randevu
               </p>
             </div>
           </div>
@@ -406,7 +402,7 @@ export default function HostedWidgetPage() {
                     >
                       <CarouselContent className="-ml-2">
                         {config.store.storeImages.map((imageUrl, index) => (
-                          <CarouselItem key={index} className="pl-2 basis-1/3">
+                          <CarouselItem key={index} className="pl-2 basis-1/2 md:basis-1/3">
                             <button
                               onClick={() => setSelectedImageIndex(index)}
                               className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100 hover:opacity-95 transition-opacity focus:outline-none"
@@ -503,56 +499,48 @@ export default function HostedWidgetPage() {
                   </p>
                 )}
               </div>
-
-              <div className="flex items-center gap-3 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2.5 mt-4">
-                <ShieldCheck className="h-4 w-4 text-blue-600" />
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
-                    Güvenli Randevu
-                  </p>
-                  <p className="text-[11px] text-slate-600 leading-tight">
-                    Bilgileriniz Salontakvim altyapısıyla güvende.
-                  </p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="shadow-xl border-slate-200/80 overflow-hidden pb-0">
-          <CardHeader className="bg-white/80 backdrop-blur">
-            <CardTitle>Randevunuzu Planlayın</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Aşağıdaki panelden hizmet ve saati seçerek randevunuzu tamamlayın.
-            </p>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="relative bg-linear-to-br from-white via-slate-50 to-slate-100">
-              <div
-                id={containerId}
-                ref={widgetMountRef}
-                className="relative h-full"
-              />
+        <section id="booking">
+          <Card className="shadow-xl border-slate-200/80 overflow-hidden pb-0">
+            <CardHeader className="bg-white/80 backdrop-blur">
+              <CardTitle>Randevunuzu Planlayın</CardTitle>
+              <p className="text-sm text-muted-foreground">
+                Aşağıdaki panelden hizmet ve saati seçerek randevunuzu
+                tamamlayın.
+              </p>
+            </CardHeader>
 
-              {!isWidgetReady && !widgetError && !isError && (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="flex flex-col items-center gap-3 text-slate-600">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <p className="text-sm">Randevu paneli yükleniyor…</p>
+            <CardContent className="p-0">
+              <div className="relative bg-linear-to-br from-white via-slate-50 to-slate-100">
+                <div
+                  id={containerId}
+                  ref={widgetMountRef}
+                  className="relative h-full"
+                />
+
+                {!isWidgetReady && !widgetError && !isError && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-3 text-slate-600">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <p className="text-sm">Randevu paneli yükleniyor…</p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {widgetError && (
-                <div className="absolute inset-0 flex items-center justify-center px-6">
-                  <Alert variant="destructive" className="w-full max-w-xl">
-                    <AlertDescription>{widgetError}</AlertDescription>
-                  </Alert>
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+                {widgetError && (
+                  <div className="absolute inset-0 flex items-center justify-center px-6">
+                    <Alert variant="destructive" className="w-full max-w-xl">
+                      <AlertDescription>{widgetError}</AlertDescription>
+                    </Alert>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
         <section id="feedback">
           <Card className="shadow-lg border-slate-200/80">
