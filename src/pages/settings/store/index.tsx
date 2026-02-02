@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
@@ -33,8 +33,15 @@ export function StoreSettings() {
   const {
     register,
     setValue,
+    setFocus,
     formState: { errors, isDirty },
   } = form;
+
+  useEffect(() => {
+    if (errors.slug) {
+      setFocus("slug");
+    }
+  }, [errors.slug, setFocus]);
 
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);

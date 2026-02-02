@@ -5,7 +5,24 @@
 import { axiosInstance } from "./api-client";
 import type { Store } from "@/types";
 
+export interface CreateStoreDto {
+  name: string;
+  slug: string;
+  createStaffProfile?: boolean;
+  staffTitle?: string;
+  staffBio?: string;
+  staffIsVisible?: boolean;
+}
+
 export class StoreService {
+  /**
+   * Create a store for the current user (onboarding)
+   */
+  async createMyStore(data: CreateStoreDto): Promise<Store> {
+    const response = await axiosInstance.post<Store>("/stores", data);
+    return response.data;
+  }
+
   /**
    * Get current user's store
    */

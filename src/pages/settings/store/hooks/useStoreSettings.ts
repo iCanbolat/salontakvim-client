@@ -72,10 +72,19 @@ export function useStoreSettings() {
     },
     onError: (err: unknown) => {
       const maybeAxios = err as { response?: { status?: number; data?: any } };
-      if (maybeAxios?.response?.status === 409) {
+      const message = maybeAxios?.response?.data?.message;
+
+      if (
+        maybeAxios?.response?.status === 409 &&
+        typeof message === "string" &&
+        message.includes("slug")
+      ) {
+        form.setError("slug", {
+          type: "manual",
+          message: "This URL is already taken. Please choose another one.",
+        });
         setFormError("This slug is already taken. Please choose another.");
       } else {
-        const message = maybeAxios?.response?.data?.message;
         setFormError(
           typeof message === "string"
             ? message

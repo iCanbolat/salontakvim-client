@@ -14,7 +14,6 @@ export interface User {
   lastName: string | null;
   phone?: string;
   role: UserRole;
-  paymentStatus: PaymentStatus;
   authProvider: AuthProvider;
   providerId?: string;
   avatar: string | null;
@@ -33,15 +32,16 @@ export interface AuthResponse {
     firstName: string | null;
     lastName: string | null;
     role: UserRole;
-    paymentStatus: PaymentStatus;
     avatar: string | null;
   };
   accessToken: string;
   refreshToken: string;
+  needsOnboarding?: boolean;
 }
 
 export interface MeResponse {
   user: User;
+  hasStore: boolean;
 }
 
 export interface LoginDto {

@@ -3,6 +3,8 @@
  * Matches backend store schema
  */
 
+export type PaymentStatus = "freemium" | "paid" | "business";
+
 export interface Store {
   id: string;
   ownerId: string;
@@ -13,6 +15,7 @@ export interface Store {
   email?: string;
   phone?: string;
   currency: string;
+  paymentStatus: PaymentStatus;
   storeImages?: string[];
   totalAppointments: number;
   totalCustomers: number;

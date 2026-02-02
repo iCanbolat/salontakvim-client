@@ -18,7 +18,7 @@ export class AuthService {
   async register(data: RegisterDto): Promise<AuthResponse> {
     const response = await axiosInstance.post<AuthResponse>(
       "/auth/register",
-      data
+      data,
     );
     this.saveAuthData(response.data);
     return response.data;
@@ -30,7 +30,7 @@ export class AuthService {
   async login(data: LoginDto): Promise<AuthResponse> {
     const response = await axiosInstance.post<AuthResponse>(
       "/auth/login",
-      data
+      data,
     );
     this.saveAuthData(response.data);
     return response.data;
@@ -75,6 +75,11 @@ export class AuthService {
   private saveAuthData(authData: AuthResponse) {
     localStorage.setItem("accessToken", authData.accessToken);
     localStorage.setItem("refreshToken", authData.refreshToken);
+    if (authData.needsOnboarding) {
+      localStorage.setItem("needsOnboarding", "true");
+    } else {
+      localStorage.removeItem("needsOnboarding");
+    }
 
     // Convert AuthResponse.user (minimal) to full User object for storage
     const user: User = {
@@ -83,7 +88,6 @@ export class AuthService {
       firstName: authData.user.firstName,
       lastName: authData.user.lastName,
       role: authData.user.role,
-      paymentStatus: authData.user.paymentStatus,
       avatar: authData.user.avatar,
       authProvider: "local", // Will be updated on /me call
       isActive: true,
@@ -104,6 +108,7 @@ export class AuthService {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("needsOnboarding");
     apiClient.logout();
   }
 
@@ -118,6 +123,20 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Check if user needs onboarding (no store)
+   */
+  needsOnboarding(): boolean {
+    return localStorage.getItem("needsOnboarding") === "true";
+  }
+
+  /**
+   * Clear onboarding flag
+   */
+  clearOnboardingFlag(): void {
+    localStorage.removeItem("needsOnboarding");
   }
 
   /**

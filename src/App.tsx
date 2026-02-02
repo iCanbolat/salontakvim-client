@@ -9,7 +9,12 @@ import { AuthProvider, NotificationProvider, useAuth } from "./contexts";
 import { queryClient } from "./lib/queryClient";
 import { MainLayout } from "./components/layout";
 import { ProtectedRoute } from "./components/routes/ProtectedRoute";
-import { LoginPage, RegisterPage } from "./pages/auth";
+import {
+  LoginPage,
+  RegisterPage,
+  WelcomePage,
+  AuthCallbackPage,
+} from "./pages/auth";
 import { DashboardPage } from "./pages/dashboard";
 import {
   StoreSettings,
@@ -40,6 +45,7 @@ import {
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
 import CancelAppointmentPage from "./pages/public/CancelAppointmentPage";
+import { authService } from "./services";
 
 function App() {
   return (
@@ -54,6 +60,7 @@ function App() {
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/register" element={<RegisterPage />} />
+              <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route
                 path="/staff/invitations/accept"
                 element={<AcceptInvitationPage />}
@@ -64,6 +71,9 @@ function App() {
                 path="/appointments/cancel"
                 element={<CancelAppointmentPage />}
               />
+
+              {/* Welcome/Onboarding route (protected but no store required) */}
+              <Route path="/welcome" element={<WelcomeRoute />} />
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>
@@ -159,12 +169,45 @@ function App() {
   );
 }
 
+// Welcome route - requires auth but shows onboarding page
+function WelcomeRoute() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // If user already has a store (doesn't need onboarding), redirect to dashboard
+  if (!authService.needsOnboarding()) {
+    if (user.role === "admin") {
+      return <Navigate to="/admin/dashboard" replace />;
+    } else if (user.role === "staff") {
+      return <Navigate to="/staff/dashboard" replace />;
+    }
+  }
+
+  return <WelcomePage />;
+}
+
 // Root redirect component to handle dashboard routing
 function RootRedirect() {
   const { user, isAuthenticated } = useAuth();
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
+  }
+
+  // Check if user needs onboarding
+  if (authService.needsOnboarding() && user.role === "admin") {
+    return <Navigate to="/welcome" replace />;
   }
 
   // Redirect to appropriate dashboard based on role

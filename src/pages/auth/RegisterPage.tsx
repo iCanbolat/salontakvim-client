@@ -114,9 +114,21 @@ export function RegisterPage() {
       await registerUser(registerData);
       toast.success("Registration successful! Welcome to SalonTakvim.");
       navigate("/admin/dashboard"); // Redirect to admin dashboard
-    } catch (error) {
+    } catch (error: any) {
       console.error("Registration error:", error);
-      toast.error("Registration failed. Please try again.");
+      const errorMessage = error?.response?.data?.message || "";
+
+      if (errorMessage.includes("slug")) {
+        form.setError("storeSlug", {
+          type: "manual",
+          message: "This URL is already taken. Please choose another one.",
+        });
+        setStep(1); // Go back to step 1 where the slug field is
+        setTimeout(() => form.setFocus("storeSlug"), 0);
+        toast.error("This URL is already taken.");
+      } else {
+        toast.error("Registration failed. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
