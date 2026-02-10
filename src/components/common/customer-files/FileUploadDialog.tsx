@@ -538,6 +538,15 @@ export function FileUploadDialog({
                             alt="Preview"
                             className="max-w-full max-h-full object-contain rounded shadow-lg"
                           />
+                        ) : getFileType(filesToUpload[selectedPreviewIndex]) ===
+                          "pdf" ? (
+                          <iframe
+                            src={`${getFilePreviewUrl(
+                              filesToUpload[selectedPreviewIndex],
+                            )}#toolbar=0`}
+                            className="w-full h-full rounded shadow-lg border-0 bg-white"
+                            title="PDF Preview"
+                          />
                         ) : (
                           <div className="text-center">
                             <div

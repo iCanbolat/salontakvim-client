@@ -61,7 +61,7 @@ function App() {
                 element={<AcceptInvitationPage />}
               />
               <Route path="/book/:slug" element={<HostedWidgetPage />} />
-              <Route path="/feedback" element={<FeedbackPage />} />
+              <Route path="/appointments/feedback" element={<FeedbackPage />} />
               <Route
                 path="/appointments/cancel"
                 element={<CancelAppointmentPage />}

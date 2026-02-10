@@ -43,7 +43,6 @@ interface AppointmentCardProps {
   storeId: string;
   onEdit: (appointment: Appointment) => void;
   onChangeStatus?: (appointment: Appointment) => void;
-  role?: "admin" | "staff";
 }
 
 export function AppointmentCard({
@@ -51,7 +50,6 @@ export function AppointmentCard({
   storeId,
   onEdit,
   onChangeStatus,
-  role = "admin",
 }: AppointmentCardProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -77,7 +75,7 @@ export function AppointmentCard({
   };
 
   const handleCardClick = () => {
-    navigate(`/${role}/appointments/${appointment.id}`);
+    navigate(`/appointments/${appointment.id}`);
   };
 
   const handleEditClick = (e: React.MouseEvent) => {

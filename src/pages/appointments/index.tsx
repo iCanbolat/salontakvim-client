@@ -189,7 +189,6 @@ export function AppointmentsList() {
             storeId={store.id}
             onEdit={handleEdit}
             onChangeStatus={setStatusUpdateAppointment}
-            role={user?.role as any}
           />
         )}
         // Table View

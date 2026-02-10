@@ -82,6 +82,18 @@ export function FilePreviewDialog({
                     Önizleme yüklenemedi
                   </div>
                 )
+              ) : file.fileType === "pdf" ? (
+                imageUrl ? (
+                  <iframe
+                    src={`${imageUrl}#toolbar=0`}
+                    className="w-full h-[70vh] rounded-lg border-0 bg-white"
+                    title={file.originalName}
+                  />
+                ) : (
+                  <div className="text-muted-foreground">
+                    Önizleme yüklenemedi
+                  </div>
+                )
               ) : (
                 <div className="text-muted-foreground text-center">
                   Bu dosya türü için önizleme desteklenmiyor
