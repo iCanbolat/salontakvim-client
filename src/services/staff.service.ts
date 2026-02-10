@@ -17,6 +17,7 @@ import type {
   StaffBreak,
   CreateStaffBreakDto,
   UpdateStaffBreakDto,
+  StaffDetailsResponse,
 } from "@/types";
 import type { Service } from "@/types";
 
@@ -118,8 +119,11 @@ export class StaffService {
   /**
    * Get a single staff member
    */
-  async getStaffMember(storeId: string, staffId: string): Promise<StaffMember> {
-    const response = await axiosInstance.get<StaffMember>(
+  async getStaffMember(
+    storeId: string,
+    staffId: string,
+  ): Promise<StaffDetailsResponse> {
+    const response = await axiosInstance.get<StaffDetailsResponse>(
       `/stores/${storeId}/staff/${staffId}`,
     );
     return response.data;

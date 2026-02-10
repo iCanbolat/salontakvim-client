@@ -48,6 +48,8 @@ export interface Appointment {
   paymentMethod?: string;
   isPaid: boolean;
   paidAt?: string;
+  feedback?: any;
+  files?: any[];
   customerNotes?: string;
   internalNotes?: string;
   cancelledAt?: string;

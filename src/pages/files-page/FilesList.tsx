@@ -69,6 +69,7 @@ export function FilesList() {
     error,
     isPreviewOpen,
     previewFile,
+    previewAppointment,
     previewImageUrl,
     isPreviewLoading,
   } = state;
@@ -150,7 +151,7 @@ export function FilesList() {
     <div
       key={file.id}
       className="relative group border rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer"
-      onClick={() => file.fileType === "image" && actions.handlePreview(file)}
+      onClick={() => actions.handlePreview(file)}
     >
       <div className="flex items-start gap-3 pr-8">
         <div className={`p-2 rounded-lg ${FILE_TYPE_COLORS[file.fileType]}`}>
@@ -295,13 +296,17 @@ export function FilesList() {
     ? customerMap.get(selectedCustomerId)
     : null;
 
+  console.log(selectedCustomer);
+
   const selectedCustomerLabel = selectedCustomer
     ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`.trim() ||
       selectedCustomer.email ||
       "Customer"
-    : selectedCustomerId
-      ? `Customer ${selectedCustomerId.slice(0, 6)}`
-      : null;
+    : activeFolder?.customerName
+      ? activeFolder.customerName
+      : selectedCustomerId
+        ? `Customer ${selectedCustomerId.slice(0, 6)}`
+        : null;
 
   if (!store) {
     return null;
@@ -318,15 +323,13 @@ export function FilesList() {
           <p className="text-gray-600 mt-1">
             {selectedCustomerId ? (
               <>
-                {activeFolder?.fileCount ?? 0} file
-                {(activeFolder?.fileCount ?? 0) !== 1 ? "s" : ""} •{" "}
-                {customerFileService.formatFileSize(
-                  activeFolder?.totalSize ?? 0,
-                )}
+                {filesData?.total ?? 0} file
+                {(filesData?.total ?? 0) !== 1 ? "s" : ""} •{" "}
+                {customerFileService.formatFileSize(filesData?.totalSize ?? 0)}
               </>
             ) : (
               <>
-                {filesData?.total ?? 0} file
+                {filesData?.total ?? 0} folder
                 {(filesData?.total ?? 0) !== 1 ? "s" : ""} •{" "}
                 {customerFileService.formatFileSize(filesData?.totalSize ?? 0)}{" "}
                 total
@@ -406,9 +409,7 @@ export function FilesList() {
               data={data}
               columns={fileColumns}
               getRowKey={(file) => file.id}
-              onRowClick={(file) =>
-                file.fileType === "image" && actions.handlePreview(file)
-              }
+              onRowClick={(file) => actions.handlePreview(file)}
               rowClassName="cursor-pointer"
             />
           )}
@@ -449,6 +450,7 @@ export function FilesList() {
         isOpen={isPreviewOpen}
         onOpenChange={actions.setIsPreviewOpen}
         file={previewFile}
+        appointment={previewAppointment || undefined}
         imageUrl={previewImageUrl}
         isLoading={isPreviewLoading}
       />

@@ -129,14 +129,14 @@ export function WelcomePage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white px-4 py-8">
       <Card className="w-full max-w-lg">
         <CardHeader className="space-y-1 text-center">
           <div className="mx-auto w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
             <Sparkles className="h-6 w-6 text-blue-600" />
           </div>
           <CardTitle className="text-2xl font-bold">
-            Welcome to SalonTakvim
+            Welcome to Clinify
             {user?.firstName ? `, ${user.firstName}!` : "!"}
           </CardTitle>
           <CardDescription>

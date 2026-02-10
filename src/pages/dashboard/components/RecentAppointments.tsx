@@ -9,8 +9,34 @@ import { AppointmentStatusBadge } from "@/pages/appointments/components/Appointm
 import { Calendar, Clock, User } from "lucide-react";
 import { appointmentService, storeService } from "@/services";
 import { format } from "date-fns";
+import { useAuth, useNotifications } from "@/contexts";
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function RecentAppointments() {
+  const { user } = useAuth();
+  const { latestNotification } = useNotifications();
+  const queryClient = useQueryClient();
+  const managerLocationId =
+    user?.role === "manager" ? (user.locationId ?? undefined) : undefined;
+
+  // Handle real-time invalidation
+  useEffect(() => {
+    if (!latestNotification) return;
+
+    const appointmentTypes = [
+      "appointment_created",
+      "appointment_cancelled",
+      "appointment_status_changed",
+    ];
+
+    if (appointmentTypes.includes(latestNotification.type)) {
+      queryClient.invalidateQueries({
+        queryKey: ["recent-appointments", latestNotification.storeId],
+      });
+    }
+  }, [latestNotification, queryClient]);
+
   // Fetch user's store
   const { data: store } = useQuery({
     queryKey: ["my-store"],
@@ -19,10 +45,11 @@ export function RecentAppointments() {
 
   // Fetch recent appointments
   const { data: appointmentsData, isLoading } = useQuery({
-    queryKey: ["recent-appointments", store?.id],
+    queryKey: ["recent-appointments", store?.id, managerLocationId],
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
         limit: 5,
+        locationId: managerLocationId,
       }),
     enabled: !!store?.id,
   });
@@ -101,7 +128,7 @@ export function RecentAppointments() {
                     <Clock className="h-3 w-3" />
                     {format(
                       new Date(appointment.startDateTime),
-                      "MMM dd, yyyy HH:mm"
+                      "MMM dd, yyyy HH:mm",
                     )}
                   </span>
                   <span className="flex items-center gap-1">
@@ -125,4 +152,3 @@ export function RecentAppointments() {
     </Card>
   );
 }
-

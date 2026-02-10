@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -45,22 +45,62 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { activityService } from "../../../services";
 import { notificationService } from "../../../services/notification.service";
 import { RecentActivityList } from "../../dashboard/components/RecentActivityList";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { cn } from "../../../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
+import { useAuth } from "../../../contexts";
 
 export function NotificationSettings() {
-  const { state, actions, data } = useNotificationSettings();
+  const { user } = useAuth();
+
+  // Role checks
+  const isManager = user?.role === "manager";
+  const isStaff = user?.role === "staff";
+  const isAdmin = user?.role === "admin";
+
+  const { state, actions, data } = useNotificationSettings({
+    enableSettings: isAdmin,
+  });
   const { isLoading: settingsLoading } = state;
   const { settings, store } = data;
   const { handleUpdate } = actions;
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const activeTab = searchParams.get("tab") || "settings";
+  // Default tab: admin/owner to settings, others to notifications
+  const defaultTab = isAdmin ? "settings" : "notifications";
+  const activeTab = searchParams.get("tab") || defaultTab;
 
-  const { unreadCount, markAsRead, markAllAsRead } = useNotifications();
+  // Redirect unauthorized access to appropriate tabs
+  useEffect(() => {
+    if ((isManager || isStaff) && activeTab === "settings") {
+      setSearchParams({ tab: "notifications" });
+      return;
+    }
+    if (isStaff && activeTab === "activities") {
+      setSearchParams({ tab: "notifications" });
+    }
+  }, [isManager, isStaff, activeTab, setSearchParams]);
+
+  const { unreadCount, markAsRead, markAllAsRead, latestNotification } =
+    useNotifications();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    if (!latestNotification) return;
+
+    // Invalidate notifications list when a new one arrives
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+
+    // Invalidate activities if the notification might have generated one
+    // (though we just disabled activity for new appointments, other things might still have them)
+    if (activeTab === "activities") {
+      queryClient.invalidateQueries({
+        queryKey: ["activities", store?.id],
+      });
+    }
+  }, [latestNotification, queryClient, activeTab, store?.id]);
 
   const [notificationStatus, setNotificationStatus] = useState<
     "all" | "read" | "unread"
@@ -95,8 +135,9 @@ export function NotificationSettings() {
         page: activityPage,
         limit: activityPageSize,
         type: activityType === "all" ? undefined : activityType,
+        locationId: isManager ? user?.locationId || undefined : undefined,
       }),
-    enabled: !!store?.id && activeTab === "activities",
+    enabled: !!store?.id && activeTab === "activities" && !isStaff,
   });
 
   const handleTabChange = (value: string) => {
@@ -156,7 +197,7 @@ export function NotificationSettings() {
     }
   };
 
-  if (settingsLoading || !settings) {
+  if (isAdmin && (settingsLoading || !settings)) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -179,10 +220,12 @@ export function NotificationSettings() {
         className="space-y-6"
       >
         <TabsList className="bg-white border shadow-sm">
-          <TabsTrigger value="settings" className="gap-2">
-            <Settings className="h-4 w-4" />
-            <span>Ayarlar</span>
-          </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="settings" className="gap-2">
+              <Settings className="h-4 w-4" />
+              <span>Ayarlar</span>
+            </TabsTrigger>
+          )}
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
             <span>Bildirimler</span>
@@ -192,242 +235,252 @@ export function NotificationSettings() {
               </span>
             )}
           </TabsTrigger>
-          <TabsTrigger value="activities" className="gap-2">
-            <Activity className="h-4 w-4" />
-            <span>Aktiviteler</span>
-          </TabsTrigger>
+          {!isStaff && (
+            <TabsTrigger value="activities" className="gap-2">
+              <Activity className="h-4 w-4" />
+              <span>Aktiviteler</span>
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="settings" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5 text-blue-600" />
-                <CardTitle>E-posta Ayarları</CardTitle>
-              </div>
-              <CardDescription>
-                E-posta bildirimleri için temel yapılandırma
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Gönderen Adı</Label>
-                <input
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  placeholder="İşletme Adınız"
-                  value={settings.senderName}
-                  onChange={(e) => handleUpdate("senderName", e.target.value)}
-                />
-                <p className="text-sm text-muted-foreground">
-                  Bu isim, e-postaların "Gönderen" alanında görünecektir
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-blue-600" />
-                <CardTitle>Bildirim Türleri</CardTitle>
-              </div>
-              <CardDescription>
-                Bildirimleri etkinleştirin/devre dışı bırakın ve gönderim
-                kanallarını seçin
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Appointment Confirmation */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Randevu Onayı</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Yeni bir randevu oluşturulduğunda gönderilir
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.appointmentConfirmationEnabled}
-                    onCheckedChange={(checked) =>
-                      handleUpdate("appointmentConfirmationEnabled", checked)
-                    }
-                  />
+        {isAdmin && (
+          <TabsContent value="settings" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-blue-600" />
+                  <CardTitle>E-posta Ayarları</CardTitle>
                 </div>
-                {settings.appointmentConfirmationEnabled && (
-                  <div className="ml-4 space-y-2">
-                    <Label>Gönderim Kanalı</Label>
-                    <Select
-                      value={settings.appointmentConfirmationChannel}
-                      onValueChange={(value: any) =>
-                        handleUpdate("appointmentConfirmationChannel", value)
-                      }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">E-posta</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="both">Her İkisi</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Appointment Reminders */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Randevu Hatırlatıcıları</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Randevulardan önce otomatik hatırlatıcılar
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.appointmentReminderEnabled}
-                    onCheckedChange={(checked) =>
-                      handleUpdate("appointmentReminderEnabled", checked)
-                    }
+                <CardDescription>
+                  E-posta bildirimleri için temel yapılandırma
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Gönderen Adı</Label>
+                  <input
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder="İşletme Adınız"
+                    value={settings?.senderName}
+                    onChange={(e) => handleUpdate("senderName", e.target.value)}
                   />
+                  <p className="text-sm text-muted-foreground">
+                    Bu isim, e-postaların "Gönderen" alanında görünecektir
+                  </p>
                 </div>
-                {settings.appointmentReminderEnabled && (
-                  <div className="ml-4 space-y-4">
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-normal">
-                        24 saat kala hatırlat
-                      </Label>
-                      <Switch
-                        checked={settings.reminder24hEnabled}
-                        onCheckedChange={(checked) =>
-                          handleUpdate("reminder24hEnabled", checked)
-                        }
-                      />
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Bell className="h-5 w-5 text-blue-600" />
+                  <CardTitle>Bildirim Türleri</CardTitle>
+                </div>
+                <CardDescription>
+                  Bildirimleri etkinleştirin/devre dışı bırakın ve gönderim
+                  kanallarını seçin
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {/* Appointment Confirmation */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Randevu Onayı</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Yeni bir randevu oluşturulduğunda gönderilir
+                      </p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <Label className="text-sm font-normal">
-                        1 saat kala hatırlat
-                      </Label>
-                      <Switch
-                        checked={settings.reminder1hEnabled}
-                        onCheckedChange={(checked) =>
-                          handleUpdate("reminder1hEnabled", checked)
+                    <Switch
+                      checked={
+                        settings?.appointmentConfirmationEnabled ?? false
+                      }
+                      onCheckedChange={(checked) =>
+                        handleUpdate("appointmentConfirmationEnabled", checked)
+                      }
+                    />
+                  </div>
+                  {settings?.appointmentConfirmationEnabled && (
+                    <div className="ml-4 space-y-2">
+                      <Label>Gönderim Kanalı</Label>
+                      <Select
+                        value={settings?.appointmentConfirmationChannel}
+                        onValueChange={(value: any) =>
+                          handleUpdate("appointmentConfirmationChannel", value)
                         }
-                      />
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="sms">SMS</SelectItem>
+                          <SelectItem value="both">Her İkisi</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
-                  </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Appointment Cancellation */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">Randevu İptali</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Bir randevu iptal edildiğinde gönderilir
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.appointmentCancellationEnabled}
-                    onCheckedChange={(checked) =>
-                      handleUpdate("appointmentCancellationEnabled", checked)
-                    }
-                  />
+                  )}
                 </div>
-                {settings.appointmentCancellationEnabled && (
-                  <div className="ml-4 space-y-2">
-                    <Label>Gönderim Kanalı</Label>
-                    <Select
-                      value={settings.appointmentCancellationChannel}
-                      onValueChange={(value: any) =>
-                        handleUpdate("appointmentCancellationChannel", value)
+
+                <Separator />
+
+                {/* Appointment Reminders */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Randevu Hatırlatıcıları
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Randevulardan önce otomatik hatırlatıcılar
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings?.appointmentReminderEnabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleUpdate("appointmentReminderEnabled", checked)
                       }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">E-posta</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="both">Her İkisi</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Appointment Rescheduled */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">
-                      Randevu Saati Değişikliği
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      Randevu saati değiştirildiğinde gönderilir
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.appointmentRescheduledEnabled}
-                    onCheckedChange={(checked) =>
-                      handleUpdate("appointmentRescheduledEnabled", checked)
-                    }
-                  />
+                  {settings?.appointmentReminderEnabled && (
+                    <div className="ml-4 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-normal">
+                          24 saat kala hatırlat
+                        </Label>
+                        <Switch
+                          checked={settings?.reminder24hEnabled ?? false}
+                          onCheckedChange={(checked) =>
+                            handleUpdate("reminder24hEnabled", checked)
+                          }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label className="text-sm font-normal">
+                          1 saat kala hatırlat
+                        </Label>
+                        <Switch
+                          checked={settings?.reminder1hEnabled ?? false}
+                          onCheckedChange={(checked) =>
+                            handleUpdate("reminder1hEnabled", checked)
+                          }
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                {settings.appointmentRescheduledEnabled && (
-                  <div className="ml-4 space-y-2">
-                    <Label>Gönderim Kanalı</Label>
-                    <Select
-                      value={settings.appointmentRescheduledChannel}
-                      onValueChange={(value: any) =>
-                        handleUpdate("appointmentRescheduledChannel", value)
+
+                <Separator />
+
+                {/* Appointment Cancellation */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Randevu İptali</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Bir randevu iptal edildiğinde gönderilir
+                      </p>
+                    </div>
+                    <Switch
+                      checked={
+                        settings?.appointmentCancellationEnabled ?? false
                       }
-                    >
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="email">E-posta</SelectItem>
-                        <SelectItem value="sms">SMS</SelectItem>
-                        <SelectItem value="both">Her İkisi</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      onCheckedChange={(checked) =>
+                        handleUpdate("appointmentCancellationEnabled", checked)
+                      }
+                    />
                   </div>
-                )}
-              </div>
-
-              <Separator />
-
-              {/* Customer Feedback Request */}
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label className="text-base">
-                      Müşteri Geri Bildirim Talebi
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      E-posta her zaman gönderilir; SMS ile göndermek için de
-                      etkinleştirin
-                    </p>
-                  </div>
-                  <Switch
-                    checked={settings.feedbackRequestSmsEnabled}
-                    onCheckedChange={(checked) =>
-                      handleUpdate("feedbackRequestSmsEnabled", checked)
-                    }
-                  />
+                  {settings?.appointmentCancellationEnabled && (
+                    <div className="ml-4 space-y-2">
+                      <Label>Gönderim Kanalı</Label>
+                      <Select
+                        value={settings?.appointmentCancellationChannel}
+                        onValueChange={(value: any) =>
+                          handleUpdate("appointmentCancellationChannel", value)
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="sms">SMS</SelectItem>
+                          <SelectItem value="both">Her İkisi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+
+                <Separator />
+
+                {/* Appointment Rescheduled */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Randevu Saati Değişikliği
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        Randevu saati değiştirildiğinde gönderilir
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings?.appointmentRescheduledEnabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleUpdate("appointmentRescheduledEnabled", checked)
+                      }
+                    />
+                  </div>
+                  {settings?.appointmentRescheduledEnabled && (
+                    <div className="ml-4 space-y-2">
+                      <Label>Gönderim Kanalı</Label>
+                      <Select
+                        value={settings?.appointmentRescheduledChannel}
+                        onValueChange={(value: any) =>
+                          handleUpdate("appointmentRescheduledChannel", value)
+                        }
+                      >
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="sms">SMS</SelectItem>
+                          <SelectItem value="both">Her İkisi</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+
+                <Separator />
+
+                {/* Customer Feedback Request */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">
+                        Müşteri Geri Bildirim Talebi
+                      </Label>
+                      <p className="text-sm text-muted-foreground">
+                        E-posta her zaman gönderilir; SMS ile göndermek için de
+                        etkinleştirin
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings?.feedbackRequestSmsEnabled ?? false}
+                      onCheckedChange={(checked) =>
+                        handleUpdate("feedbackRequestSmsEnabled", checked)
+                      }
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent value="notifications" className="space-y-6">
           <Card>
@@ -572,68 +625,72 @@ export function NotificationSettings() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="activities" className="space-y-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <Label className="text-sm text-muted-foreground">Durum</Label>
-              <Select
-                value={activityType}
-                onValueChange={(value) => {
-                  setActivityType(value);
-                  setActivityPage(1);
-                }}
-              >
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Durum" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Tümü</SelectItem>
-                  <SelectItem value="appointment">Randevu</SelectItem>
-                  <SelectItem value="customer">Müşteri</SelectItem>
-                  <SelectItem value="staff">Personel</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
-                Sayfa {activityPage} / {activitiesTotalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={activityPage <= 1}
-                onClick={() => setActivityPage((prev) => Math.max(1, prev - 1))}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                disabled={activityPage >= activitiesTotalPages}
-                onClick={() =>
-                  setActivityPage((prev) =>
-                    Math.min(activitiesTotalPages, prev + 1),
-                  )
-                }
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          <div className="min-h-[600px]">
-            {activitiesLoading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        {!isStaff && (
+          <TabsContent value="activities" className="space-y-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Label className="text-sm text-muted-foreground">Durum</Label>
+                <Select
+                  value={activityType}
+                  onValueChange={(value) => {
+                    setActivityType(value);
+                    setActivityPage(1);
+                  }}
+                >
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Durum" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tümü</SelectItem>
+                    <SelectItem value="appointment">Randevu</SelectItem>
+                    <SelectItem value="customer">Müşteri</SelectItem>
+                    <SelectItem value="staff">Personel</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <RecentActivityList
-                activities={activitiesList}
-                showViewAll={false}
-              />
-            )}
-          </div>
-        </TabsContent>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  Sayfa {activityPage} / {activitiesTotalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={activityPage <= 1}
+                  onClick={() =>
+                    setActivityPage((prev) => Math.max(1, prev - 1))
+                  }
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  disabled={activityPage >= activitiesTotalPages}
+                  onClick={() =>
+                    setActivityPage((prev) =>
+                      Math.min(activitiesTotalPages, prev + 1),
+                    )
+                  }
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="min-h-[600px]">
+              {activitiesLoading ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <RecentActivityList
+                  activities={activitiesList}
+                  showViewAll={false}
+                />
+              )}
+            </div>
+          </TabsContent>
+        )}
       </Tabs>
 
       <Alert>

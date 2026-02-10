@@ -15,7 +15,7 @@ import {
 import type { Service, StaffMember } from "@/types";
 
 interface FeedbackFiltersProps {
-  isAdmin: boolean;
+  canFilterByStaffService: boolean;
   searchTerm: string;
   onSearchChange: (value: string) => void;
   staffFilter: string;
@@ -27,7 +27,7 @@ interface FeedbackFiltersProps {
 }
 
 export function FeedbackFilters({
-  isAdmin,
+  canFilterByStaffService,
   searchTerm,
   onSearchChange,
   staffFilter,
@@ -51,7 +51,7 @@ export function FeedbackFilters({
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder={
-                isAdmin
+                canFilterByStaffService
                   ? "Müşteri, personel veya yorum ara..."
                   : "Müşteri veya yorum ara..."
               }
@@ -60,7 +60,7 @@ export function FeedbackFilters({
               className="pl-10"
             />
           </div>
-          {isAdmin && (
+          {canFilterByStaffService && (
             <>
               <Select value={staffFilter} onValueChange={onStaffFilterChange}>
                 <SelectTrigger className="w-full sm:w-[200px]">
@@ -70,7 +70,8 @@ export function FeedbackFilters({
                   <SelectItem value="all">Tüm Personel</SelectItem>
                   {staffList?.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>
-                      {staff.firstName} {staff.lastName}
+                      {`${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
+                        "İsimsiz Personel"}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -47,6 +47,28 @@ export const feedbackService = {
     return response.data;
   },
 
+  async getDashboard(
+    storeId: string,
+    filters?: FeedbackFilters,
+  ): Promise<{
+    feedback: PaginatedFeedbackResponse;
+    stats: FeedbackStats;
+    staff: any[];
+    services: any[];
+  }> {
+    const params = new URLSearchParams();
+    if (filters?.staffId) params.append("staffId", filters.staffId);
+    if (filters?.serviceId) params.append("serviceId", filters.serviceId);
+    if (filters?.search) params.append("search", filters.search);
+    if (filters?.page) params.append("page", filters.page.toString());
+    if (filters?.limit) params.append("limit", filters.limit.toString());
+
+    const response = await axiosInstance.get(
+      `/stores/${storeId}/feedback/dashboard?${params.toString()}`,
+    );
+    return response.data;
+  },
+
   /**
    * Create feedback for an appointment
    */

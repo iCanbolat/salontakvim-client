@@ -9,6 +9,8 @@ import type {
   UpdateStaffBreakDto,
   StaffBreakWithStaff,
   StaffBreakStatus,
+  PaginatedResponse,
+  PaginationParams,
 } from "@/types";
 
 export class BreakService {
@@ -17,10 +19,10 @@ export class BreakService {
    */
   async getStaffBreaks(
     storeId: string,
-    staffId: string
+    staffId: string,
   ): Promise<StaffBreak[]> {
     const response = await axiosInstance.get<StaffBreak[]>(
-      `/stores/${storeId}/staff/${staffId}/breaks`
+      `/stores/${storeId}/staff/${staffId}/breaks`,
     );
     return response.data;
   }
@@ -31,11 +33,11 @@ export class BreakService {
   async createStaffBreak(
     storeId: string,
     staffId: string,
-    data: CreateStaffBreakDto
+    data: CreateStaffBreakDto,
   ): Promise<StaffBreak> {
     const response = await axiosInstance.post<StaffBreak>(
       `/stores/${storeId}/staff/${staffId}/breaks`,
-      data
+      data,
     );
     return response.data;
   }
@@ -47,11 +49,11 @@ export class BreakService {
     storeId: string,
     staffId: string,
     breakId: string,
-    data: UpdateStaffBreakDto
+    data: UpdateStaffBreakDto,
   ): Promise<StaffBreak> {
     const response = await axiosInstance.patch<StaffBreak>(
       `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`,
-      data
+      data,
     );
     return response.data;
   }
@@ -62,23 +64,27 @@ export class BreakService {
   async deleteStaffBreak(
     storeId: string,
     staffId: string,
-    breakId: string
+    breakId: string,
   ): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`
+      `/stores/${storeId}/staff/${staffId}/breaks/${breakId}`,
     );
   }
 
   async getStoreBreaks(
     storeId: string,
-    status?: StaffBreakStatus
-  ): Promise<StaffBreakWithStaff[]> {
-    const response = await axiosInstance.get<StaffBreakWithStaff[]>(
-      `/stores/${storeId}/breaks`,
-      {
-        params: status ? { status } : undefined,
-      }
-    );
+    status?: StaffBreakStatus,
+    pagination?: PaginationParams,
+  ): Promise<PaginatedResponse<StaffBreakWithStaff>> {
+    const response = await axiosInstance.get<
+      PaginatedResponse<StaffBreakWithStaff>
+    >(`/stores/${storeId}/breaks`, {
+      params: {
+        ...(status ? { status } : {}),
+        ...(pagination?.page ? { page: pagination.page } : {}),
+        ...(pagination?.limit ? { limit: pagination.limit } : {}),
+      },
+    });
 
     return response.data;
   }

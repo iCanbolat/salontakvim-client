@@ -4,7 +4,14 @@ import { notificationService } from "@/services/notification.service";
 import type { UpdateNotificationSettingsDto } from "@/types/notification.types";
 import { toast } from "sonner";
 
-export function useNotificationSettings() {
+interface UseNotificationSettingsOptions {
+  enableSettings?: boolean;
+}
+
+export function useNotificationSettings(
+  options: UseNotificationSettingsOptions = {},
+) {
+  const enableSettings = options.enableSettings ?? true;
   const queryClient = useQueryClient();
 
   // Get current store
@@ -21,7 +28,7 @@ export function useNotificationSettings() {
   } = useQuery({
     queryKey: ["notificationSettings", store?.id],
     queryFn: () => notificationService.getNotificationSettings(store!.id),
-    enabled: !!store?.id,
+    enabled: enableSettings && !!store?.id,
   });
 
   // Update settings mutation
@@ -46,7 +53,7 @@ export function useNotificationSettings() {
     updateMutation.mutate({ [field]: value } as UpdateNotificationSettingsDto);
   };
 
-  const isLoading = storeLoading || settingsLoading;
+  const isLoading = storeLoading || (enableSettings && settingsLoading);
 
   return {
     state: {

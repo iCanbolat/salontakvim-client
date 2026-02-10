@@ -45,9 +45,13 @@ export function StaffManagement() {
     error,
   } = state;
 
-  const { store, staffMembers, pendingInvitations, timeOffs } = data;
-  const { staff: staffPagination, invitations: invitationsPagination } =
-    pagination;
+  const { store, staffMembers, pendingInvitations, timeOffs, timeOffsTotal } =
+    data;
+  const {
+    staff: staffPagination,
+    invitations: invitationsPagination,
+    timeOffs: timeOffPagination,
+  } = pagination;
 
   const staffTableColumns = useMemo(() => getStaffTableColumns(), []);
 
@@ -150,9 +154,7 @@ export function StaffManagement() {
           <TabsTrigger value="invitations">
             Invitations ({pendingInvitations.length})
           </TabsTrigger>
-          <TabsTrigger value="timeoffs">
-            Time Off ({timeOffs?.length || 0})
-          </TabsTrigger>
+          <TabsTrigger value="timeoffs">Time Off ({timeOffsTotal})</TabsTrigger>
         </TabsList>
 
         {/* Staff Members Tab */}
@@ -293,88 +295,106 @@ export function StaffManagement() {
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
               ) : timeOffs && timeOffs.length > 0 ? (
-                <div className="space-y-3">
-                  {timeOffs.map((timeOff) => (
-                    <div
-                      key={timeOff.id}
-                      className="flex flex-col gap-3 rounded-lg border bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between"
-                    >
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-                          <span className="font-semibold text-gray-900">
-                            {getStaffName(timeOff)}
-                          </span>
-                          {timeOff.staffTitle && (
-                            <span className="text-gray-500">
-                              • {timeOff.staffTitle}
+                <div
+                  className={`flex flex-col ${
+                    timeOffs.length < 13 ? "" : "min-h-[600px]"
+                  }`}
+                >
+                  <div className="space-y-3 pb-4">
+                    {timeOffs.map((timeOff) => (
+                      <div
+                        key={timeOff.id}
+                        className="flex flex-col gap-3 rounded-lg border bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between"
+                      >
+                        <div className="space-y-2">
+                          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                            <span className="font-semibold text-gray-900">
+                              {getStaffName(timeOff)}
                             </span>
-                          )}
-                          <Badge
-                            variant="outline"
-                            className={statusBadgeClass[timeOff.status]}
-                          >
-                            {statusLabels[timeOff.status]}
-                          </Badge>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDateRange(timeOff)}</span>
-                        </div>
-
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
-                          <Clock className="h-4 w-4" />
-                          <span>{formatTimeRange(timeOff)}</span>
-                        </div>
-
-                        {timeOff.reason && (
-                          <div className="rounded bg-gray-50 p-2 text-sm text-gray-700">
-                            {timeOff.reason}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col items-start gap-2 md:items-end">
-                        <p className="text-xs text-gray-500">
-                          Requested{" "}
-                          {format(parseISO(timeOff.createdAt), "d MMM yyyy", {
-                            locale: tr,
-                          })}
-                        </p>
-                        {timeOff.status === "pending" ? (
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              size="sm"
-                              onClick={() =>
-                                actions.updateBreakStatus({
-                                  breakId: timeOff.id,
-                                  staffId: timeOff.staffId,
-                                  status: "approved",
-                                })
-                              }
-                            >
-                              <Check className="h-4 w-4 mr-1" />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
+                            {timeOff.staffTitle && (
+                              <span className="text-gray-500">
+                                • {timeOff.staffTitle}
+                              </span>
+                            )}
+                            <Badge
                               variant="outline"
-                              onClick={() =>
-                                actions.updateBreakStatus({
-                                  breakId: timeOff.id,
-                                  staffId: timeOff.staffId,
-                                  status: "declined",
-                                })
-                              }
+                              className={statusBadgeClass[timeOff.status]}
                             >
-                              <X className="h-4 w-4 mr-1" />
-                              Decline
-                            </Button>
+                              {statusLabels[timeOff.status]}
+                            </Badge>
                           </div>
-                        ) : null}
+
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Calendar className="h-4 w-4" />
+                            <span>{formatDateRange(timeOff)}</span>
+                          </div>
+
+                          <div className="flex items-center gap-2 text-sm text-gray-600">
+                            <Clock className="h-4 w-4" />
+                            <span>{formatTimeRange(timeOff)}</span>
+                          </div>
+
+                          {timeOff.reason && (
+                            <div className="rounded bg-gray-50 p-2 text-sm text-gray-700">
+                              {timeOff.reason}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col items-start gap-2 md:items-end">
+                          <p className="text-xs text-gray-500">
+                            Requested{" "}
+                            {format(parseISO(timeOff.createdAt), "d MMM yyyy", {
+                              locale: tr,
+                            })}
+                          </p>
+                          {timeOff.status === "pending" ? (
+                            <div className="flex flex-wrap gap-2">
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  actions.updateBreakStatus({
+                                    breakId: timeOff.id,
+                                    staffId: timeOff.staffId,
+                                    status: "approved",
+                                  })
+                                }
+                              >
+                                <Check className="h-4 w-4 mr-1" />
+                                Approve
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() =>
+                                  actions.updateBreakStatus({
+                                    breakId: timeOff.id,
+                                    staffId: timeOff.staffId,
+                                    status: "declined",
+                                  })
+                                }
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Decline
+                              </Button>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
+                  <div className="mt-auto">
+                    <PaginationControls
+                      currentPage={timeOffPagination.currentPage}
+                      totalPages={timeOffPagination.totalPages}
+                      onPageChange={timeOffPagination.goToPage}
+                      canGoPrevious={timeOffPagination.canGoPrevious}
+                      canGoNext={timeOffPagination.canGoNext}
+                      startIndex={timeOffPagination.startIndex}
+                      endIndex={timeOffPagination.endIndex}
+                      totalItems={timeOffsTotal}
+                    />
+                  </div>
                 </div>
               ) : (
                 <div className="text-center py-12 border rounded-lg bg-gray-50">

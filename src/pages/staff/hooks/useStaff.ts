@@ -11,20 +11,25 @@ import { storeService, staffService, breakService } from "@/services";
 import { usePagination } from "@/hooks";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import type { StaffBreakStatus } from "@/types";
+import { useAuth, useNotifications } from "@/contexts";
 
 type TimeOffStatusFilter = "all" | StaffBreakStatus;
 
 export function useStaff() {
+  const { user } = useAuth();
+  const { latestNotification } = useNotifications();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("staff");
   const [searchTerm, setSearchTerm] = useState("");
   const [timeOffStatus, setTimeOffStatus] =
     useState<TimeOffStatusFilter>("pending");
+  const [timeOffPage, setTimeOffPage] = useState(1);
   const [view, setView] = useState<"grid" | "list">("grid");
 
   const queryClient = useQueryClient();
   const debouncedSearchTerm = useDebouncedSearch(searchTerm);
+  const timeOffPageSize = 5;
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -54,6 +59,10 @@ export function useStaff() {
     setSearchParams(next, { replace: true });
   };
 
+  useEffect(() => {
+    setTimeOffPage(1);
+  }, [timeOffStatus]);
+
   // Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
     queryKey: ["my-store"],
@@ -76,6 +85,10 @@ export function useStaff() {
     placeholderData: keepPreviousData,
   });
 
+  const filteredStaffMembers = staffMembers?.filter(
+    (member) => member.userId !== user?.id,
+  );
+
   // Fetch invitations
   const {
     data: invitations,
@@ -93,14 +106,46 @@ export function useStaff() {
     isLoading: timeOffsLoading,
     error: timeOffsError,
   } = useQuery({
-    queryKey: ["store-breaks", store?.id, timeOffStatus],
+    queryKey: [
+      "store-breaks",
+      store?.id,
+      timeOffStatus,
+      timeOffPage,
+      timeOffPageSize,
+    ],
     queryFn: () =>
       breakService.getStoreBreaks(
         store!.id,
         timeOffStatus === "all" ? undefined : timeOffStatus,
+        { page: timeOffPage, limit: timeOffPageSize },
       ),
     enabled: !!store?.id,
   });
+
+  // Real-time invalidation for time off via notifications
+  useEffect(() => {
+    if (!store?.id || !latestNotification) {
+      return;
+    }
+
+    const isSameStore = latestNotification.storeId === store.id;
+    const isTimeOff = latestNotification.type === "staff_time_off";
+
+    if (isSameStore && isTimeOff) {
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "store-breaks" && key[1] === store.id;
+        },
+      });
+    }
+  }, [
+    latestNotification?.id,
+    latestNotification?.type,
+    latestNotification?.storeId,
+    store?.id,
+    queryClient,
+  ]);
 
   const updateBreakStatus = useMutation({
     mutationFn: ({
@@ -114,7 +159,12 @@ export function useStaff() {
     }) =>
       breakService.updateStaffBreak(store!.id, staffId, breakId, { status }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["store-breaks", store?.id] });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const key = query.queryKey;
+          return key[0] === "store-breaks" && key[1] === store?.id;
+        },
+      });
       toast.success("Time off updated");
     },
     onError: (error: Error) => {
@@ -127,7 +177,7 @@ export function useStaff() {
 
   // Pagination for staff members
   const staffPagination = usePagination({
-    items: staffMembers || [],
+    items: filteredStaffMembers || [],
     itemsPerPage: 12,
   });
 
@@ -135,6 +185,15 @@ export function useStaff() {
   const invitationsPagination = usePagination({
     items: pendingInvitations,
     itemsPerPage: 12,
+  });
+
+  const timeOffPagination = usePagination({
+    items: timeOffs?.data ?? [],
+    itemsPerPage: timeOffs?.limit ?? timeOffPageSize,
+    totalItems: timeOffs?.total ?? 0,
+    disableSlice: true,
+    currentPage: timeOffPage,
+    onPageChange: setTimeOffPage,
   });
 
   const isLoading =
@@ -162,14 +221,16 @@ export function useStaff() {
     },
     data: {
       store,
-      staffMembers,
+      staffMembers: filteredStaffMembers,
       invitations,
       pendingInvitations,
-      timeOffs,
+      timeOffs: timeOffs?.data ?? [],
+      timeOffsTotal: timeOffs?.total ?? 0,
     },
     pagination: {
       staff: staffPagination,
       invitations: invitationsPagination,
+      timeOffs: timeOffPagination,
     },
   };
 }

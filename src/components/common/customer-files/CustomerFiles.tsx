@@ -10,6 +10,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { customerFileService } from "@/services/customer-file.service";
+import type { CustomerFile } from "@/services/customer-file.service";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -39,16 +40,25 @@ import { useCustomerFiles } from "./useCustomerFiles";
 interface CustomerFilesProps {
   storeId: string;
   customerId: string;
+  appointmentId?: string;
   isReadOnly?: boolean;
+  files?: CustomerFile[];
 }
 
 export function CustomerFiles({
   storeId,
   customerId,
+  appointmentId,
   isReadOnly = false,
+  files,
 }: CustomerFilesProps) {
   const { state, actions, data, isLoading, error, isDeleting, fileInputRef } =
-    useCustomerFiles({ storeId, customerId });
+    useCustomerFiles({
+      storeId,
+      customerId,
+      appointmentId,
+      initialFiles: files,
+    });
 
   if (error) {
     return (
@@ -270,6 +280,7 @@ export function CustomerFiles({
         onOpenChange={actions.setIsUploadDialogOpen}
         storeId={storeId}
         customerId={customerId}
+        appointmentId={appointmentId}
         initialFiles={state.droppedFiles}
         onSuccess={actions.refreshFiles}
       />

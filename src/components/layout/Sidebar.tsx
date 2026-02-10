@@ -1,6 +1,6 @@
 /**
  * Sidebar Navigation Component
- * Shows navigation menu based on user role (admin/staff)
+ * Shows navigation menu based on user role (admin/manager/staff)
  */
 
 import { NavLink } from "react-router-dom";
@@ -26,12 +26,13 @@ import { useAuth } from "@/contexts";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  roles: Array<"admin" | "staff">;
+  roles: UserRole[];
 }
 
 interface SidebarProps {
@@ -165,16 +166,87 @@ const staffNavItems: NavItem[] = [
   },
 ];
 
+// Manager navigation - location scoped, no settings/analytics/widget
+const managerNavItems: NavItem[] = [
+  {
+    label: "Dashboard",
+    href: "/manager/dashboard",
+    icon: LayoutDashboard,
+    roles: ["manager"],
+  },
+  {
+    label: "Appointments",
+    href: "/manager/appointments",
+    icon: Calendar,
+    roles: ["manager"],
+  },
+  {
+    label: "Services",
+    href: "/manager/services",
+    icon: Briefcase,
+    roles: ["manager"],
+  },
+  {
+    label: "Staff",
+    href: "/manager/staff",
+    icon: Users,
+    roles: ["manager"],
+  },
+  {
+    label: "Customers",
+    href: "/manager/customers",
+    icon: UserCircle,
+    roles: ["manager"],
+  },
+  {
+    label: "Folders",
+    href: "/manager/files",
+    icon: FileText,
+    roles: ["manager"],
+  },
+  {
+    label: "Feedback",
+    href: "/manager/feedback",
+    icon: MessageSquare,
+    roles: ["manager"],
+  },
+  {
+    label: "Notifications",
+    href: "/manager/notifications",
+    icon: Bell,
+    roles: ["manager"],
+  },
+  {
+    label: "My Profile",
+    href: "/manager/profile",
+    icon: UserCog,
+    roles: ["manager"],
+  },
+];
+
 export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
   const { user } = useAuth();
 
-  const navItems = user?.role === "admin" ? adminNavItems : staffNavItems;
+  const getNavItems = () => {
+    switch (user?.role) {
+      case "admin":
+        return adminNavItems;
+      case "manager":
+        return managerNavItems;
+      case "staff":
+        return staffNavItems;
+      default:
+        return [];
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
     <div
       className={cn(
         "flex flex-col h-full bg-white border-r border-gray-200 transition-all duration-300 relative",
-        isCollapsed ? "w-20" : "w-64"
+        isCollapsed ? "w-20" : "w-64",
       )}
     >
       {/* Toggle Button */}
@@ -195,7 +267,7 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div
         className={cn(
           "flex items-center h-16 border-b border-gray-200 transition-all duration-300",
-          isCollapsed ? "px-4 justify-center" : "px-6"
+          isCollapsed ? "px-4 justify-center" : "px-6",
         )}
       >
         <div className="flex items-center gap-3 overflow-hidden">
@@ -229,14 +301,14 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
                   isCollapsed ? "justify-center px-2" : "px-3",
                   isActive
                     ? "bg-blue-50 text-blue-700"
-                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                    : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
                 )
               }
             >
               <item.icon
                 className={cn(
                   "w-5 h-5 shrink-0 transition-transform duration-200",
-                  !isCollapsed && "group-hover:scale-110"
+                  !isCollapsed && "group-hover:scale-110",
                 )}
               />
               {!isCollapsed && (

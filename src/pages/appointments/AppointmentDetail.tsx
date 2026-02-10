@@ -127,7 +127,9 @@ export function AppointmentDetailPage() {
         <AppointmentFileUploadCard
           storeId={store.id}
           customerId={appointment.customerId}
+          appointmentId={appointment.id}
           isReadOnly={appointment.status === "completed"}
+          files={appointment.files}
         />
       )}
 

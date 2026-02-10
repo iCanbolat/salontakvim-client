@@ -93,11 +93,20 @@ export function TimeOffDialog({
       queryClient.invalidateQueries({
         queryKey: ["staff-breaks", storeId, staffId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staffId],
+      });
       toast.success("İzin eklendi");
       onClose();
     },
-    onError: (error: Error) => {
-      toast.error("İzin eklenemedi: " + error.message);
+    onError: (error: any) => {
+      const message =
+        error.response?.data?.message ===
+        "This break overlaps with an existing break or time off"
+          ? "Bu izin, mevcut bir izin veya mola ile çakışıyor."
+          : error.response?.data?.message || error.message;
+
+      toast.error("İzin eklenemedi: " + message);
     },
   });
 
@@ -109,11 +118,20 @@ export function TimeOffDialog({
       queryClient.invalidateQueries({
         queryKey: ["staff-breaks", storeId, staffId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staffId],
+      });
       toast.success("İzin güncellendi");
       onClose();
     },
-    onError: (error: Error) => {
-      toast.error("İzin güncellenemedi: " + error.message);
+    onError: (error: any) => {
+      const message =
+        error.response?.data?.message ===
+        "This break overlaps with an existing break or time off"
+          ? "Bu izin, mevcut bir izin veya mola ile çakışıyor."
+          : error.response?.data?.message || error.message;
+
+      toast.error("İzin güncellenemedi: " + message);
     },
   });
 
@@ -363,8 +381,8 @@ export function TimeOffDialog({
                   ? "Güncelleniyor..."
                   : "Ekleniyor..."
                 : isEditing
-                ? "Güncelle"
-                : "Ekle"}
+                  ? "Güncelle"
+                  : "Ekle"}
             </Button>
           </DialogFooter>
         </form>

@@ -10,11 +10,21 @@ import {
 import { io, type Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import {
+  Bell,
+  Calendar,
+  XCircle,
+  RefreshCw,
+  Coffee,
+  UserPlus,
+  CheckCircle2,
+  FileText,
+} from "lucide-react";
 import { useAuth } from "./AuthContext";
 import { notificationService } from "@/services/notification.service";
 import { authService } from "@/services";
-import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import type { RecentActivity } from "@/types";
+import { cn } from "@/lib/utils";
 
 export interface Notification {
   id: string;
@@ -27,8 +37,6 @@ export interface Notification {
   createdAt: string;
   metadata?: Record<string, any> | null;
 }
-
-type ToastVariant = "success" | "error" | "warning" | "info" | "default";
 
 interface NotificationContextValue {
   notifications: Notification[];
@@ -77,13 +85,63 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [latestNotification, setLatestNotification] =
     useState<Notification | null>(null);
 
-  const resolveToastVariant = (type: string): ToastVariant => {
-    if (type === "appointment_cancelled") return "error";
-    if (type === "appointment_created") return "success";
-    if (type === "appointment_status_changed") return "info";
-    if (type === "staff_invitation") return "info";
-    if (type === "staff_invitation_accepted") return "success";
-    return "default";
+  const getNotificationConfig = (type: string) => {
+    switch (type) {
+      case "appointment_created":
+        return {
+          icon: Calendar,
+          color: "text-blue-600",
+          bgColor: "bg-blue-50",
+        };
+      case "appointment_cancelled":
+        return {
+          icon: XCircle,
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+        };
+      case "appointment_status_changed":
+        return {
+          icon: RefreshCw,
+          color: "text-amber-600",
+          bgColor: "bg-amber-50",
+        };
+      case "staff_time_off":
+        return {
+          icon: Coffee,
+          color: "text-purple-600",
+          bgColor: "bg-purple-50",
+        };
+      case "staff_invitation":
+        return {
+          icon: UserPlus,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+        };
+      case "staff_break_approved":
+        return {
+          icon: CheckCircle2,
+          color: "text-green-600",
+          bgColor: "bg-green-50",
+        };
+      case "staff_break_declined":
+        return {
+          icon: XCircle,
+          color: "text-red-600",
+          bgColor: "bg-red-50",
+        };
+      case "appointment_file_uploaded":
+        return {
+          icon: FileText,
+          color: "text-indigo-600",
+          bgColor: "bg-indigo-50",
+        };
+      default:
+        return {
+          icon: Bell,
+          color: "text-gray-600",
+          bgColor: "bg-gray-50",
+        };
+    }
   };
 
   const isBrowserNotificationSupported = () =>
@@ -131,28 +189,64 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   };
 
   const showNotificationToast = (notification: Notification) => {
-    const variant = resolveToastVariant(notification.type);
-    const options = {
-      description: notification.message,
-    };
+    const config = getNotificationConfig(notification.type);
+    const Icon = config.icon;
+    const url = notification.metadata?.url as string | undefined;
 
-    // Show toast
-    switch (variant) {
-      case "success":
-        toast.success(notification.title, options);
-        break;
-      case "error":
-        toast.error(notification.title, options);
-        break;
-      case "warning":
-        toast.warning(notification.title, options);
-        break;
-      case "info":
-        toast.info(notification.title, options);
-        break;
-      default:
-        toast(notification.title, options);
-    }
+    toast.custom(
+      (toastInstance: any) => (
+        <div
+          className={cn(
+            "pointer-events-auto w-[360px] rounded-lg border border-gray-200 bg-white p-4 shadow-lg",
+            toastInstance.visible
+              ? "animate-in fade-in zoom-in"
+              : "animate-out fade-out zoom-out",
+            url ? "cursor-pointer" : "cursor-default",
+          )}
+          role="status"
+          onClick={() => {
+            if (url) {
+              window.location.href = url;
+            }
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className={cn("shrink-0 p-2 rounded-full mt-0.5", config.bgColor)}
+            >
+              <Icon className={cn("h-4 w-4", config.color)} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start justify-between gap-2">
+                <p className="text-sm font-semibold text-gray-900 line-clamp-1">
+                  {notification.title}
+                </p>
+                <button
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    toast.dismiss(toastInstance.id);
+                  }}
+                >
+                  Dismiss
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 mt-1 line-clamp-2">
+                {notification.message}
+              </p>
+              {url && (
+                <p className="text-[11px] text-gray-400 mt-2">
+                  Detaylari goruntulemek icin tiklayin
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      ),
+      {
+        duration: 6000,
+      },
+    );
 
     // Browser notification (fallback to request permission if needed)
     maybeShowBrowserNotification(notification);
@@ -258,16 +352,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       setNotifications((prev) => [notification, ...prev]);
       setLatestNotification(notification);
       showNotificationToast(notification);
-
-      if (
-        [
-          "appointment_created",
-          "appointment_cancelled",
-          "appointment_status_changed",
-        ].includes(notification.type)
-      ) {
-        invalidateAfterAppointmentChange(queryClient, notification.storeId);
-      }
     });
 
     newSocket.on("activity", (activity: RecentActivity) => {

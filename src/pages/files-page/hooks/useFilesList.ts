@@ -8,15 +8,25 @@ import {
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { usePagination, useDebouncedSearch } from "@/hooks";
-import { storeService, customerFileService, customerService } from "@/services";
+import {
+  storeService,
+  customerFileService,
+  customerService,
+  appointmentService,
+} from "@/services";
 import type { CustomerFile } from "@/services/customer-file.service";
-import type { CustomerWithStats } from "@/types";
+import type { CustomerWithStats, Appointment } from "@/types";
 
 export function useFilesList() {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || "",
+  );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [folderPage, setFolderPage] = useState(1);
+
   const [view, setView] = useState<"grid" | "list">("list");
   const [fileTypeFilter, setFileTypeFilter] = useState<string>("all");
   const [uploadedSort, setUploadedSort] = useState<"asc" | "desc">("desc");
@@ -27,6 +37,8 @@ export function useFilesList() {
   // Preview state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<CustomerFile | null>(null);
+  const [previewAppointment, setPreviewAppointment] =
+    useState<Appointment | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
@@ -46,111 +58,71 @@ export function useFilesList() {
     queryFn: () => storeService.getMyStore(),
   });
 
-  // Fetch all files
+  // Fetch folders (when no customer selected)
+  const { data: foldersResponse, isPending: foldersPending } = useQuery({
+    queryKey: ["store-folders", store?.id, debouncedSearch, folderPage],
+    queryFn: () =>
+      customerFileService.getFolders(store!.id, {
+        search: debouncedSearch || undefined,
+        limit: 12, // Items per page for folders
+        page: folderPage,
+      }),
+    enabled: !!store?.id && !selectedCustomerId,
+    placeholderData: keepPreviousData,
+  });
+
+  // Fetch files (when customer selected)
   const {
-    data: filesData,
+    data: filesResponse,
     isPending: filesPending,
     error,
   } = useQuery({
-    queryKey: ["store-files", store?.id, debouncedSearch, fileTypeFilter],
+    queryKey: [
+      "store-files",
+      store?.id,
+      selectedCustomerId,
+      debouncedSearch,
+      fileTypeFilter,
+      currentPage,
+    ],
     queryFn: () =>
-      customerFileService.getAllStoreFiles(store!.id, {
+      customerFileService.getFiles(store!.id, selectedCustomerId!, {
         search: debouncedSearch || undefined,
         fileType: fileTypeFilter !== "all" ? fileTypeFilter : undefined,
+        limit: 20, // Items per page for files
+        page: currentPage,
       }),
-    enabled: !!store?.id,
+    enabled: !!store?.id && !!selectedCustomerId,
     placeholderData: keepPreviousData,
   });
 
-  // Fetch customers for folder names
-  const { data: customers } = useQuery({
-    queryKey: ["customers", store?.id, "files"],
-    queryFn: () => customerService.getCustomers(store!.id),
-    enabled: !!store?.id,
-    placeholderData: keepPreviousData,
+  // Fetch selected customer profile details when in folder view
+  const { data: selectedCustomerProfile } = useQuery({
+    queryKey: ["customer", store?.id, selectedCustomerId],
+    queryFn: () =>
+      customerService.getCustomerProfile(store!.id, selectedCustomerId!),
+    enabled: !!store?.id && !!selectedCustomerId,
   });
 
-  const isInitialLoading = (storeLoading || filesPending) && !filesData;
-  const files = filesData?.files || [];
+  const isInitialLoading =
+    storeLoading || (selectedCustomerId ? filesPending : foldersPending);
+
+  // No longer need full customer map for folders as backend provides stats with names
+  // But we might need customer map if we used sorting on client side that depends on names?
+  // Current logic for folders handles names from server response.
+
+  const folders = foldersResponse?.data || [];
 
   const customerMap = useMemo(() => {
     const map = new Map<string, CustomerWithStats>();
-    (customers || []).forEach((customer) => {
-      map.set(customer.id, customer);
-    });
+    if (selectedCustomerProfile) {
+      map.set(
+        selectedCustomerProfile.customer.id,
+        selectedCustomerProfile.customer,
+      );
+    }
     return map;
-  }, [customers]);
-
-  const folders = useMemo(() => {
-    if (!files.length)
-      return [] as Array<{
-        customerId: string;
-        customerName: string;
-        fileCount: number;
-        totalSize: number;
-        lastUploadedAt: string;
-      }>;
-
-    const grouped = new Map<
-      string,
-      {
-        customerId: string;
-        customerName: string;
-        fileCount: number;
-        totalSize: number;
-        lastUploadedAt: string;
-      }
-    >();
-
-    files.forEach((file) => {
-      const customer = customerMap.get(file.customerId);
-      const name = customer
-        ? `${customer.firstName} ${customer.lastName}`.trim() ||
-          customer.email ||
-          "Customer"
-        : `Customer ${file.customerId.slice(0, 6)}`;
-
-      const existing = grouped.get(file.customerId);
-      const lastUploadedAt = existing
-        ? new Date(existing.lastUploadedAt) > new Date(file.createdAt)
-          ? existing.lastUploadedAt
-          : file.createdAt
-        : file.createdAt;
-
-      grouped.set(file.customerId, {
-        customerId: file.customerId,
-        customerName: name,
-        fileCount: (existing?.fileCount || 0) + 1,
-        totalSize: (existing?.totalSize || 0) + file.fileSize,
-        lastUploadedAt,
-      });
-    });
-
-    return Array.from(grouped.values()).sort((a, b) => {
-      const aTime = new Date(a.lastUploadedAt).getTime();
-      const bTime = new Date(b.lastUploadedAt).getTime();
-      return bTime - aTime;
-    });
-  }, [files, customerMap]);
-
-  const sortedFiles = useMemo(() => {
-    if (!files.length) return files;
-    return [...files].sort((a, b) => {
-      const aTime = new Date(a.createdAt).getTime();
-      const bTime = new Date(b.createdAt).getTime();
-      return uploadedSort === "asc" ? aTime - bTime : bTime - aTime;
-    });
-  }, [files, uploadedSort]);
-
-  const activeFiles = useMemo(() => {
-    if (!selectedCustomerId) return sortedFiles;
-    return sortedFiles.filter((file) => file.customerId === selectedCustomerId);
-  }, [sortedFiles, selectedCustomerId]);
-
-  const activeFolder = useMemo(() => {
-    if (!selectedCustomerId) return null;
-    return folders.find((f) => f.customerId === selectedCustomerId) || null;
-  }, [folders, selectedCustomerId]);
+  }, [selectedCustomerProfile]);
 
   // Sync search term from URL
   useEffect(() => {
@@ -176,36 +148,38 @@ export function useFilesList() {
     }
   }, [searchTerm, setSearchParams, searchParams]);
 
-  // Pagination
-  const {
-    paginatedItems,
-    currentPage,
-    totalPages,
-    goToPage,
-    startIndex,
-    endIndex,
-  } = usePagination({
-    items: activeFiles,
-    itemsPerPage: 20,
-  });
+  // Pagination for FILES
+  const { paginatedItems, totalPages, goToPage, startIndex, endIndex } =
+    usePagination({
+      items: filesResponse?.data || [],
+      itemsPerPage: 20,
+      totalItems: filesResponse?.total ?? 0,
+      currentPage,
+      onPageChange: setCurrentPage,
+      disableSlice: true,
+    });
 
+  // Pagination for FOLDERS
   const {
     paginatedItems: paginatedFolders,
-    currentPage: folderPage,
     totalPages: folderTotalPages,
     goToPage: goToFolderPage,
     startIndex: folderStartIndex,
     endIndex: folderEndIndex,
   } = usePagination({
-    items: folders,
+    items: folders, // These are already paginated from server (data of current page)
     itemsPerPage: 12,
+    totalItems: foldersResponse?.total ?? 0,
+    currentPage: folderPage,
+    onPageChange: setFolderPage,
+    disableSlice: true,
   });
 
   // Reset to first page on search/filter change
   useEffect(() => {
-    goToPage(1);
-    goToFolderPage(1);
-  }, [debouncedSearch, fileTypeFilter]);
+    setCurrentPage(1);
+    setFolderPage(1);
+  }, [debouncedSearch, fileTypeFilter, selectedCustomerId]);
 
   // Clean up preview URL on unmount
   useEffect(() => {
@@ -241,22 +215,37 @@ export function useFilesList() {
     setPreviewFile(file);
     setIsPreviewOpen(true);
     setPreviewImageUrl(null);
+    setPreviewAppointment(null);
 
-    if (file.fileType === "image") {
-      try {
-        setIsPreviewLoading(true);
+    setIsPreviewLoading(true);
+    try {
+      // Fetch appointment detail if linked
+      if (file.appointmentId) {
+        try {
+          const appointment = await appointmentService.getAppointment(
+            store!.id,
+            file.appointmentId,
+          );
+          setPreviewAppointment(appointment);
+        } catch (err) {
+          console.error("Failed to fetch appointment detail for file", err);
+          // Don't show toast error here as it's secondary to the file preview itself
+        }
+      }
+
+      if (file.fileType === "image") {
         const { blob } = await customerFileService.downloadStoreFile(
           store!.id,
           file.id,
         );
         const url = URL.createObjectURL(blob);
         setPreviewImageUrl(url);
-      } catch (err: any) {
-        const message = err?.response?.data?.message || err?.message;
-        toast.error(message || "Failed to load preview");
-      } finally {
-        setIsPreviewLoading(false);
       }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message;
+      toast.error(message || "Failed to load preview");
+    } finally {
+      setIsPreviewLoading(false);
     }
   };
 
@@ -266,8 +255,8 @@ export function useFilesList() {
 
   const handleToggleUploadedSort = () => {
     setUploadedSort((prev) => (prev === "asc" ? "desc" : "asc"));
-    goToPage(1);
-    goToFolderPage(1);
+    // Sort is not implemented on server for now
+    toast.info("Sorting is not supported yet (default: newest first)");
   };
 
   const queryClient = useQueryClient();
@@ -276,6 +265,7 @@ export function useFilesList() {
       customerFileService.deleteFile(store!.id, file.customerId, file.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["store-files", store?.id] });
+      queryClient.invalidateQueries({ queryKey: ["store-folders", store?.id] });
       toast.success("File deleted successfully");
     },
     onError: (err: any) => {
@@ -295,16 +285,22 @@ export function useFilesList() {
       error,
       isPreviewOpen,
       previewFile,
+      previewAppointment,
       previewImageUrl,
       isPreviewLoading,
     },
     data: {
       store,
-      filesData,
-      customers,
+      filesData: selectedCustomerId
+        ? filesResponse
+        : {
+            total: foldersResponse?.total,
+            totalSize: foldersResponse?.totalSize,
+          }, // Adjusted for FilesList.tsx consumption
       folders,
-      activeFiles,
-      activeFolder,
+      activeFiles: filesResponse?.data || [],
+      activeFolder:
+        folders.find((f) => f.customerId === selectedCustomerId) || null,
       customerMap,
     },
     paging: {

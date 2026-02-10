@@ -5,8 +5,8 @@
 
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { appointmentService, feedbackService, storeService } from "@/services";
-import type { Appointment, FeedbackWithDetails } from "@/types";
+import { appointmentService, storeService } from "@/services";
+import type { Appointment } from "@/types";
 
 export function useAppointmentDetail() {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -26,18 +26,7 @@ export function useAppointmentDetail() {
     enabled: !!store?.id && !!appointmentId,
   });
 
-  const shouldLoadFeedback = appointment?.status === "completed";
-
-  const {
-    data: feedback,
-    isLoading: feedbackLoading,
-    error: feedbackError,
-  } = useQuery<FeedbackWithDetails | null>({
-    queryKey: ["appointment-feedback", store?.id, appointmentId],
-    queryFn: () =>
-      feedbackService.getFeedbackByAppointment(store!.id, appointmentId!),
-    enabled: !!store?.id && !!appointmentId && shouldLoadFeedback,
-  });
+  const feedback = appointment?.feedback;
 
   const isLoading = storeLoading || appointmentLoading;
 
@@ -47,9 +36,9 @@ export function useAppointmentDetail() {
     feedback,
     isLoading,
     appointmentError,
-    feedbackError,
-    feedbackLoading,
+    feedbackError: null,
+    feedbackLoading: false,
     appointmentId,
-    canShowFeedback: shouldLoadFeedback && !!feedback,
+    canShowFeedback: appointment?.status === "completed" && !!feedback,
   };
 }

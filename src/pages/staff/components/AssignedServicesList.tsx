@@ -1,13 +1,12 @@
 import { useMemo } from "react";
 import { Layers, Loader2 } from "lucide-react";
-import type { Category, Service } from "@/types";
+import type { Service } from "@/types";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 interface AssignedServicesListProps {
   services?: Service[];
-  categories?: Category[];
   isLoading?: boolean;
   onManageAssignments?: () => void;
 }
@@ -20,19 +19,9 @@ const currencyFormatter = new Intl.NumberFormat("tr-TR", {
 
 export function AssignedServicesList({
   services,
-  categories,
   isLoading,
   onManageAssignments,
 }: AssignedServicesListProps) {
-  const categoryMap = useMemo(() => {
-    if (!categories) {
-      return new Map<string, Category>();
-    }
-    return new Map(
-      categories.map((category) => [category.id.toString(), category]),
-    );
-  }, [categories]);
-
   const groupedServices = useMemo(() => {
     if (!services?.length) {
       return [] as Array<{
@@ -58,16 +47,15 @@ export function AssignedServicesList({
     services.forEach((service) => {
       const categoryId = service.categoryId?.toString() ?? "uncategorized";
       if (!grouped.has(categoryId)) {
-        const category = categoryMap.get(categoryId);
         grouped.set(categoryId, {
           key: categoryId,
           title:
-            category?.name ||
+            service.categoryName ||
             (categoryId === "uncategorized"
               ? "Kategorisiz"
               : `Kategori #${categoryId}`),
-          color: category?.color,
-          position: category?.position ?? Number.MAX_SAFE_INTEGER,
+          color: service.categoryColor,
+          position: Number.MAX_SAFE_INTEGER,
           services: [],
         });
       }
@@ -83,7 +71,7 @@ export function AssignedServicesList({
         ),
       }))
       .sort((a, b) => a.position - b.position);
-  }, [services, categoryMap]);
+  }, [services]);
 
   const formatPrice = (price: string) => {
     const numericPrice = Number(price);

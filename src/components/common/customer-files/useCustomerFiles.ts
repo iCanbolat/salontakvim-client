@@ -9,17 +9,22 @@ import { toast } from "sonner";
 import {
   customerFileService,
   type CustomerFile,
+  type CustomerFileListResponse,
 } from "@/services/customer-file.service";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 
 interface UseCustomerFilesProps {
   storeId: string;
   customerId: string;
+  appointmentId?: string;
+  initialFiles?: CustomerFile[];
 }
 
 export function useCustomerFiles({
   storeId,
   customerId,
+  appointmentId,
+  initialFiles,
 }: UseCustomerFilesProps) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -38,9 +43,25 @@ export function useCustomerFiles({
 
   const [deleteFileId, setDeleteFileId] = useState<string | null>(null);
 
+  const shouldUseInitialFiles =
+    initialFiles !== undefined &&
+    debouncedSearch === "" &&
+    fileTypeFilter === "all";
+
+  const initialData = shouldUseInitialFiles
+    ? {
+        data: initialFiles,
+        total: initialFiles.length,
+        page: 1,
+        limit: initialFiles.length,
+        totalPages: 1,
+        totalSize: initialFiles.reduce((sum, file) => sum + file.fileSize, 0),
+      }
+    : undefined;
+
   // Fetch files
   const {
-    data,
+    data: fetchedData,
     isLoading,
     error,
     refetch: refreshFiles,
@@ -49,6 +70,7 @@ export function useCustomerFiles({
       "customer-files",
       storeId,
       customerId,
+      appointmentId,
       debouncedSearch,
       fileTypeFilter,
     ],
@@ -56,22 +78,112 @@ export function useCustomerFiles({
       customerFileService.getFiles(storeId, customerId, {
         search: debouncedSearch || undefined,
         fileType: fileTypeFilter !== "all" ? fileTypeFilter : undefined,
+        appointmentId: appointmentId || undefined,
       }),
     enabled: !!storeId && !!customerId,
+    initialData,
   });
+
+  const normalizedData = (() => {
+    if (!fetchedData) {
+      return undefined;
+    }
+    if ("files" in fetchedData) {
+      return fetchedData as CustomerFileListResponse & {
+        files: CustomerFile[];
+      };
+    }
+    return {
+      ...fetchedData,
+      files: fetchedData.data,
+    } as CustomerFileListResponse & { files: CustomerFile[] };
+  })();
+
+  const updateCachedFiles = useCallback(
+    (
+      updater: (files: CustomerFile[]) => CustomerFile[],
+      options?: { appointmentScope?: string | null },
+    ) => {
+      queryClient.setQueriesData(
+        {
+          predicate: (query) => {
+            const key = query.queryKey;
+            if (key[0] !== "customer-files") return false;
+            if (key[1] !== storeId || key[2] !== customerId) return false;
+
+            const scope = options?.appointmentScope;
+            if (scope && key[3] && key[3] !== scope) {
+              return false;
+            }
+            return true;
+          },
+        },
+        (old: any) => {
+          if (!old) return old;
+          const files = (old.files || old.data || []) as CustomerFile[];
+          const nextFiles = updater(files);
+          const totalSize = nextFiles.reduce(
+            (sum, file) => sum + file.fileSize,
+            0,
+          );
+
+          if ("files" in old) {
+            return {
+              ...old,
+              files: nextFiles,
+              total: nextFiles.length,
+              totalSize,
+            };
+          }
+          return {
+            ...old,
+            data: nextFiles,
+            total: nextFiles.length,
+            totalSize,
+          };
+        },
+      );
+    },
+    [queryClient, storeId, customerId],
+  );
 
   // Delete mutation
   const deleteMutation = useMutation({
     mutationFn: (fileId: string) =>
       customerFileService.deleteFile(storeId, customerId, fileId),
+    onMutate: async (fileId) => {
+      await queryClient.cancelQueries({
+        queryKey: ["customer-files", storeId, customerId],
+      });
+
+      const previousData = queryClient.getQueriesData({
+        predicate: (query) =>
+          query.queryKey[0] === "customer-files" &&
+          query.queryKey[1] === storeId &&
+          query.queryKey[2] === customerId,
+      });
+
+      updateCachedFiles((files) => files.filter((file) => file.id !== fileId), {
+        appointmentScope: appointmentId || null,
+      });
+
+      return { previousData };
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["customer-files", storeId, customerId],
       });
+      queryClient.invalidateQueries({ queryKey: ["store-files", storeId] });
+      queryClient.invalidateQueries({ queryKey: ["store-folders", storeId] });
       toast.success("Dosya başarıyla silindi");
       setDeleteFileId(null);
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _fileId, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: any) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
       toast.error(error.message || "Dosya silinemedi");
     },
   });
@@ -179,7 +291,7 @@ export function useCustomerFiles({
       deleteFile: (id: string) => deleteMutation.mutate(id),
       refreshFiles,
     },
-    data,
+    data: normalizedData,
     isLoading,
     error,
     isDeleting: deleteMutation.isPending,

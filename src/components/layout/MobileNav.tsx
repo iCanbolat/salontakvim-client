@@ -18,18 +18,20 @@ import {
   Clock,
   UserCog,
   FileText,
+  MessageSquare,
 } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
+import type { UserRole } from "@/types";
 
 interface NavItem {
   label: string;
   href: string;
   icon: React.ElementType;
-  roles: Array<"admin" | "staff">;
+  roles: UserRole[];
 }
 
 const adminNavItems: NavItem[] = [
@@ -152,6 +154,64 @@ const staffNavItems: NavItem[] = [
   },
 ];
 
+// Manager navigation - location scoped, no settings/analytics/widget
+const managerNavItems: NavItem[] = [
+  {
+    label: "Dashboard",
+    href: "/manager/dashboard",
+    icon: LayoutDashboard,
+    roles: ["manager"],
+  },
+  {
+    label: "Appointments",
+    href: "/manager/appointments",
+    icon: Calendar,
+    roles: ["manager"],
+  },
+  {
+    label: "Services",
+    href: "/manager/services",
+    icon: Briefcase,
+    roles: ["manager"],
+  },
+  {
+    label: "Staff",
+    href: "/manager/staff",
+    icon: Users,
+    roles: ["manager"],
+  },
+  {
+    label: "Customers",
+    href: "/manager/customers",
+    icon: UserCircle,
+    roles: ["manager"],
+  },
+  {
+    label: "Folders",
+    href: "/manager/files",
+    icon: FileText,
+    roles: ["manager"],
+  },
+  {
+    label: "Feedback",
+    href: "/manager/feedback",
+    icon: MessageSquare,
+    roles: ["manager"],
+  },
+  {
+    label: "Notifications",
+    href: "/manager/notifications",
+    icon: Bell,
+    roles: ["manager"],
+  },
+  {
+    label: "My Profile",
+    href: "/manager/profile",
+    icon: UserCog,
+    roles: ["manager"],
+  },
+];
+
 interface MobileNavProps {
   isOpen: boolean;
   onClose: () => void;
@@ -160,7 +220,20 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const { user } = useAuth();
 
-  const navItems = user?.role === "admin" ? adminNavItems : staffNavItems;
+  const getNavItems = () => {
+    switch (user?.role) {
+      case "admin":
+        return adminNavItems;
+      case "manager":
+        return managerNavItems;
+      case "staff":
+        return staffNavItems;
+      default:
+        return [];
+    }
+  };
+
+  const navItems = getNavItems();
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -194,7 +267,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                       "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors",
                       isActive
                         ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
                     )
                   }
                 >

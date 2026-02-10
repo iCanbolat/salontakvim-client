@@ -31,6 +31,8 @@ import { useDashboardData } from "./hooks/useDashboardData";
 export function DashboardPage() {
   const { user, store, staffMember, adminData, staffData, isLoading } =
     useDashboardData();
+  const isStoreDashboardRole =
+    user?.role === "admin" || user?.role === "manager";
 
   if (isLoading) {
     return (
@@ -212,8 +214,8 @@ export function DashboardPage() {
     );
   };
 
-  // If user is admin, show admin dashboard (with tabs if they are also staff)
-  if (user?.role === "admin") {
+  // If user is admin or manager, show store dashboard (with tabs if they are also staff)
+  if (isStoreDashboardRole) {
     if (staffMember) {
       return (
         <Tabs defaultValue="store" className="space-y-6">

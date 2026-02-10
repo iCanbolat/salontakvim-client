@@ -10,6 +10,10 @@ import {
 
 export function useDashboardData() {
   const { user } = useAuth();
+  const managerLocationId =
+    user?.role === "manager" ? (user.locationId ?? undefined) : undefined;
+  const isStoreDashboardRole =
+    user?.role === "admin" || user?.role === "manager";
 
   // 1. Fetch user's store
   const { data: store, isLoading: storeLoading } = useQuery({
@@ -34,16 +38,23 @@ export function useDashboardData() {
     isLoading: adminAnalyticsLoading,
     error: adminError,
   } = useQuery({
-    queryKey: ["admin-dashboard", store?.id],
-    queryFn: () => analyticsService.getDashboard(store!.id),
-    enabled: !!store?.id && user?.role === "admin",
+    queryKey: ["admin-dashboard", store?.id, managerLocationId],
+    queryFn: () =>
+      analyticsService.getDashboard(
+        store!.id,
+        managerLocationId ? { locationId: managerLocationId } : undefined,
+      ),
+    enabled: !!store?.id && isStoreDashboardRole,
   });
 
   const { data: adminActivities = [], isLoading: adminActivitiesLoading } =
     useQuery({
-      queryKey: ["admin-activities", store?.id],
-      queryFn: () => activityService.getRecentActivities(store!.id),
-      enabled: !!store?.id && user?.role === "admin",
+      queryKey: ["admin-activities", store?.id, managerLocationId],
+      queryFn: () =>
+        activityService.getRecentActivities(store!.id, {
+          locationId: managerLocationId,
+        }),
+      enabled: !!store?.id && isStoreDashboardRole,
     });
 
   // 4. Staff specific data
@@ -82,7 +93,7 @@ export function useDashboardData() {
   const isLoading =
     storeLoading ||
     staffLoading ||
-    (user?.role === "admin" &&
+    (isStoreDashboardRole &&
       (adminAnalyticsLoading || adminActivitiesLoading)) ||
     (staffMember && staffAppointmentsLoading);
 

@@ -91,6 +91,9 @@ export function ServiceAssignmentDialog({
       queryClient.invalidateQueries({
         queryKey: ["staff-services", storeId, staff.id],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staff.id],
+      });
       queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
       refetchStaffServices();
       toast.success("Services assigned successfully!", {

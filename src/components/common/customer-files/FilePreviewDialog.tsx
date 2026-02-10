@@ -5,8 +5,11 @@ import {
   DialogTitle,
   DialogBody,
 } from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { Loader2, Calendar, User, ShoppingBag } from "lucide-react";
 import { type CustomerFile } from "@/services/customer-file.service";
+import type { Appointment } from "@/types";
+import { format } from "date-fns";
+import { tr } from "date-fns/locale";
 
 interface FilePreviewDialogProps {
   isOpen: boolean;
@@ -14,6 +17,7 @@ interface FilePreviewDialogProps {
   file: CustomerFile | null;
   imageUrl: string | null;
   isLoading: boolean;
+  appointment?: Appointment;
 }
 
 export function FilePreviewDialog({
@@ -22,12 +26,41 @@ export function FilePreviewDialog({
   file,
   imageUrl,
   isLoading,
+  appointment,
 }: FilePreviewDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl">
         <DialogHeader>
-          <DialogTitle>{file?.originalName}</DialogTitle>
+          <DialogTitle>
+            {file?.originalName}
+            {appointment && (
+              <div className="mt-2 text-sm font-normal text-muted-foreground flex flex-wrap gap-4">
+                <div className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  <span>
+                    {format(
+                      new Date(appointment.startDateTime),
+                      "dd MMMM yyyy HH:mm",
+                      { locale: tr },
+                    )}
+                  </span>
+                </div>
+                {appointment.serviceName && (
+                  <div className="flex items-center gap-1">
+                    <ShoppingBag className="h-3 w-3" />
+                    <span>{appointment.serviceName}</span>
+                  </div>
+                )}
+                {appointment.staffName && (
+                  <div className="flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    <span>{appointment.staffName}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </DialogTitle>
         </DialogHeader>
         <DialogBody>
           {file ? (

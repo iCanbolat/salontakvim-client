@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, Mail, MapPin, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import {
 } from "./components";
 import type { DayOfWeek } from "@/types";
 import { useStaffDetails } from "./hooks/useStaffDetails";
+import { useAuth } from "@/contexts";
 
 const DAY_LABELS: { value: DayOfWeek; label: string }[] = [
   { value: "monday", label: "Monday" },
@@ -34,6 +36,11 @@ const DAY_LABELS: { value: DayOfWeek; label: string }[] = [
 
 export function StaffDetails() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const staffBasePath = useMemo(
+    () => (user?.role === "manager" ? "/manager/staff" : "/admin/staff"),
+    [user?.role],
+  );
   const { state, actions, data } = useStaffDetails();
   const {
     isProfileDialogOpen,
@@ -44,14 +51,7 @@ export function StaffDetails() {
     isValidStaffId,
   } = state;
 
-  const {
-    store,
-    staff,
-    staffServices,
-    workingHours,
-    categories,
-    staffDisplayName,
-  } = data;
+  const { store, staff, staffServices, workingHours, staffDisplayName } = data;
 
   if (isLoading && !staff) {
     return (
@@ -64,7 +64,7 @@ export function StaffDetails() {
   if (error || !isValidStaffId) {
     return (
       <div className="space-y-4">
-        <Button variant="ghost" onClick={() => navigate("/admin/staff")}>
+        <Button variant="ghost" onClick={() => navigate(staffBasePath)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Staff
         </Button>
@@ -82,7 +82,7 @@ export function StaffDetails() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <Button variant="ghost" onClick={() => navigate("/admin/staff")}>
+        <Button variant="ghost" onClick={() => navigate(staffBasePath)}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Staff
         </Button>
@@ -112,7 +112,6 @@ export function StaffDetails() {
                   <Badge variant={staff.isVisible ? "default" : "secondary"}>
                     {staff.isVisible ? "Visible" : "Hidden"}
                   </Badge>
-                  <Badge variant="outline">Member</Badge>
                 </div>
               </div>
 
@@ -172,10 +171,7 @@ export function StaffDetails() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <AssignedServicesList
-                    services={staffServices || []}
-                    categories={categories || []}
-                  />
+                  <AssignedServicesList services={staffServices || []} />
                 </CardContent>
               </Card>
             </TabsContent>

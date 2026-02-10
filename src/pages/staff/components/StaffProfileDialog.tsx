@@ -11,6 +11,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { staffService, locationService } from "@/services";
+import { useAuth } from "@/contexts";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +22,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -32,6 +32,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import type { StaffMember, UpdateStaffProfileDto } from "@/types";
 
 const profileSchema = z.object({
@@ -39,7 +48,7 @@ const profileSchema = z.object({
   title: z.string().max(255, "Title too long").optional(),
   locationId: z.string().optional().nullable(),
   isVisible: z.boolean(),
-  role: z.enum(["admin", "staff"] as const),
+  role: z.enum(["admin", "manager", "staff"] as const),
 });
 
 type ProfileFormData = z.infer<typeof profileSchema>;
@@ -58,6 +67,8 @@ export function StaffProfileDialog({
   onClose,
 }: StaffProfileDialogProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isManager = user?.role === "manager";
   const [staffSnapshot, setStaffSnapshot] = useState(staff);
 
   // Update staff snapshot only when dialog opens to prevent flickering on close
@@ -67,13 +78,7 @@ export function StaffProfileDialog({
     }
   }, [open, staff]);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isDirty },
-    watch,
-    setValue,
-  } = useForm<ProfileFormData>({
+  const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileSchema),
     mode: "onChange",
     defaultValues: {
@@ -81,18 +86,14 @@ export function StaffProfileDialog({
       title: staff.title || "",
       locationId: staff.locationId ?? null,
       isVisible: staff.isVisible,
-      role: staff.role === "admin" ? "admin" : "staff",
+      role: staff.role as "admin" | "manager" | "staff",
     },
   });
-
-  const isVisible = watch("isVisible");
-  const role = watch("role");
-  const selectedLocationId = watch("locationId");
 
   const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", storeId],
     queryFn: () => locationService.getLocations(storeId),
-    enabled: open,
+    enabled: open && !isManager,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -104,6 +105,9 @@ export function StaffProfileDialog({
       queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
       queryClient.invalidateQueries({
         queryKey: ["staff-member", storeId, staff.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staff.id],
       });
       toast.success("Profile updated", {
         description: "Staff member profile has been updated successfully.",
@@ -142,161 +146,198 @@ export function StaffProfileDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col flex-1 min-h-0"
-        >
-          <DialogBody className="space-y-4">
-            {/* Email (Read-only) */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                value={staffSnapshot.email}
-                disabled
-                className="bg-gray-50"
-              />
-            </div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            <DialogBody className="space-y-4">
+              {/* Email (Read-only) */}
+              <FormItem>
+                <FormLabel>Email</FormLabel>
+                <FormControl>
+                  <Input
+                    type="email"
+                    value={staffSnapshot.email}
+                    disabled
+                    className="bg-gray-50"
+                  />
+                </FormControl>
+              </FormItem>
 
-            {/* Title */}
-            <div className="space-y-2">
-              <Label htmlFor="title">Job Title</Label>
-              <Input
-                id="title"
-                type="text"
-                placeholder="e.g. Senior Stylist, Nail Technician"
-                {...register("title")}
-                disabled={updateMutation.isPending}
+              {/* Title */}
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Job Title</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="e.g. Senior Stylist, Nail Technician"
+                        {...field}
+                        value={field.value || ""}
+                        disabled={updateMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-              {errors.title && (
-                <p className="text-sm text-red-600">{errors.title.message}</p>
+
+              {/* Bio */}
+              <FormField
+                control={form.control}
+                name="bio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bio</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Tell customers about this staff member's experience and specialties..."
+                        rows={4}
+                        {...field}
+                        value={field.value || ""}
+                        disabled={updateMutation.isPending}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Location Selection - Hidden for managers */}
+              {!isManager && (
+                <FormField
+                  control={form.control}
+                  name="locationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location (Optional)</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value || "none"}
+                        disabled={updateMutation.isPending || locationsLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select a location" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">No location</SelectItem>
+                          {locations?.map((location) => (
+                            <SelectItem key={location.id} value={location.id}>
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Choose which branch this staff member belongs to.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               )}
-            </div>
 
-            {/* Bio */}
-            <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                placeholder="Tell customers about this staff member's experience and specialties..."
-                rows={4}
-                {...register("bio")}
-                disabled={updateMutation.isPending}
+              {/* Visibility Toggle */}
+              <FormField
+                control={form.control}
+                name="isVisible"
+                render={({ field }) => (
+                  <FormItem className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        Visible in Booking Widget
+                      </FormLabel>
+                      <FormDescription>
+                        Show this staff member to customers when booking
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                        disabled={updateMutation.isPending}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
-              {errors.bio && (
-                <p className="text-sm text-red-600">{errors.bio.message}</p>
-              )}
-            </div>
 
-            {/* Location Selection */}
-            <div className="space-y-2">
-              <Label htmlFor="locationId">Location (Optional)</Label>
-              <Select
-                value={
-                  selectedLocationId === null ||
-                  selectedLocationId === undefined
-                    ? "none"
-                    : selectedLocationId
-                }
-                onValueChange={(value) => {
-                  setValue("locationId", value === "none" ? undefined : value, {
-                    shouldDirty: true,
-                  });
-                }}
-                disabled={updateMutation.isPending || locationsLoading}
+              {/* Role Selection */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Account Role</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={updateMutation.isPending}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="staff">
+                          Staff (Limited Access)
+                        </SelectItem>
+                        <SelectItem value="manager">
+                          Manager (Location-based Full Access)
+                        </SelectItem>
+                        {!isManager && (
+                          <SelectItem value="admin">
+                            Admin (Full System Access)
+                          </SelectItem>
+                        )}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Determines the staff member's access level in the system.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Error Alert */}
+              {updateMutation.isError && (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Failed to update profile. Please try again.
+                  </AlertDescription>
+                </Alert>
+              )}
+            </DialogBody>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3 pt-2 px-6 pb-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleClose}
+                disabled={updateMutation.isPending}
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a location" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">No location</SelectItem>
-                  {locations?.map((location) => (
-                    <SelectItem key={location.id} value={location.id}>
-                      {location.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-gray-500">
-                Choose which branch this staff member belongs to.
-              </p>
-              {errors.locationId && (
-                <p className="text-sm text-red-600">
-                  {errors.locationId.message}
-                </p>
-              )}
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!form.formState.isDirty || updateMutation.isPending}
+              >
+                {updateMutation.isPending && (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                )}
+                Save Changes
+              </Button>
             </div>
-
-            {/* Visibility Toggle */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="visibility">Visible in Booking Widget</Label>
-                <p className="text-sm text-gray-600">
-                  Show this staff member to customers when booking
-                </p>
-              </div>
-              <Switch
-                id="visibility"
-                checked={isVisible}
-                onCheckedChange={(checked: boolean) =>
-                  setValue("isVisible", checked, { shouldDirty: true })
-                }
-                disabled={updateMutation.isPending}
-              />
-            </div>
-
-            {/* Role Toggle */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div className="space-y-0.5">
-                <Label htmlFor="role">Admin Access</Label>
-                <p className="text-sm text-gray-600">
-                  Grant this staff member admin privileges for the store
-                </p>
-              </div>
-              <Switch
-                id="role"
-                checked={role === "admin"}
-                onCheckedChange={(checked: boolean) =>
-                  setValue("role", checked ? "admin" : "staff", {
-                    shouldDirty: true,
-                  })
-                }
-                disabled={updateMutation.isPending}
-              />
-            </div>
-
-            {/* Error Alert */}
-            {updateMutation.isError && (
-              <Alert variant="destructive">
-                <AlertDescription>
-                  Failed to update profile. Please try again.
-                </AlertDescription>
-              </Alert>
-            )}
-          </DialogBody>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-3 pt-2 px-6 pb-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={updateMutation.isPending}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!isDirty || updateMutation.isPending}
-            >
-              {updateMutation.isPending && (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-              )}
-              Save Changes
-            </Button>
-          </div>
-        </form>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   );

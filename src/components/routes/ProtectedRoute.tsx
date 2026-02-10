@@ -13,6 +13,7 @@ interface ProtectedRouteProps {
 
 const roleFallbackPaths: Record<UserRole, string> = {
   admin: "/admin/dashboard",
+  manager: "/manager/dashboard",
   staff: "/staff/dashboard",
   customer: "",
 };

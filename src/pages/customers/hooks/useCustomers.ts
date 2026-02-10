@@ -8,22 +8,30 @@ import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { storeService, customerService } from "@/services";
 import { useDebouncedSearch, usePagination } from "@/hooks";
+import { useAuth } from "@/contexts";
 import type { CustomerWithStats } from "@/types";
 
 export type CustomerView = "grid" | "list";
 
 export function useCustomers() {
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // UI State
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(
+    searchParams.get("search") || "",
+  );
+  const [currentPage, setCurrentPage] = useState(
+    parseInt(searchParams.get("page") || "1", 10),
+  );
   const [view, setView] = useState<CustomerView>("grid");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
   const [isSendingSms, setIsSendingSms] = useState(false);
+  const itemsPerPage = 12;
 
   // Determine base path (admin or staff)
   const basePath = location.pathname.startsWith("/staff")
@@ -43,14 +51,24 @@ export function useCustomers() {
 
   // Fetch customers
   const {
-    data: allCustomers,
+    data: customerResponse,
     isPending: customersPending,
     error,
   } = useQuery({
-    queryKey: ["customers", store?.id, debouncedSearch],
+    queryKey: [
+      "customers",
+      store?.id,
+      debouncedSearch,
+      currentPage,
+      user?.role,
+      user?.id,
+      user?.locationId,
+    ],
     queryFn: () =>
       customerService.getCustomers(store!.id, {
         search: debouncedSearch || undefined,
+        page: currentPage,
+        limit: itemsPerPage,
       }),
     enabled: !!store?.id,
     placeholderData: keepPreviousData,
@@ -59,26 +77,23 @@ export function useCustomers() {
   // Pagination
   const {
     paginatedItems: customers,
-    currentPage,
     totalPages,
     goToPage,
     startIndex,
     endIndex,
   } = usePagination({
-    items: allCustomers || [],
-    itemsPerPage: 12,
+    items: customerResponse?.data || [],
+    itemsPerPage,
+    totalItems: customerResponse?.total ?? 0,
+    currentPage,
+    onPageChange: setCurrentPage,
+    disableSlice: true,
   });
 
-  const isInitialLoading = (storeLoading || customersPending) && !allCustomers;
+  const isInitialLoading =
+    (storeLoading || customersPending) && !customerResponse;
 
   // URL Sync
-  useEffect(() => {
-    const initialSearch = searchParams.get("search");
-    if (initialSearch && initialSearch !== searchTerm) {
-      setSearchTerm(initialSearch);
-    }
-  }, [searchParams]);
-
   useEffect(() => {
     const current = new URLSearchParams(searchParams);
     if (searchTerm) {
@@ -86,31 +101,38 @@ export function useCustomers() {
     } else {
       current.delete("search");
     }
+
+    if (currentPage > 1) {
+      current.set("page", currentPage.toString());
+    } else {
+      current.delete("page");
+    }
+
     const nextSearch = current.toString();
     const prevSearch = searchParams.toString();
 
     if (nextSearch !== prevSearch) {
       setSearchParams(current, { replace: true });
     }
-  }, [searchTerm, setSearchParams, searchParams]);
+  }, [searchTerm, currentPage, setSearchParams, searchParams]);
 
   // Reset pagination on search
   useEffect(() => {
-    goToPage(1);
+    setCurrentPage(1);
   }, [debouncedSearch]);
 
   // Derived
   const isAllCustomersSelected =
-    allCustomers &&
-    allCustomers.length > 0 &&
-    selectedCustomers.length === allCustomers.length;
+    customerResponse?.data &&
+    customerResponse.data.length > 0 &&
+    selectedCustomers.length === customerResponse.total;
 
   const selectedCustomersData = useMemo(
     () =>
-      allCustomers
-        ? allCustomers.filter((c) => selectedCustomers.includes(c.id))
+      customerResponse?.data
+        ? customerResponse.data.filter((c) => selectedCustomers.includes(c.id))
         : [],
-    [allCustomers, selectedCustomers],
+    [customerResponse?.data, selectedCustomers],
   );
 
   // Actions
@@ -148,9 +170,9 @@ export function useCustomers() {
   );
 
   const handleSelectAllInTotal = useCallback(() => {
-    if (!allCustomers) return;
-    setSelectedCustomers(allCustomers.map((c) => c.id));
-  }, [allCustomers]);
+    if (!customerResponse) return;
+    setSelectedCustomers(customerResponse.data.map((c) => c.id));
+  }, [customerResponse]);
 
   const handleSendSms = async (message: string) => {
     setIsSendingSms(true);
@@ -186,7 +208,7 @@ export function useCustomers() {
     },
     data: {
       customers,
-      totalCount: allCustomers?.length ?? 0,
+      totalCount: customerResponse?.total ?? 0,
       selectedCustomersData,
     },
     actions: {

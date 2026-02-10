@@ -3,7 +3,7 @@
  * Matches backend user schema
  */
 
-export type UserRole = "admin" | "staff" | "customer";
+export type UserRole = "admin" | "manager" | "staff" | "customer";
 export type PaymentStatus = "freemium" | "paid";
 export type AuthProvider = "local" | "google" | "facebook" | "apple";
 
@@ -23,6 +23,9 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   customerNumber?: number; // For easy customer search
+  // Manager/Staff specific fields
+  locationId?: string | null;
+  storeId?: string | null;
 }
 
 export interface AuthResponse {

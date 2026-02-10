@@ -4,11 +4,12 @@ import type { PaginatedResponse, RecentActivity } from "@/types";
 class ActivityService {
   async getRecentActivities(
     storeId: string,
-    limit = 10,
+    options?: { limit?: number; locationId?: string },
   ): Promise<RecentActivity[]> {
+    const limit = options?.limit ?? 10;
     const response = await axiosInstance.get<RecentActivity[]>(
       `/stores/${storeId}/activities`,
-      { params: { limit } },
+      { params: { limit, locationId: options?.locationId } },
     );
     return response.data;
   }
@@ -18,11 +19,12 @@ class ActivityService {
     page: number;
     limit: number;
     type?: string;
+    locationId?: string;
   }): Promise<PaginatedResponse<RecentActivity>> {
-    const { storeId, page, limit, type } = params;
+    const { storeId, page, limit, type, locationId } = params;
     const response = await axiosInstance.get<PaginatedResponse<RecentActivity>>(
       `/stores/${storeId}/activities`,
-      { params: { page, limit, type } },
+      { params: { page, limit, type, locationId } },
     );
     return response.data;
   }

@@ -144,6 +144,43 @@ function App() {
                   />
                   <Route path="/staff/profile" element={<StaffProfile />} />
                 </Route>
+
+                {/* Manager routes - location scoped, no settings/analytics/widget */}
+                <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
+                  <Route
+                    path="/manager/dashboard"
+                    element={<DashboardPage />}
+                  />
+                  <Route
+                    path="/manager/appointments"
+                    element={<AppointmentsList />}
+                  />
+                  <Route
+                    path="/manager/appointments/:appointmentId"
+                    element={<AppointmentDetailPage />}
+                  />
+                  <Route path="/manager/services" element={<ServicesList />} />
+                  <Route path="/manager/staff" element={<StaffList />} />
+                  <Route
+                    path="/manager/staff/:staffId"
+                    element={<StaffDetails />}
+                  />
+                  <Route
+                    path="/manager/customers"
+                    element={<CustomersList />}
+                  />
+                  <Route
+                    path="/manager/customers/:customerId"
+                    element={<CustomerDetails />}
+                  />
+                  <Route path="/manager/files" element={<FilesList />} />
+                  <Route path="/manager/feedback" element={<FeedbackList />} />
+                  <Route
+                    path="/manager/notifications"
+                    element={<NotificationSettings />}
+                  />
+                  <Route path="/manager/profile" element={<StaffProfile />} />
+                </Route>
               </Route>
 
               {/* Root redirect based on auth */}
@@ -189,6 +226,8 @@ function WelcomeRoute() {
   if (!authService.needsOnboarding()) {
     if (user.role === "admin") {
       return <Navigate to="/admin/dashboard" replace />;
+    } else if (user.role === "manager") {
+      return <Navigate to="/manager/dashboard" replace />;
     } else if (user.role === "staff") {
       return <Navigate to="/staff/dashboard" replace />;
     }
@@ -213,6 +252,8 @@ function RootRedirect() {
   // Redirect to appropriate dashboard based on role
   if (user.role === "admin") {
     return <Navigate to="/admin/dashboard" replace />;
+  } else if (user.role === "manager") {
+    return <Navigate to="/manager/dashboard" replace />;
   } else if (user.role === "staff") {
     return <Navigate to="/staff/dashboard" replace />;
   }

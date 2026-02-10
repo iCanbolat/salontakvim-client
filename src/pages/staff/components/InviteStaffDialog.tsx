@@ -4,12 +4,14 @@
  */
 
 import { useForm } from "react-hook-form";
+import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Mail, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { staffService, locationService } from "@/services";
+import { useAuth } from "@/contexts";
 import {
   Dialog,
   DialogContent,
@@ -59,10 +61,14 @@ export function InviteStaffDialog({
   onClose,
 }: InviteStaffDialogProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isManager = user?.role === "manager";
+  const managerLocationId = user?.locationId;
+
   const { data: locations, isLoading: locationsLoading } = useQuery({
     queryKey: ["locations", storeId],
     queryFn: () => locationService.getLocations(storeId),
-    enabled: !!storeId && storeId !== "0",
+    enabled: !!storeId && storeId !== "0" && !isManager,
   });
 
   const form = useForm<InviteFormData>({
@@ -71,9 +77,16 @@ export function InviteStaffDialog({
     defaultValues: {
       email: "",
       title: "",
-      locationId: "",
+      locationId: isManager && managerLocationId ? managerLocationId : "",
     },
   });
+
+  // Set locationId for manager when dialog opens
+  useEffect(() => {
+    if (open && isManager && managerLocationId) {
+      form.setValue("locationId", managerLocationId);
+    }
+  }, [open, isManager, managerLocationId, form]);
 
   // Invite staff mutation
   const inviteMutation = useMutation({
@@ -143,40 +156,62 @@ export function InviteStaffDialog({
                 )}
               />
 
-              {/* Location Field */}
-              <FormField
-                control={form.control}
-                name="locationId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Location <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <Select
-                      onValueChange={field.onChange}
-                      value={field.value}
-                      disabled={inviteMutation.isPending || locationsLoading}
-                    >
+              {/* Location Field - Hidden for managers */}
+              {isManager ? (
+                <FormField
+                  control={form.control}
+                  name="locationId"
+                  render={() => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
                       <FormControl>
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a location" />
-                        </SelectTrigger>
+                        <Input
+                          value="Your assigned location"
+                          disabled
+                          className="bg-gray-50"
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {(locations || []).map((location) => (
-                          <SelectItem
-                            key={location.id}
-                            value={String(location.id)}
-                          >
-                            {location.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <p className="text-xs text-muted-foreground">
+                        Staff will be invited to your assigned location
+                      </p>
+                    </FormItem>
+                  )}
+                />
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="locationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>
+                        Location <span className="text-red-500">*</span>
+                      </FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                        disabled={inviteMutation.isPending || locationsLoading}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select a location" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {(locations || []).map((location) => (
+                            <SelectItem
+                              key={location.id}
+                              value={String(location.id)}
+                            >
+                              {location.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
 
               {/* Title Field */}
               <FormField

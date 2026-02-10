@@ -4,12 +4,14 @@
  */
 
 import { axiosInstance } from "./api-client";
+import type { PaginatedResponse } from "@/types";
 
 export interface CustomerFile {
   id: string;
   storeId: string;
   customerId: string;
   uploadedBy: string | null;
+  appointmentId: string | null;
   fileName: string;
   originalName: string;
   mimeType: string;
@@ -22,15 +24,26 @@ export interface CustomerFile {
   updatedAt: string;
 }
 
-export interface CustomerFileListResponse {
-  files: CustomerFile[];
-  total: number;
+export interface CustomerFileListResponse extends PaginatedResponse<CustomerFile> {
+  totalSize: number;
+}
+
+export interface FolderStats {
+  customerId: string;
+  customerName: string;
+  fileCount: number;
+  totalSize: number;
+  lastUploadedAt: string;
+}
+
+export interface FolderListResponse extends PaginatedResponse<FolderStats> {
   totalSize: number;
 }
 
 export interface UploadFileOptions {
   description?: string;
   tags?: string[];
+  appointmentId?: string;
 }
 
 export interface UpdateFileOptions {
@@ -48,18 +61,41 @@ export const customerFileService = {
       fileType?: string;
       search?: string;
       limit?: number;
-      offset?: number;
-    }
+      page?: number;
+    },
   ): Promise<CustomerFileListResponse> {
     const params = new URLSearchParams();
 
     if (options?.fileType) params.append("fileType", options.fileType);
     if (options?.search) params.append("search", options.search);
     if (options?.limit) params.append("limit", options.limit.toString());
-    if (options?.offset) params.append("offset", options.offset.toString());
+    if (options?.page) params.append("page", options.page.toString());
 
     const response = await axiosInstance.get<CustomerFileListResponse>(
-      `/stores/${storeId}/files?${params.toString()}`
+      `/stores/${storeId}/files?${params.toString()}`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Get store file folders (grouped by customer)
+   */
+  async getFolders(
+    storeId: string,
+    options?: {
+      search?: string;
+      limit?: number;
+      page?: number;
+    },
+  ): Promise<FolderListResponse> {
+    const params = new URLSearchParams();
+
+    if (options?.search) params.append("search", options.search);
+    if (options?.limit) params.append("limit", options.limit.toString());
+    if (options?.page) params.append("page", options.page.toString());
+
+    const response = await axiosInstance.get<FolderListResponse>(
+      `/stores/${storeId}/files/folders?${params.toString()}`,
     );
     return response.data;
   },
@@ -69,11 +105,11 @@ export const customerFileService = {
    */
   async downloadStoreFile(
     storeId: string,
-    fileId: string
+    fileId: string,
   ): Promise<{ blob: Blob; fileName: string }> {
     const response = await axiosInstance.get(
       `/stores/${storeId}/files/${fileId}/download`,
-      { responseType: "blob" }
+      { responseType: "blob" },
     );
 
     const disposition = response.headers["content-disposition"] || "";
@@ -99,19 +135,22 @@ export const customerFileService = {
     options?: {
       fileType?: string;
       search?: string;
+      appointmentId?: string;
       limit?: number;
-      offset?: number;
-    }
+      page?: number;
+    },
   ): Promise<CustomerFileListResponse> {
     const params = new URLSearchParams();
 
     if (options?.fileType) params.append("fileType", options.fileType);
     if (options?.search) params.append("search", options.search);
+    if (options?.appointmentId)
+      params.append("appointmentId", options.appointmentId);
     if (options?.limit) params.append("limit", options.limit.toString());
-    if (options?.offset) params.append("offset", options.offset.toString());
+    if (options?.page) params.append("page", options.page.toString());
 
     const response = await axiosInstance.get<CustomerFileListResponse>(
-      `/stores/${storeId}/customers/${customerId}/files?${params.toString()}`
+      `/stores/${storeId}/customers/${customerId}/files?${params.toString()}`,
     );
     return response.data;
   },
@@ -122,10 +161,10 @@ export const customerFileService = {
   async getFile(
     storeId: string,
     customerId: string,
-    fileId: string
+    fileId: string,
   ): Promise<CustomerFile> {
     const response = await axiosInstance.get<CustomerFile>(
-      `/stores/${storeId}/customers/${customerId}/files/${fileId}`
+      `/stores/${storeId}/customers/${customerId}/files/${fileId}`,
     );
     return response.data;
   },
@@ -137,7 +176,7 @@ export const customerFileService = {
     storeId: string,
     customerId: string,
     file: File,
-    options?: UploadFileOptions
+    options?: UploadFileOptions,
   ): Promise<CustomerFile> {
     const formData = new FormData();
     formData.append("file", file);
@@ -148,6 +187,9 @@ export const customerFileService = {
     if (options?.tags && options.tags.length > 0) {
       options.tags.forEach((tag) => formData.append("tags", tag));
     }
+    if (options?.appointmentId) {
+      formData.append("appointmentId", options.appointmentId);
+    }
 
     const response = await axiosInstance.post<CustomerFile>(
       `/stores/${storeId}/customers/${customerId}/files`,
@@ -156,7 +198,7 @@ export const customerFileService = {
         headers: {
           "Content-Type": "multipart/form-data",
         },
-      }
+      },
     );
     return response.data;
   },
@@ -168,11 +210,11 @@ export const customerFileService = {
     storeId: string,
     customerId: string,
     fileId: string,
-    options: UpdateFileOptions
+    options: UpdateFileOptions,
   ): Promise<CustomerFile> {
     const response = await axiosInstance.patch<CustomerFile>(
       `/stores/${storeId}/customers/${customerId}/files/${fileId}`,
-      options
+      options,
     );
     return response.data;
   },
@@ -183,10 +225,10 @@ export const customerFileService = {
   async deleteFile(
     storeId: string,
     customerId: string,
-    fileId: string
+    fileId: string,
   ): Promise<void> {
     await axiosInstance.delete(
-      `/stores/${storeId}/customers/${customerId}/files/${fileId}`
+      `/stores/${storeId}/customers/${customerId}/files/${fileId}`,
     );
   },
 
@@ -196,11 +238,11 @@ export const customerFileService = {
   async deleteMultipleFiles(
     storeId: string,
     customerId: string,
-    fileIds: string[]
+    fileIds: string[],
   ): Promise<{ deleted: number }> {
     const response = await axiosInstance.delete<{ deleted: number }>(
       `/stores/${storeId}/customers/${customerId}/files`,
-      { data: { fileIds } }
+      { data: { fileIds } },
     );
     return response.data;
   },
@@ -211,11 +253,11 @@ export const customerFileService = {
   async downloadFile(
     storeId: string,
     customerId: string,
-    fileId: string
+    fileId: string,
   ): Promise<{ blob: Blob; fileName: string }> {
     const response = await axiosInstance.get(
       `/stores/${storeId}/customers/${customerId}/files/${fileId}/download`,
-      { responseType: "blob" }
+      { responseType: "blob" },
     );
 
     const disposition = response.headers["content-disposition"] || "";

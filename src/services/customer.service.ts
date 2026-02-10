@@ -9,6 +9,7 @@ import type {
   CustomerProfile,
   CustomerFilters,
   UpdateCustomerDto,
+  PaginatedResponse,
 } from "@/types";
 
 /**
@@ -22,8 +23,8 @@ export const customerService = {
    */
   async getCustomers(
     storeId: string,
-    filters?: CustomerFilters
-  ): Promise<CustomerWithStats[]> {
+    filters?: CustomerFilters,
+  ): Promise<PaginatedResponse<CustomerWithStats>> {
     const params = new URLSearchParams();
 
     if (filters?.search) params.append("search", filters.search);
@@ -32,9 +33,9 @@ export const customerService = {
     if (filters?.sortBy) params.append("sortBy", filters.sortBy);
     if (filters?.sortOrder) params.append("sortOrder", filters.sortOrder);
 
-    const response = await axiosInstance.get<CustomerWithStats[]>(
-      `/stores/${storeId}/customers?${params.toString()}`
-    );
+    const response = await axiosInstance.get<
+      PaginatedResponse<CustomerWithStats>
+    >(`/stores/${storeId}/customers?${params.toString()}`);
     return response.data;
   },
 
@@ -44,10 +45,10 @@ export const customerService = {
    */
   async getCustomerProfile(
     storeId: string,
-    customerId: string
+    customerId: string,
   ): Promise<CustomerProfile> {
     const response = await axiosInstance.get<CustomerProfile>(
-      `/stores/${storeId}/customers/${customerId}`
+      `/stores/${storeId}/customers/${customerId}`,
     );
     return response.data;
   },
@@ -58,11 +59,11 @@ export const customerService = {
   async updateCustomer(
     storeId: string,
     customerId: string,
-    data: UpdateCustomerDto
+    data: UpdateCustomerDto,
   ): Promise<CustomerWithStats> {
     const response = await axiosInstance.patch<CustomerWithStats>(
       `/stores/${storeId}/customers/${customerId}`,
-      data
+      data,
     );
     return response.data;
   },
@@ -79,7 +80,7 @@ export const customerService = {
    */
   async getCustomerAppointments(storeId: string, customerId: string) {
     const response = await axiosInstance.get(
-      `/stores/${storeId}/appointments?customerId=${customerId}`
+      `/stores/${storeId}/appointments?customerId=${customerId}`,
     );
     return response.data;
   },
@@ -89,10 +90,10 @@ export const customerService = {
    */
   async searchCustomers(
     storeId: string,
-    query: string
+    query: string,
   ): Promise<CustomerWithStats[]> {
     const response = await axiosInstance.get<CustomerWithStats[]>(
-      `/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`
+      `/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`,
     );
     return response.data;
   },

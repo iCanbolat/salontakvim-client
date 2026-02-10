@@ -91,13 +91,6 @@ export function WorkingHoursDialog({
   const createMutation = useMutation({
     mutationFn: async (data: CreateWorkingHoursDto) =>
       staffService.createWorkingHours(storeId, staff.id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["working-hours", storeId, staff.id],
-      });
-      toast.success("Schedule updated");
-      refetch();
-    },
   });
 
   const updateMutation = useMutation({
@@ -108,13 +101,6 @@ export function WorkingHoursDialog({
       id: string;
       data: CreateWorkingHoursDto;
     }) => staffService.updateWorkingHours(storeId, staff.id, id, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["working-hours", storeId, staff.id],
-      });
-      toast.success("Schedule updated");
-      refetch();
-    },
   });
 
   const deleteMutation = useMutation({
@@ -123,6 +109,9 @@ export function WorkingHoursDialog({
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["working-hours", storeId, staff.id],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staff.id],
       });
       toast.success("Schedule updated");
       refetch();
@@ -210,16 +199,41 @@ export function WorkingHoursDialog({
       (entry): entry is [DayOfWeek, WorkingHoursFormValue] => Boolean(entry[1]),
     );
 
-    const promises = entries.map(([dayOfWeek, data]) => {
-      const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
-      if (existing) {
-        return updateMutation.mutateAsync({ id: existing.id, data });
-      }
-      return createMutation.mutateAsync(data);
-    });
+    const changePromises = entries
+      .map(([dayOfWeek, data]) => {
+        const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
+        const existingStart = existing ? normalizeTime(existing.startTime) : "";
+        const existingEnd = existing ? normalizeTime(existing.endTime) : "";
+        const hasChanges = existing
+          ? data.startTime !== existingStart ||
+            data.endTime !== existingEnd ||
+            data.isActive !== existing.isActive
+          : data.isActive; // only create if active
+
+        if (!hasChanges) {
+          return null;
+        }
+
+        if (existing) {
+          return updateMutation.mutateAsync({ id: existing.id, data });
+        }
+
+        return createMutation.mutateAsync(data);
+      })
+      .filter(Boolean) as Promise<unknown>[];
 
     try {
-      await Promise.all(promises);
+      if (changePromises.length > 0) {
+        await Promise.all(changePromises);
+        queryClient.invalidateQueries({
+          queryKey: ["working-hours", storeId, staff.id],
+        });
+        queryClient.invalidateQueries({
+          queryKey: ["staff-details", storeId, staff.id],
+        });
+        toast.success("Schedule updated successfully");
+        refetch();
+      }
       onClose();
     } catch (error) {
       // handled via individual mutation states

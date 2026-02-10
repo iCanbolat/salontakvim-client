@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { staffService, storeService, categoryService } from "@/services";
+import { staffService, storeService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 
 export function useStaffDetails() {
@@ -19,32 +19,13 @@ export function useStaffDetails() {
     queryFn: () => storeService.getMyStore(),
   });
 
-  const staffQuery = useQuery({
-    queryKey: ["staff-member", store?.id, staffId],
+  const staffDetailsQuery = useQuery({
+    queryKey: ["staff-details", store?.id, staffId],
     queryFn: () => staffService.getStaffMember(store!.id, staffId!),
     enabled: Boolean(store?.id && isValidStaffId),
   });
 
-  const staffServicesQuery = useQuery({
-    queryKey: ["staff-services", store?.id, staffId],
-    queryFn: () => staffService.getStaffServices(store!.id, staffId!),
-    enabled: Boolean(store?.id && isValidStaffId),
-  });
-
-  const workingHoursQuery = useQuery({
-    queryKey: ["working-hours", store?.id, staffId],
-    queryFn: () => staffService.getWorkingHours(store!.id, staffId!),
-    enabled: Boolean(store?.id && isValidStaffId),
-  });
-
-  const categoriesQuery = useQuery({
-    queryKey: ["categories", store?.id],
-    queryFn: () => categoryService.getCategories(store!.id),
-    enabled: Boolean(store?.id),
-    staleTime: 1000 * 60 * 5,
-  });
-
-  const staff = staffQuery.data;
+  const staff = staffDetailsQuery.data?.staff;
   const staffDisplayName =
     staff?.fullName?.trim() ||
     `${staff?.firstName ?? ""} ${staff?.lastName ?? ""}`.trim() ||
@@ -71,13 +52,8 @@ export function useStaffDetails() {
     clearBreadcrumbLabel,
   ]);
 
-  const isLoading =
-    storeLoading ||
-    staffQuery.isLoading ||
-    staffServicesQuery.isLoading ||
-    workingHoursQuery.isLoading;
-  const error =
-    staffQuery.error || staffServicesQuery.error || workingHoursQuery.error;
+  const isLoading = storeLoading || staffDetailsQuery.isLoading;
+  const error = staffDetailsQuery.error;
 
   return {
     state: {
@@ -96,9 +72,9 @@ export function useStaffDetails() {
     data: {
       store,
       staff,
-      staffServices: staffServicesQuery.data,
-      workingHours: workingHoursQuery.data,
-      categories: categoriesQuery.data,
+      staffServices: staffDetailsQuery.data?.services,
+      workingHours: staffDetailsQuery.data?.workingHours,
+      categories: staffDetailsQuery.data?.categories,
       staffDisplayName,
     },
   };

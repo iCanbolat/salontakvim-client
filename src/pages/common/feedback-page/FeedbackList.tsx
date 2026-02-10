@@ -10,12 +10,7 @@ import { AlertCircle, MessageSquare } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { toast } from "sonner";
-import {
-  storeService,
-  feedbackService,
-  staffService,
-  serviceService,
-} from "@/services";
+import { storeService, feedbackService } from "@/services";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
@@ -37,6 +32,7 @@ export function FeedbackList() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const canFilterByStaffService = isAdmin || user?.role === "manager";
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     delay: 500,
@@ -57,14 +53,14 @@ export function FeedbackList() {
     queryFn: () => storeService.getMyStore(),
   });
 
-  // Fetch feedback list
+  // Fetch dashboard data
   const {
-    data: feedbackResponse,
-    isLoading: feedbackLoading,
-    error: feedbackError,
+    data: dashboardData,
+    isLoading: dashboardLoading,
+    error: dashboardError,
   } = useQuery({
     queryKey: [
-      "feedback",
+      "feedback-dashboard",
       store?.id,
       staffFilter !== "all" ? staffFilter : undefined,
       serviceFilter !== "all" ? serviceFilter : undefined,
@@ -73,7 +69,7 @@ export function FeedbackList() {
       limit,
     ],
     queryFn: () =>
-      feedbackService.getFeedback(store!.id, {
+      feedbackService.getDashboard(store!.id, {
         staffId: staffFilter !== "all" ? staffFilter : undefined,
         serviceId: serviceFilter !== "all" ? serviceFilter : undefined,
         search: debouncedSearch || undefined,
@@ -84,35 +80,18 @@ export function FeedbackList() {
     placeholderData: (previous) => previous,
   });
 
-  // Fetch feedback stats
-  const { data: stats } = useQuery({
-    queryKey: ["feedback-stats", store?.id],
-    queryFn: () => feedbackService.getFeedbackStats(store!.id),
-    enabled: !!store?.id,
-  });
-
-  // Fetch staff for filter
-  const { data: staffList } = useQuery({
-    queryKey: ["staff", store?.id],
-    queryFn: () => staffService.getStaffMembers(store!.id),
-    enabled: !!store?.id && isAdmin,
-  });
-
-  // Fetch services for filter
-  const { data: servicesList } = useQuery({
-    queryKey: ["services", store?.id],
-    queryFn: () => serviceService.getServices(store!.id),
-    enabled: !!store?.id && isAdmin,
-  });
+  const feedbackResponse = dashboardData?.feedback;
+  const stats = dashboardData?.stats;
+  const staffList = dashboardData?.staff;
+  const servicesList = dashboardData?.services;
 
   // Delete feedback mutation
   const deleteMutation = useMutation({
     mutationFn: (feedbackId: string) =>
       feedbackService.deleteFeedback(store!.id, feedbackId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["feedback", store?.id] });
       queryClient.invalidateQueries({
-        queryKey: ["feedback-stats", store?.id],
+        queryKey: ["feedback-dashboard", store?.id],
       });
       toast.success("Geri bildirim silindi");
     },
@@ -130,7 +109,7 @@ export function FeedbackList() {
   const endIndex = Math.min(page * limit, totalItems);
 
   // Loading state
-  if (storeLoading || (feedbackLoading && !feedbackResponse)) {
+  if (storeLoading || (dashboardLoading && !dashboardData)) {
     return (
       <div className="container mx-auto py-6 space-y-6">
         <Skeleton className="h-10 w-64" />
@@ -145,7 +124,7 @@ export function FeedbackList() {
   }
 
   // Error state
-  if (feedbackError) {
+  if (dashboardError) {
     return (
       <div className="container mx-auto py-6">
         <Alert variant="destructive">
@@ -168,7 +147,7 @@ export function FeedbackList() {
       <FeedbackStats stats={stats} />
 
       <FeedbackFilters
-        isAdmin={isAdmin}
+        canFilterByStaffService={canFilterByStaffService}
         searchTerm={searchTerm}
         onSearchChange={setSearchTerm}
         staffFilter={staffFilter}

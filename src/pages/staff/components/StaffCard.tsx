@@ -7,6 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { staffService } from "@/services";
+import { useAuth } from "@/contexts";
 import {
   Card,
   CardContent,
@@ -36,6 +37,9 @@ interface StaffCardProps {
 
 export function StaffCard({ staff, storeId }: StaffCardProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const staffBasePath =
+    user?.role === "manager" ? "/manager/staff" : "/admin/staff";
 
   // Toggle visibility mutation
   const toggleVisibilityMutation = useMutation({
@@ -167,7 +171,7 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
           }
           className="flex-1"
         >
-          <Link to={`/admin/staff/${staff.id}`}>View Details</Link>
+          <Link to={`${staffBasePath}/${staff.id}`}>View Details</Link>
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>

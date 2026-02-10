@@ -24,6 +24,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { TimeOffDialog } from "./TimeOffDialog";
+import { useAuth } from "@/contexts";
 
 interface TimeOffListProps {
   storeId: string;
@@ -33,6 +34,9 @@ interface TimeOffListProps {
 
 export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const managerLocationId =
+    user?.role === "manager" ? (user.locationId ?? undefined) : undefined;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingBreak, setEditingBreak] = useState<StaffBreak | null>(null);
 
@@ -48,16 +52,26 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
 
   // Delete mutation
   const deleteMutation = useMutation({
-    mutationFn: (breakId: number) =>
+    mutationFn: (breakId: string) =>
       breakService.deleteStaffBreak(storeId, staffId, breakId),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["staff-breaks", storeId, staffId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["staff-details", storeId, staffId],
+      });
+      if (user?.role === "manager") {
+        queryClient.invalidateQueries({
+          queryKey: ["admin-activities", storeId, managerLocationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      }
       toast.success("İzin silindi");
     },
-    onError: (error: Error) => {
-      toast.error("İzin silinemedi: " + error.message);
+    onError: (error: any) => {
+      const message = error.response?.data?.message || error.message;
+      toast.error("İzin silinemedi: " + message);
     },
   });
 
@@ -66,7 +80,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = (breakId: number) => {
+  const handleDelete = (breakId: string) => {
     if (confirm("Bu izni silmek istediğinizden emin misiniz?")) {
       deleteMutation.mutate(breakId);
     }
@@ -85,7 +99,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
     if (breakItem.startTime && breakItem.endTime) {
       return `${breakItem.startTime.substring(
         0,
-        5
+        5,
       )} - ${breakItem.endTime.substring(0, 5)}`;
     }
     return "Tüm Gün";

@@ -4,6 +4,8 @@
  */
 
 import type { UserRole } from "./user.types";
+import type { Service } from "./service.types";
+import type { Category } from "./category.types";
 
 export interface StaffMember {
   id: string;
@@ -84,6 +86,13 @@ export interface UpdateStaffProfileDto {
 
 export interface AssignServicesDto {
   serviceIds: string[];
+}
+
+export interface StaffDetailsResponse {
+  staff: StaffMember;
+  services: Service[];
+  workingHours: WorkingHours[];
+  categories: Category[];
 }
 
 export interface WorkingHours {

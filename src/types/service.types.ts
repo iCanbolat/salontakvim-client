@@ -25,6 +25,7 @@ export interface Service {
   bufferTimeBefore: number;
   bufferTimeAfter: number;
   categoryColor?: string;
+  categoryName?: string;
   image?: string;
   isVisible: boolean;
   showBringingAnyoneOption: boolean;

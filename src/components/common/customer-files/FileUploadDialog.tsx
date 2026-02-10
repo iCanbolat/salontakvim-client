@@ -15,7 +15,10 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
-import { customerFileService } from "@/services/customer-file.service";
+import {
+  customerFileService,
+  type CustomerFile,
+} from "@/services/customer-file.service";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -90,6 +93,7 @@ interface FileUploadDialogProps {
   onOpenChange: (open: boolean) => void;
   storeId: string;
   customerId: string;
+  appointmentId?: string;
   initialFiles?: File[];
   onSuccess?: () => void;
 }
@@ -99,6 +103,7 @@ export function FileUploadDialog({
   onOpenChange,
   storeId,
   customerId,
+  appointmentId,
   initialFiles = [],
   onSuccess,
 }: FileUploadDialogProps) {
@@ -142,24 +147,143 @@ export function FileUploadDialog({
           {
             description: description || undefined,
             tags,
+            appointmentId,
           },
         );
         results.push(result);
       }
       return results;
     },
+    onMutate: async (values) => {
+      await queryClient.cancelQueries({
+        queryKey: ["customer-files", storeId, customerId],
+      });
+
+      const tempFiles = values.files.map((file, index) => ({
+        id: `temp-${Date.now()}-${index}`,
+        storeId,
+        customerId,
+        uploadedBy: null,
+        appointmentId: appointmentId || null,
+        fileName: file.name,
+        originalName: file.name,
+        mimeType: file.type,
+        fileType: getFileType(file) as "image" | "pdf" | "document" | "other",
+        fileSize: file.size,
+        description: values.description || null,
+        tags: values.tags ? values.tags.split(",").map((t) => t.trim()) : null,
+        downloadUrl: "",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }));
+
+      const previousData = queryClient.getQueriesData({
+        predicate: (query) =>
+          query.queryKey[0] === "customer-files" &&
+          query.queryKey[1] === storeId &&
+          query.queryKey[2] === customerId,
+      });
+
+      queryClient.setQueriesData(
+        {
+          predicate: (query) => {
+            const key = query.queryKey;
+            if (key[0] !== "customer-files") return false;
+            if (key[1] !== storeId || key[2] !== customerId) return false;
+
+            if (appointmentId && key[3] && key[3] !== appointmentId) {
+              return false;
+            }
+            return true;
+          },
+        },
+        (old: any) => {
+          if (!old) return old;
+          const existing = (old.files || old.data || []) as CustomerFile[];
+          const nextFiles = [...tempFiles, ...existing];
+          const totalSize = nextFiles.reduce(
+            (sum, file) => sum + file.fileSize,
+            0,
+          );
+
+          if ("files" in old) {
+            return {
+              ...old,
+              files: nextFiles,
+              total: nextFiles.length,
+              totalSize,
+            };
+          }
+
+          return {
+            ...old,
+            data: nextFiles,
+            total: nextFiles.length,
+            totalSize,
+          };
+        },
+      );
+
+      return { previousData, tempIds: tempFiles.map((file) => file.id) };
+    },
     onSuccess: (results) => {
+      queryClient.setQueriesData(
+        {
+          predicate: (query) =>
+            query.queryKey[0] === "customer-files" &&
+            query.queryKey[1] === storeId &&
+            query.queryKey[2] === customerId,
+        },
+        (old: any) => {
+          if (!old) return old;
+          const existing = (old.files || old.data || []) as CustomerFile[];
+          const nextFiles = [
+            ...results,
+            ...existing.filter((file) => !file.id.startsWith("temp-")),
+          ];
+          const totalSize = nextFiles.reduce(
+            (sum, file) => sum + file.fileSize,
+            0,
+          );
+
+          if ("files" in old) {
+            return {
+              ...old,
+              files: nextFiles,
+              total: nextFiles.length,
+              totalSize,
+            };
+          }
+          return {
+            ...old,
+            data: nextFiles,
+            total: nextFiles.length,
+            totalSize,
+          };
+        },
+      );
+
       queryClient.invalidateQueries({
         queryKey: ["admin-activities", storeId],
       });
       queryClient.invalidateQueries({
         queryKey: ["activities", storeId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["customer-files", storeId, customerId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["store-files", storeId] });
+      queryClient.invalidateQueries({ queryKey: ["store-folders", storeId] });
       toast.success(`${results.length} dosya başarıyla yüklendi`);
       resetForm();
       onSuccess?.();
     },
-    onError: (error: Error) => {
+    onError: (error: Error, _values, context) => {
+      if (context?.previousData) {
+        context.previousData.forEach(([key, data]: any) => {
+          queryClient.setQueryData(key, data);
+        });
+      }
       toast.error(error.message || "Dosyalar yüklenemedi");
     },
   });

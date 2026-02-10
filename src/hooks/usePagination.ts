@@ -3,11 +3,15 @@
  * Reusable pagination logic for list pages
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 
 interface UsePaginationProps<T> {
   items: T[];
   itemsPerPage?: number;
+  totalItems?: number;
+  disableSlice?: boolean;
+  currentPage?: number;
+  onPageChange?: (page: number) => void;
 }
 
 interface UsePaginationReturn<T> {
@@ -26,46 +30,64 @@ interface UsePaginationReturn<T> {
 export function usePagination<T>({
   items,
   itemsPerPage = 12,
+  totalItems,
+  disableSlice = false,
+  currentPage,
+  onPageChange,
 }: UsePaginationProps<T>): UsePaginationReturn<T> {
-  const [currentPage, setCurrentPage] = useState(1);
-
-  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const [internalPage, setInternalPage] = useState(currentPage ?? 1);
+  const effectivePage = currentPage ?? internalPage;
+  const setPage = onPageChange ?? setInternalPage;
+  const totalCount = totalItems ?? items.length;
+  const totalPages = Math.ceil(totalCount / itemsPerPage);
 
   const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
+    if (disableSlice) {
+      return items;
+    }
+
+    const startIndex = (effectivePage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return items.slice(startIndex, endIndex);
-  }, [items, currentPage, itemsPerPage]);
+  }, [items, effectivePage, itemsPerPage, disableSlice]);
 
   const goToPage = (page: number) => {
     const pageNumber = Math.max(1, Math.min(page, totalPages));
-    setCurrentPage(pageNumber);
+    setPage(pageNumber);
   };
 
   const nextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage((prev) => prev + 1);
+    if (effectivePage < totalPages) {
+      setPage(effectivePage + 1);
     }
   };
 
   const previousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage((prev) => prev - 1);
+    if (effectivePage > 1) {
+      setPage(effectivePage - 1);
     }
   };
 
-  const startIndex = (currentPage - 1) * itemsPerPage + 1;
-  const endIndex = Math.min(currentPage * itemsPerPage, items.length);
+  useEffect(() => {
+    if (totalPages > 0 && effectivePage > totalPages) {
+      setPage(totalPages);
+    }
+  }, [effectivePage, totalPages, setPage]);
+
+  const startIndex =
+    totalCount === 0 ? 0 : (effectivePage - 1) * itemsPerPage + 1;
+  const endIndex =
+    totalCount === 0 ? 0 : Math.min(effectivePage * itemsPerPage, totalCount);
 
   return {
-    currentPage,
+    currentPage: effectivePage,
     totalPages,
     paginatedItems,
     goToPage,
     nextPage,
     previousPage,
-    canGoNext: currentPage < totalPages,
-    canGoPrevious: currentPage > 1,
+    canGoNext: effectivePage < totalPages,
+    canGoPrevious: effectivePage > 1,
     startIndex,
     endIndex,
   };
