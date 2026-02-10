@@ -14,8 +14,6 @@ interface BreadcrumbItem {
 }
 
 const routeLabels: Record<string, string> = {
-  admin: "Admin",
-  staff: "Staff",
   dashboard: "Dashboard",
   appointments: "Appointments",
   services: "Services",
@@ -42,20 +40,8 @@ export function Breadcrumbs() {
     return null;
   }
 
-  // Filter out only the first segment if it's 'admin' or 'staff' (role prefix)
-  const filteredSegments = pathSegments.filter((segment, index) => {
-    // Remove 'admin' or 'staff' only if it's the first segment (role prefix)
-    if (index === 0 && (segment === "admin" || segment === "staff")) {
-      return false;
-    }
-    return true;
-  });
-
-  // Generate breadcrumb items from filtered segments
-  const breadcrumbs: BreadcrumbItem[] = filteredSegments.map((segment) => {
-    // Reconstruct href with original path structure
-    const originalIndex = pathSegments.indexOf(segment);
-    const href = "/" + pathSegments.slice(0, originalIndex + 1).join("/");
+  const breadcrumbs: BreadcrumbItem[] = pathSegments.map((segment, index) => {
+    const href = "/" + pathSegments.slice(0, index + 1).join("/");
 
     // Check if there's a dynamic override for this path
     const overrideLabel = overrides[href];
@@ -77,11 +63,7 @@ export function Breadcrumbs() {
       {isDashboardPage ? null : (
         <>
           <Link
-            to={
-              pathSegments[0] === "admin"
-                ? "/admin/dashboard"
-                : "/staff/dashboard"
-            }
+            to="/dashboard"
             className="text-gray-500 hover:text-gray-700 transition-colors"
           >
             <Home className="h-4 w-4" />

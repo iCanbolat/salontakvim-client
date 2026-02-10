@@ -113,7 +113,7 @@ export function RegisterPage() {
       const { confirmPassword, ...registerData } = data;
       await registerUser(registerData);
       toast.success("Registration successful! Welcome to SalonTakvim.");
-      navigate("/admin/dashboard"); // Redirect to admin dashboard
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Registration error:", error);
       const errorMessage = error?.response?.data?.message || "";

@@ -5,7 +5,7 @@ import {
   useMutation,
   useQueryClient,
 } from "@tanstack/react-query";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { usePagination, useDebouncedSearch } from "@/hooks";
 import {
@@ -19,7 +19,6 @@ import type { CustomerWithStats, Appointment } from "@/types";
 
 export function useFilesList() {
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState(
     searchParams.get("search") || "",
@@ -42,10 +41,7 @@ export function useFilesList() {
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
-  // Determine base path based on current location (admin or staff)
-  const customersBasePath = location.pathname.startsWith("/staff")
-    ? "/staff/customers"
-    : "/admin/customers";
+  const customersBasePath = "/customers";
 
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,

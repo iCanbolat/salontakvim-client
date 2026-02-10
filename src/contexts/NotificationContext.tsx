@@ -169,7 +169,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       browserNotification.onclick = () => {
         window.focus();
         // Redirect to appointments page using CLIENT_URL
-        window.location.href = `${CLIENT_URL}/admin/appointments`;
+        window.location.href = `${CLIENT_URL}/appointments`;
         browserNotification.close();
       };
     };

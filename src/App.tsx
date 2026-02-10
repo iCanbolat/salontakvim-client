@@ -34,13 +34,8 @@ import {
 import { AppointmentDetailPage } from "./pages/appointments/AppointmentDetail";
 import {
   AcceptInvitationPage,
-  AppointmentsList as StaffAppointmentsList,
   StaffSchedule,
   StaffProfile,
-  StaffCustomersList,
-  StaffCustomerDetails,
-  StaffFilesList,
-  StaffFeedbackList,
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
@@ -62,7 +57,7 @@ function App() {
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route
-                path="/staff/invitations/accept"
+                path="/invitations/accept"
                 element={<AcceptInvitationPage />}
               />
               <Route path="/book/:slug" element={<HostedWidgetPage />} />
@@ -77,109 +72,56 @@ function App() {
 
               {/* Protected routes with layout */}
               <Route element={<MainLayout />}>
-                {/* Admin routes */}
+                <Route
+                  element={
+                    <ProtectedRoute
+                      allowedRoles={["admin", "manager", "staff"]}
+                    />
+                  }
+                >
+                  <Route path="/dashboard" element={<DashboardPage />} />
+                  <Route path="/appointments" element={<AppointmentsList />} />
+                  <Route
+                    path="/appointments/:appointmentId"
+                    element={<AppointmentDetailPage />}
+                  />
+                  <Route path="/customers" element={<CustomersList />} />
+                  <Route
+                    path="/customers/:customerId"
+                    element={<CustomerDetails />}
+                  />
+                  <Route path="/files" element={<FilesList />} />
+                  <Route path="/feedback" element={<FeedbackList />} />
+                  <Route
+                    path="/notifications"
+                    element={<NotificationSettings />}
+                  />
+                  <Route path="/profile" element={<StaffProfile />} />
+                </Route>
+
+                <Route
+                  element={
+                    <ProtectedRoute allowedRoles={["admin", "manager"]} />
+                  }
+                >
+                  <Route path="/services" element={<ServicesList />} />
+                  <Route path="/staff" element={<StaffList />} />
+                  <Route path="/staff/:staffId" element={<StaffDetails />} />
+                </Route>
+
                 <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                  <Route path="/admin/dashboard" element={<DashboardPage />} />
-                  <Route
-                    path="/admin/appointments"
-                    element={<AppointmentsList />}
-                  />
-                  <Route
-                    path="/admin/appointments/:appointmentId"
-                    element={<AppointmentDetailPage />}
-                  />
-                  <Route path="/admin/services" element={<ServicesList />} />
-
-                  <Route path="/admin/staff" element={<StaffList />} />
-                  <Route
-                    path="/admin/staff/:staffId"
-                    element={<StaffDetails />}
-                  />
-                  <Route path="/admin/locations" element={<LocationsList />} />
-                  <Route path="/admin/customers" element={<CustomersList />} />
-                  <Route
-                    path="/admin/customers/:customerId"
-                    element={<CustomerDetails />}
-                  />
-                  <Route path="/admin/files" element={<FilesList />} />
-                  <Route path="/admin/feedback" element={<FeedbackList />} />
-                  <Route path="/admin/widget" element={<WidgetSettings />} />
-                  <Route path="/admin/analytics" element={<Analytics />} />
-                  <Route
-                    path="/admin/notifications"
-                    element={<NotificationSettings />}
-                  />
-                  <Route path="/admin/profile" element={<StaffProfile />} />
-                  <Route path="/admin/settings" element={<StoreSettings />} />
+                  <Route path="/locations" element={<LocationsList />} />
+                  <Route path="/widget" element={<WidgetSettings />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route path="/settings" element={<StoreSettings />} />
                 </Route>
 
-                {/* Staff routes */}
                 <Route element={<ProtectedRoute allowedRoles={["staff"]} />}>
-                  <Route path="/staff/dashboard" element={<DashboardPage />} />
+                  <Route path="/schedule" element={<StaffSchedule />} />
                   <Route
-                    path="/staff/appointments"
-                    element={<StaffAppointmentsList />}
+                    path="/time-off"
+                    element={<Navigate to="/schedule" replace />}
                   />
-                  <Route
-                    path="/staff/appointments/:appointmentId"
-                    element={<AppointmentDetailPage />}
-                  />
-                  <Route path="/staff/schedule" element={<StaffSchedule />} />
-                  <Route
-                    path="/staff/time-off"
-                    element={<Navigate to="/staff/schedule" replace />}
-                  />
-                  <Route
-                    path="/staff/customers"
-                    element={<StaffCustomersList />}
-                  />
-                  <Route
-                    path="/staff/customers/:customerId"
-                    element={<StaffCustomerDetails />}
-                  />
-                  <Route path="/staff/files" element={<StaffFilesList />} />
-                  <Route
-                    path="/staff/feedback"
-                    element={<StaffFeedbackList />}
-                  />
-                  <Route path="/staff/profile" element={<StaffProfile />} />
-                </Route>
-
-                {/* Manager routes - location scoped, no settings/analytics/widget */}
-                <Route element={<ProtectedRoute allowedRoles={["manager"]} />}>
-                  <Route
-                    path="/manager/dashboard"
-                    element={<DashboardPage />}
-                  />
-                  <Route
-                    path="/manager/appointments"
-                    element={<AppointmentsList />}
-                  />
-                  <Route
-                    path="/manager/appointments/:appointmentId"
-                    element={<AppointmentDetailPage />}
-                  />
-                  <Route path="/manager/services" element={<ServicesList />} />
-                  <Route path="/manager/staff" element={<StaffList />} />
-                  <Route
-                    path="/manager/staff/:staffId"
-                    element={<StaffDetails />}
-                  />
-                  <Route
-                    path="/manager/customers"
-                    element={<CustomersList />}
-                  />
-                  <Route
-                    path="/manager/customers/:customerId"
-                    element={<CustomerDetails />}
-                  />
-                  <Route path="/manager/files" element={<FilesList />} />
-                  <Route path="/manager/feedback" element={<FeedbackList />} />
-                  <Route
-                    path="/manager/notifications"
-                    element={<NotificationSettings />}
-                  />
-                  <Route path="/manager/profile" element={<StaffProfile />} />
                 </Route>
               </Route>
 
@@ -224,13 +166,7 @@ function WelcomeRoute() {
 
   // If user already has a store (doesn't need onboarding), redirect to dashboard
   if (!authService.needsOnboarding()) {
-    if (user.role === "admin") {
-      return <Navigate to="/admin/dashboard" replace />;
-    } else if (user.role === "manager") {
-      return <Navigate to="/manager/dashboard" replace />;
-    } else if (user.role === "staff") {
-      return <Navigate to="/staff/dashboard" replace />;
-    }
+    return <Navigate to="/dashboard" replace />;
   }
 
   return <WelcomePage />;
@@ -250,15 +186,7 @@ function RootRedirect() {
   }
 
   // Redirect to appropriate dashboard based on role
-  if (user.role === "admin") {
-    return <Navigate to="/admin/dashboard" replace />;
-  } else if (user.role === "manager") {
-    return <Navigate to="/manager/dashboard" replace />;
-  } else if (user.role === "staff") {
-    return <Navigate to="/staff/dashboard" replace />;
-  }
-
-  return <Navigate to="/login" replace />;
+  return <Navigate to="/dashboard" replace />;
 }
 
 export default App;

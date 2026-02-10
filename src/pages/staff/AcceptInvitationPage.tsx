@@ -81,13 +81,13 @@ export function AcceptInvitationPage() {
     },
     onSuccess: () => {
       toast.success("Invitation accepted. Welcome aboard!");
-      navigate("/staff/dashboard", { replace: true });
+      navigate("/dashboard", { replace: true });
     },
     onError: (error: any) => {
       console.error("Invitation acceptance failed", error);
       toast.error(
         error?.response?.data?.message ||
-          "Could not accept the invitation. Please try again."
+          "Could not accept the invitation. Please try again.",
       );
     },
   });
@@ -277,7 +277,7 @@ export function AcceptInvitationPage() {
                           disabled={acceptMutation.isPending}
                           onChange={(e) =>
                             field.onChange(
-                              normalizeTurkishPhoneInput(e.target.value)
+                              normalizeTurkishPhoneInput(e.target.value),
                             )
                           }
                           onBlur={field.onBlur}

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { storeService, customerService } from "@/services";
 import { useDebouncedSearch, usePagination } from "@/hooks";
@@ -16,7 +16,6 @@ export type CustomerView = "grid" | "list";
 export function useCustomers() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // UI State
@@ -33,10 +32,7 @@ export function useCustomers() {
   const [isSendingSms, setIsSendingSms] = useState(false);
   const itemsPerPage = 12;
 
-  // Determine base path (admin or staff)
-  const basePath = location.pathname.startsWith("/staff")
-    ? "/staff/customers"
-    : "/admin/customers";
+  const basePath = "/customers";
 
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,

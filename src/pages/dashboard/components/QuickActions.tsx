@@ -43,14 +43,14 @@ export function QuickActions() {
       label: "Analytics",
       description: "View detailed reports",
       icon: BarChart3,
-      onClick: () => navigate("/admin/analytics"),
+      onClick: () => navigate("/analytics"),
       color: "bg-green-50 text-green-600 hover:bg-green-100",
     },
     {
       label: "Settings",
       description: "Manage store settings",
       icon: Settings,
-      onClick: () => navigate("/admin/settings"),
+      onClick: () => navigate("/settings"),
       color: "bg-orange-50 text-orange-600 hover:bg-orange-100",
     },
   ];

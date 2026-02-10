@@ -55,12 +55,8 @@ export function AuthCallbackPage() {
         // Redirect based on onboarding status
         if (needsOnboarding) {
           navigate("/welcome");
-        } else if (user.role === "admin") {
-          navigate("/admin/dashboard");
-        } else if (user.role === "staff") {
-          navigate("/staff/dashboard");
         } else {
-          navigate("/");
+          navigate("/dashboard");
         }
       } catch (err) {
         console.error("Failed to fetch user:", err);

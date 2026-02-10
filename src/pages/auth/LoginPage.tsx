@@ -62,7 +62,7 @@ export function LoginPage() {
       if (authService.needsOnboarding()) {
         navigate("/welcome");
       } else {
-        navigate("/admin/dashboard");
+        navigate("/dashboard");
       }
     } catch (error: any) {
       console.error("Login error:", error);

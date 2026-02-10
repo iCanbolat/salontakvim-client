@@ -39,14 +39,7 @@ export function useRequireRole(requiredRole: UserRole | UserRole[]) {
     if (!isLoading && user) {
       const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
       if (!roles.includes(user.role)) {
-        // Redirect based on user role
-        if (user.role === "admin") {
-          navigate("/admin/dashboard", { replace: true });
-        } else if (user.role === "staff") {
-          navigate("/staff/dashboard", { replace: true });
-        } else {
-          navigate("/unauthorized", { replace: true });
-        }
+        navigate("/dashboard", { replace: true });
       }
     }
   }, [user, isAuthenticated, isLoading, requiredRole, navigate]);

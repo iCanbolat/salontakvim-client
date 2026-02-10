@@ -108,7 +108,7 @@ export function WelcomePage() {
       await refetchUser();
 
       toast.success("Store created successfully! Welcome to SalonTakvim.");
-      navigate("/admin/dashboard");
+      navigate("/dashboard");
     } catch (error: any) {
       console.error("Store creation error:", error);
       const errorMessage = error?.response?.data?.message || "";

@@ -66,18 +66,12 @@ export function UserMenu() {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() =>
-            navigate(
-              user?.role === "admin" ? "/admin/profile" : "/staff/profile"
-            )
-          }
-        >
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
           <User className="mr-2 h-4 w-4" />
           <span>Profile</span>
         </DropdownMenuItem>
         {user?.role === "admin" && (
-          <DropdownMenuItem onClick={() => navigate("/admin/settings")}>
+          <DropdownMenuItem onClick={() => navigate("/settings")}>
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </DropdownMenuItem>

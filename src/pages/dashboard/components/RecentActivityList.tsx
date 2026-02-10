@@ -94,7 +94,7 @@ export function RecentActivityList({
           <CardTitle>Son Aktiviteler</CardTitle>
           {showViewAll ? (
             <Link
-              to="/admin/notifications?tab=activities"
+              to="/notifications?tab=activities"
               className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
               Tümünü gör

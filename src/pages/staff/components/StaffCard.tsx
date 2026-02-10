@@ -7,7 +7,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Trash2, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { staffService } from "@/services";
-import { useAuth } from "@/contexts";
 import {
   Card,
   CardContent,
@@ -37,9 +36,7 @@ interface StaffCardProps {
 
 export function StaffCard({ staff, storeId }: StaffCardProps) {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
-  const staffBasePath =
-    user?.role === "manager" ? "/manager/staff" : "/admin/staff";
+  const staffBasePath = "/staff";
 
   // Toggle visibility mutation
   const toggleVisibilityMutation = useMutation({
