@@ -100,7 +100,13 @@ export function FeedbackList() {
     },
   });
 
-  const feedbackList = feedbackResponse?.data ?? [];
+  const feedbackList = (feedbackResponse?.data ?? []).map((item: any) => ({
+    ...item.feedback,
+    customer: item.customer,
+    staff: item.staff,
+    service: item.service,
+  }));
+
   const totalItems = feedbackResponse?.total ?? 0;
   const totalPages = feedbackResponse?.totalPages ?? 1;
   const canGoPrevious = page > 1;
@@ -174,9 +180,12 @@ export function FeedbackList() {
             </div>
           ) : (
             <div className="space-y-4">
-              {feedbackList.map((feedback) => (
+              {feedbackList.map((feedback, index) => (
                 <FeedbackCard
-                  key={feedback.id}
+                  key={
+                    feedback.id ||
+                    `${feedback.appointmentId}-${feedback.createdAt}-${index}`
+                  }
                   feedback={feedback}
                   onDelete={(feedbackId) => deleteMutation.mutate(feedbackId)}
                 />

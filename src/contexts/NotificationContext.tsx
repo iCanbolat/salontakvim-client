@@ -42,6 +42,7 @@ interface NotificationContextValue {
   notifications: Notification[];
   unreadCount: number;
   latestNotification: Notification | null;
+  latestActivity: RecentActivity | null;
   markAsRead: (id: string) => Promise<void>;
   markAllAsRead: () => Promise<void>;
 }
@@ -84,6 +85,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const refreshInFlightRef = useRef(false);
   const [latestNotification, setLatestNotification] =
     useState<Notification | null>(null);
+  const [latestActivity, setLatestActivity] = useState<RecentActivity | null>(
+    null,
+  );
 
   const getNotificationConfig = (type: string) => {
     switch (type) {
@@ -355,13 +359,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on("activity", (activity: RecentActivity) => {
-      queryClient.setQueryData<RecentActivity[]>(
-        ["activities", activity.storeId],
-        (prev) => {
-          const existing = Array.isArray(prev) ? prev : [];
-          return [activity, ...existing].slice(0, 50);
-        },
-      );
+      setLatestActivity(activity);
+      // Invalidate all activity-related queries so they refetch
+      queryClient.invalidateQueries({ queryKey: ["activities"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-activities"] });
     });
 
     setSocket(newSocket);
@@ -430,10 +431,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       notifications,
       unreadCount,
       latestNotification,
+      latestActivity,
       markAsRead,
       markAllAsRead,
     }),
-    [notifications, unreadCount, latestNotification],
+    [notifications, unreadCount, latestNotification, latestActivity],
   );
 
   return (

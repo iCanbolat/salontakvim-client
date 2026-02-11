@@ -83,8 +83,13 @@ export function NotificationSettings() {
     }
   }, [isManager, isStaff, activeTab, setSearchParams]);
 
-  const { unreadCount, markAsRead, markAllAsRead, latestNotification } =
-    useNotifications();
+  const {
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    latestNotification,
+    latestActivity,
+  } = useNotifications();
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -92,15 +97,18 @@ export function NotificationSettings() {
 
     // Invalidate notifications list when a new one arrives
     queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  }, [latestNotification, queryClient]);
 
-    // Invalidate activities if the notification might have generated one
-    // (though we just disabled activity for new appointments, other things might still have them)
+  // Real-time activity updates
+  useEffect(() => {
+    if (!latestActivity) return;
+
     if (activeTab === "activities") {
       queryClient.invalidateQueries({
         queryKey: ["activities", store?.id],
       });
     }
-  }, [latestNotification, queryClient, activeTab, store?.id]);
+  }, [latestActivity, queryClient, activeTab, store?.id]);
 
   const [notificationStatus, setNotificationStatus] = useState<
     "all" | "read" | "unread"

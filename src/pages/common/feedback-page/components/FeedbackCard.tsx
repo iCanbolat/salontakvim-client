@@ -2,7 +2,7 @@
  * Feedback Card
  */
 
-import { format } from "date-fns";
+import { format, isValid } from "date-fns";
 import { tr } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +18,14 @@ interface FeedbackCardProps {
 }
 
 export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
+  const createdAtDate = feedback.createdAt
+    ? new Date(feedback.createdAt)
+    : null;
+  const createdAtLabel =
+    createdAtDate && isValid(createdAtDate)
+      ? format(createdAtDate, "d MMMM yyyy, HH:mm", { locale: tr })
+      : "Tarih bilgisi yok";
+
   return (
     <div className="border rounded-lg p-4 space-y-3">
       {/* Header */}
@@ -35,11 +43,7 @@ export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
             <p className="font-medium">
               {feedback.customer?.firstName} {feedback.customer?.lastName}
             </p>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(feedback.createdAt), "d MMMM yyyy, HH:mm", {
-                locale: tr,
-              })}
-            </p>
+            <p className="text-sm text-muted-foreground">{createdAtLabel}</p>
           </div>
         </div>
         <Button
