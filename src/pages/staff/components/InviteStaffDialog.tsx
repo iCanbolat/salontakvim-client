@@ -8,8 +8,7 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { Mail, Loader2, CheckCircle2 } from "lucide-react";
 import { staffService, locationService } from "@/services";
 import { useAuth } from "@/contexts";
 import {
@@ -23,7 +22,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -96,9 +95,7 @@ export function InviteStaffDialog({
       queryClient.invalidateQueries({
         queryKey: ["staff-invitations", storeId],
       });
-      toast.success("Invitation sent successfully!");
       form.reset();
-      onClose();
     },
   });
 
@@ -244,8 +241,10 @@ export function InviteStaffDialog({
               {/* Success Message */}
               {inviteMutation.isSuccess && (
                 <Alert>
+                  <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  <AlertTitle>Invitation sent</AlertTitle>
                   <AlertDescription>
-                    Invitation sent successfully!
+                    The invite email was delivered successfully.
                   </AlertDescription>
                 </Alert>
               )}

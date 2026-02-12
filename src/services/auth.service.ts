@@ -9,6 +9,9 @@ import type {
   RegisterDto,
   User,
   MeResponse,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+  PasswordResetTokenStatus,
 } from "@/types";
 
 export class AuthService {
@@ -66,6 +69,33 @@ export class AuthService {
       refreshToken,
     });
     this.saveAuthData(response.data);
+    return response.data;
+  }
+
+  /**
+   * Request password reset
+   */
+  async requestPasswordReset(data: ForgotPasswordDto): Promise<void> {
+    await axiosInstance.post("/auth/forgot-password", data);
+  }
+
+  /**
+   * Reset password using token
+   */
+  async resetPassword(data: ResetPasswordDto): Promise<void> {
+    await axiosInstance.post("/auth/reset-password", data);
+  }
+
+  /**
+   * Verify reset token
+   */
+  async verifyPasswordResetToken(
+    token: string,
+  ): Promise<PasswordResetTokenStatus> {
+    const response = await axiosInstance.get<PasswordResetTokenStatus>(
+      "/auth/reset-password/verify",
+      { params: { token } },
+    );
     return response.data;
   }
 

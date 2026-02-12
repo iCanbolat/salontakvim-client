@@ -124,7 +124,7 @@ export function PageView<TData, TFilter extends string = string>({
           "flex flex-col",
           view === "grid" &&
             totalPages > 1 &&
-            (gridMinHeightClassName ?? "min-h-[850px]"),
+            (gridMinHeightClassName ?? "min-h-[650px]"),
           view === "list" && "h-full"
         )}
       >

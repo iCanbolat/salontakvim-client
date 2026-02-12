@@ -14,6 +14,8 @@ import {
   RegisterPage,
   WelcomePage,
   AuthCallbackPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
 } from "./pages/auth";
 import { DashboardPage } from "./pages/dashboard";
 import {
@@ -54,6 +56,8 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/register" element={<RegisterPage />} />
               <Route path="/auth/callback" element={<AuthCallbackPage />} />
               <Route

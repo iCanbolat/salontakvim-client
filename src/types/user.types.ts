@@ -70,3 +70,17 @@ export interface RegisterDto {
 export interface RefreshTokenDto {
   refreshToken: string;
 }
+
+export interface ForgotPasswordDto {
+  email: string;
+}
+
+export interface ResetPasswordDto {
+  token: string;
+  password: string;
+}
+
+export interface PasswordResetTokenStatus {
+  valid: boolean;
+  expiresAt?: string;
+}
