@@ -40,6 +40,7 @@ export interface StaffInvitation {
   id: string;
   storeId: string;
   email: string;
+  role: UserRole;
   token: string;
   status: "pending" | "accepted" | "expired" | "cancelled";
   invitedBy?: string;
@@ -53,6 +54,7 @@ export interface StaffInvitation {
 
 export interface InviteStaffDto {
   email: string;
+  role: Extract<UserRole, "admin" | "manager" | "staff">;
   title?: string;
   locationId?: string;
 }
@@ -69,6 +71,7 @@ export interface StaffInvitationDetails {
   email: string;
   storeId: string;
   storeName: string | null;
+  role: Extract<UserRole, "admin" | "manager" | "staff">;
   locationId: string | null;
   locationName: string | null;
   title: string | null;

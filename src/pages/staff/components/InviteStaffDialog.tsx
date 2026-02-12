@@ -8,7 +8,8 @@ import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, Loader2, CheckCircle2 } from "lucide-react";
+import { Mail, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { staffService, locationService } from "@/services";
 import { useAuth } from "@/contexts";
 import {
@@ -22,7 +23,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -38,10 +38,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import type { InviteStaffDto } from "@/types";
+import type { InviteStaffDto, UserRole } from "@/types";
+
+const INVITABLE_ROLES: Extract<UserRole, "admin" | "manager" | "staff">[] = [
+  "admin",
+  "manager",
+  "staff",
+];
 
 const inviteSchema = z.object({
   email: z.string().email("Invalid email address").max(255, "Email too long"),
+  role: z.enum(["admin", "manager", "staff"]),
   title: z.string().max(255, "Title too long").optional(),
   locationId: z.string().min(1, "Location is required"),
 });
@@ -75,10 +82,13 @@ export function InviteStaffDialog({
     mode: "onChange",
     defaultValues: {
       email: "",
+      role: "staff",
       title: "",
       locationId: isManager && managerLocationId ? managerLocationId : "",
     },
   });
+
+  const roleOptions = isManager ? (["staff"] as const) : INVITABLE_ROLES;
 
   // Set locationId for manager when dialog opens
   useEffect(() => {
@@ -95,7 +105,15 @@ export function InviteStaffDialog({
       queryClient.invalidateQueries({
         queryKey: ["staff-invitations", storeId],
       });
-      form.reset();
+      toast.success("Invitation sent successfully");
+      handleClose();
+    },
+    onError: (error: any) => {
+      console.error("Invite staff error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        "Failed to send invitation. Please try again.";
+      toast.error(errorMessage);
     },
   });
 
@@ -148,6 +166,42 @@ export function InviteStaffDialog({
                         />
                       </div>
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>
+                      Role <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={inviteMutation.isPending || isManager}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select a role" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {roleOptions.map((role) => (
+                          <SelectItem key={role} value={role}>
+                            {role.charAt(0).toUpperCase() + role.slice(1)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {isManager && (
+                      <p className="text-xs text-muted-foreground">
+                        Managers can invite staff only
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -228,26 +282,6 @@ export function InviteStaffDialog({
                   </FormItem>
                 )}
               />
-
-              {/* Error Alert */}
-              {inviteMutation.isError && (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    Failed to send invitation. Please try again.
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              {/* Success Message */}
-              {inviteMutation.isSuccess && (
-                <Alert>
-                  <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  <AlertTitle>Invitation sent</AlertTitle>
-                  <AlertDescription>
-                    The invite email was delivered successfully.
-                  </AlertDescription>
-                </Alert>
-              )}
             </DialogBody>
 
             <DialogFooter>
