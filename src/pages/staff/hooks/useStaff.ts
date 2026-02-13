@@ -83,6 +83,8 @@ export function useStaff() {
       }),
     enabled: !!store?.id,
     placeholderData: keepPreviousData,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   const filteredStaffMembers = staffMembers?.filter(
@@ -98,6 +100,8 @@ export function useStaff() {
     queryKey: ["staff-invitations", store?.id],
     queryFn: () => staffService.getInvitations(store!.id),
     enabled: !!store?.id,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Fetch time-offs (breaks)
@@ -120,6 +124,8 @@ export function useStaff() {
         { page: timeOffPage, limit: timeOffPageSize },
       ),
     enabled: !!store?.id,
+    staleTime: 0,
+    refetchOnMount: true,
   });
 
   // Real-time invalidation for time off via notifications
