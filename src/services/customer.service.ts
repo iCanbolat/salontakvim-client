@@ -10,6 +10,8 @@ import type {
   CustomerFilters,
   UpdateCustomerDto,
   PaginatedResponse,
+  SendBulkSmsDto,
+  BulkSmsResult,
 } from "@/types";
 
 /**
@@ -94,6 +96,17 @@ export const customerService = {
   ): Promise<CustomerWithStats[]> {
     const response = await axiosInstance.get<CustomerWithStats[]>(
       `/stores/${storeId}/customers/search?q=${encodeURIComponent(query)}`,
+    );
+    return response.data;
+  },
+
+  async sendBulkSms(
+    storeId: string,
+    data: SendBulkSmsDto,
+  ): Promise<BulkSmsResult> {
+    const response = await axiosInstance.post<BulkSmsResult>(
+      `/stores/${storeId}/customers/sms`,
+      data,
     );
     return response.data;
   },

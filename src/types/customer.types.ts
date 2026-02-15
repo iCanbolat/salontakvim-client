@@ -88,3 +88,17 @@ export interface CustomerStats {
   totalRevenue: string;
   averageSpentPerCustomer: string;
 }
+
+export interface SendBulkSmsDto {
+  customerIds: string[];
+  message: string;
+}
+
+export interface BulkSmsResult {
+  requested: number;
+  eligible: number;
+  sent: number;
+  failed: number;
+  noPhone: number;
+  message: string;
+}

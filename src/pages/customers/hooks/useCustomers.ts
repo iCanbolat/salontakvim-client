@@ -10,6 +10,7 @@ import { storeService, customerService } from "@/services";
 import { useDebouncedSearch, usePagination } from "@/hooks";
 import { useAuth } from "@/contexts";
 import type { CustomerWithStats } from "@/types";
+import { toast } from "sonner";
 
 export type CustomerView = "grid" | "list";
 
@@ -173,13 +174,28 @@ export function useCustomers() {
   const handleSendSms = async (message: string) => {
     setIsSendingSms(true);
     try {
-      // API call placeholder
-      console.log("Sending SMS...", { selectedCustomers, message });
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (!store?.id) {
+        toast.error("Store bilgisi bulunamadı");
+        return;
+      }
+
+      const result = await customerService.sendBulkSms(store.id, {
+        customerIds: selectedCustomers,
+        message: message.trim(),
+      });
+
+      toast.success(
+        `SMS gönderimi tamamlandı: ${result.sent} başarılı, ${result.failed} başarısız${result.noPhone ? `, ${result.noPhone} telefonsuz` : ""}`,
+      );
       setSelectedCustomers([]);
       setIsSmsDialogOpen(false);
-    } catch (err) {
+    } catch (err: any) {
       console.error("SMS failed", err);
+      toast.error(
+        err?.response?.data?.message ||
+          err?.message ||
+          "SMS gönderimi başarısız oldu",
+      );
     } finally {
       setIsSendingSms(false);
     }
