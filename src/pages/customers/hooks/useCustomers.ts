@@ -90,6 +90,8 @@ export function useCustomers() {
   const isInitialLoading =
     (storeLoading || customersPending) && !customerResponse;
 
+  const canAssignCoupons = user?.role === "admin" || user?.role === "manager";
+
   // URL Sync
   useEffect(() => {
     const current = new URLSearchParams(searchParams);
@@ -206,6 +208,7 @@ export function useCustomers() {
     state: {
       searchTerm,
       view,
+      canAssignCoupons,
       selectedCustomers,
       isSmsDialogOpen,
       isDiscountDialogOpen,

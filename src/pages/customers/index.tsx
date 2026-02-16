@@ -33,6 +33,7 @@ export function CustomersList() {
   const {
     searchTerm,
     view,
+    canAssignCoupons,
     selectedCustomers,
     isSmsDialogOpen,
     isDiscountDialogOpen,
@@ -124,18 +125,20 @@ export function CustomersList() {
         cellClassName: "text-right",
         render: (customer) => (
           <div className="flex items-center justify-end gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                setSelectedCustomers([customer.id]);
-                setIsDiscountDialogOpen(true);
-              }}
-              title="İndirim Tanımla"
-            >
-              <Tag className="h-4 w-4" />
-            </Button>
+            {canAssignCoupons && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSelectedCustomers([customer.id]);
+                  setIsDiscountDialogOpen(true);
+                }}
+                title="İndirim Tanımla"
+              >
+                <Tag className="h-4 w-4" />
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="sm"
@@ -167,6 +170,7 @@ export function CustomersList() {
       setSelectedCustomers,
       setIsDiscountDialogOpen,
       setIsSmsDialogOpen,
+      canAssignCoupons,
     ],
   );
 
@@ -234,15 +238,17 @@ export function CustomersList() {
           )}
           {selectedCustomers.length > 0 && (
             <>
-              <Button
-                variant="default"
-                size="sm"
-                onClick={() => setIsDiscountDialogOpen(true)}
-                className="gap-2"
-              >
-                <Tag className="h-4 w-4" />
-                İndirim ({selectedCustomers.length})
-              </Button>
+              {canAssignCoupons && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={() => setIsDiscountDialogOpen(true)}
+                  className="gap-2"
+                >
+                  <Tag className="h-4 w-4" />
+                  İndirim ({selectedCustomers.length})
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -318,15 +324,17 @@ export function CustomersList() {
         isSending={isSendingSms}
       />
 
-      <DiscountDialog
-        isOpen={isDiscountDialogOpen}
-        onClose={() => {
-          setIsDiscountDialogOpen(false);
-          setSelectedCustomers([]);
-        }}
-        selectedCustomers={selectedCustomersData}
-        storeId={store.id}
-      />
+      {canAssignCoupons && (
+        <DiscountDialog
+          isOpen={isDiscountDialogOpen}
+          onClose={() => {
+            setIsDiscountDialogOpen(false);
+            setSelectedCustomers([]);
+          }}
+          selectedCustomers={selectedCustomersData}
+          storeId={store.id}
+        />
+      )}
     </div>
   );
 }
