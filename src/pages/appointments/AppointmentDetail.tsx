@@ -7,6 +7,7 @@ import { Loader2, AlertCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { AppointmentDetailHeader } from "./components/AppointmentDetailHeader";
 import { AppointmentSummaryCard } from "./components/AppointmentSummaryCard";
 import { AppointmentFeedbackCard } from "./components/AppointmentFeedbackCard";
@@ -70,6 +71,25 @@ export function AppointmentDetailPage() {
     },
   });
 
+  const settlePaymentMutation = useMutation({
+    mutationFn: (payload: {
+      finalTotalPrice: number;
+      paymentMethod?: "cash" | "card" | "online" | "stripe" | "paypal";
+      markAsPaid?: boolean;
+      internalNotes?: string;
+    }) =>
+      appointmentService.settleAppointmentPayment(store!.id, appointmentId!, {
+        ...payload,
+      }),
+    onSuccess: () => {
+      invalidateAfterAppointmentChange(queryClient, store!.id);
+      toast.success("Payment settled successfully");
+    },
+    onError: (error: any) => {
+      toast.error(error.message || "Failed to settle payment");
+    },
+  });
+
   const handleDelete = () => {
     if (
       confirm(
@@ -78,6 +98,47 @@ export function AppointmentDetailPage() {
     ) {
       deleteMutation.mutate();
     }
+  };
+
+  const handleSettlePayment = () => {
+    if (!appointment) {
+      return;
+    }
+
+    const initialTotal = String(appointment.totalPrice || "0");
+    const finalAmountInput = window.prompt(
+      "Final total amount for this appointment:",
+      initialTotal,
+    );
+
+    if (!finalAmountInput) {
+      return;
+    }
+
+    const finalTotalPrice = Number(finalAmountInput);
+    if (!Number.isFinite(finalTotalPrice) || finalTotalPrice < 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    const methodInput = window
+      .prompt(
+        "Payment method (cash/card/online/stripe/paypal):",
+        appointment.paymentMethod || "cash",
+      )
+      ?.trim()
+      .toLowerCase();
+
+    const allowedMethods = ["cash", "card", "online", "stripe", "paypal"];
+    const paymentMethod = allowedMethods.includes(methodInput || "")
+      ? (methodInput as "cash" | "card" | "online" | "stripe" | "paypal")
+      : undefined;
+
+    settlePaymentMutation.mutate({
+      finalTotalPrice,
+      paymentMethod,
+      markAsPaid: true,
+    });
   };
 
   if (isLoading) {
@@ -117,6 +178,19 @@ export function AppointmentDetailPage() {
       />
 
       <AppointmentSummaryCard appointment={appointment} />
+
+      {(appointment.status === "confirmed" ||
+        appointment.status === "completed") && (
+        <div className="flex justify-end">
+          <Button
+            variant="outline"
+            onClick={handleSettlePayment}
+            disabled={settlePaymentMutation.isPending}
+          >
+            {settlePaymentMutation.isPending ? "Updating..." : "Settle Payment"}
+          </Button>
+        </div>
+      )}
 
       {appointment.status === "completed" && canShowFeedback && feedback && (
         <AppointmentFeedbackCard feedback={feedback} />

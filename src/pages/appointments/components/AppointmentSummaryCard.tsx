@@ -37,6 +37,12 @@ export function AppointmentSummaryCard({
     "HH:mm",
   )} - ${format(new Date(appointment.endDateTime), "HH:mm")}`;
 
+  const total = Number(appointment.totalPrice || 0);
+  const deposit = Number(appointment.depositAmount || 0);
+  const remaining = Number(
+    appointment.remainingAmount ?? Math.max(0, total - deposit).toFixed(2),
+  );
+
   return (
     <Card>
       <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
@@ -106,7 +112,17 @@ export function AppointmentSummaryCard({
             <p className="text-xs uppercase tracking-wide text-muted-foreground">
               Total Price
             </p>
-            <p className="text-sm font-medium">{appointment.totalPrice}</p>
+            <p className="text-sm font-medium">{total.toFixed(2)}</p>
+            {deposit > 0 && (
+              <>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Deposit Paid: {deposit.toFixed(2)}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Remaining: {remaining.toFixed(2)}
+                </p>
+              </>
+            )}
           </div>
         </div>
 

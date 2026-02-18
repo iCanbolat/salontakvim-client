@@ -45,6 +45,8 @@ export interface Appointment {
   numberOfPeople: number;
   status: AppointmentStatus;
   totalPrice: string;
+  depositAmount?: string;
+  remainingAmount?: string;
   paymentMethod?: string;
   isPaid: boolean;
   paidAt?: string;
@@ -96,6 +98,13 @@ export interface UpdateAppointmentDto {
 export interface UpdateAppointmentStatusDto {
   status: AppointmentStatus;
   cancellationReason?: string;
+  internalNotes?: string;
+}
+
+export interface SettleAppointmentPaymentDto {
+  finalTotalPrice: number;
+  paymentMethod?: "cash" | "card" | "online" | "stripe" | "paypal";
+  markAsPaid?: boolean;
   internalNotes?: string;
 }
 

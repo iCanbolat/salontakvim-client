@@ -11,6 +11,7 @@ import type {
   AppointmentFilters,
   PaginatedAppointmentsResponse,
   AvailabilityResponse,
+  SettleAppointmentPaymentDto,
 } from "@/types";
 
 export class AppointmentService {
@@ -85,6 +86,18 @@ export class AppointmentService {
   ): Promise<Appointment> {
     const response = await axiosInstance.patch<Appointment>(
       `/stores/${storeId}/appointments/${id}/status`,
+      data,
+    );
+    return response.data;
+  }
+
+  async settleAppointmentPayment(
+    storeId: string,
+    id: string,
+    data: SettleAppointmentPaymentDto,
+  ): Promise<Appointment> {
+    const response = await axiosInstance.patch<Appointment>(
+      `/stores/${storeId}/appointments/${id}/settle-payment`,
       data,
     );
     return response.data;

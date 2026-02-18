@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Loader2,
   AlertCircle,
@@ -8,6 +8,8 @@ import {
   X,
   ImagePlus,
   Trash2,
+  CreditCard,
+  Link,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,8 +24,10 @@ import { Label } from "../../../components/ui/label";
 import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
+import { Badge } from "../../../components/ui/badge";
 import { useStoreSettings } from "./hooks/useStoreSettings";
 import { storeService } from "@/services/store.service";
+import { billingService } from "@/services/billing.service";
 
 export function StoreSettings() {
   const { state, actions, data, form } = useStoreSettings();
@@ -45,6 +49,26 @@ export function StoreSettings() {
 
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
+  const [billingError, setBillingError] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<"pro" | "business">("pro");
+  const storeId = store?.id;
+
+  const normalizedCountry = (store?.country || "TR").toUpperCase();
+  const isStripeAllowed = normalizedCountry !== "TR";
+  const paymentStatus = store?.paymentStatus || "freemium";
+
+  useEffect(() => {
+    if (paymentStatus === "pro") {
+      setSelectedPlan("business");
+    }
+  }, [paymentStatus]);
+
+  const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
+    queryKey: ["billing-connect-status", storeId],
+    queryFn: () => billingService.getConnectStatus(storeId!),
+    enabled: !!storeId && isStripeAllowed,
+    staleTime: 60_000,
+  });
 
   const uploadImageMutation = useMutation({
     mutationFn: (file: File) => storeService.uploadStoreImage(store!.id, file),
@@ -58,6 +82,61 @@ export function StoreSettings() {
       storeService.deleteStoreImage(store!.id, imageUrl),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["my-store"] });
+    },
+  });
+
+  const startSubscriptionMutation = useMutation({
+    mutationFn: async (plan: "pro" | "business") => {
+      if (!storeId) {
+        throw new Error("Store not found");
+      }
+
+      const currentUrl = window.location.href;
+      return billingService.createSubscriptionCheckoutSession({
+        storeId,
+        successUrl: currentUrl,
+        cancelUrl: currentUrl,
+        plan,
+      });
+    },
+    onSuccess: (result) => {
+      if (!result.checkoutUrl) {
+        setBillingError("Failed to get Stripe checkout URL.");
+        return;
+      }
+      window.location.href = result.checkoutUrl;
+    },
+    onError: (error: any) => {
+      setBillingError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Could not start subscription checkout.",
+      );
+    },
+  });
+
+  const connectStripeMutation = useMutation({
+    mutationFn: async () => {
+      if (!storeId) {
+        throw new Error("Store not found");
+      }
+
+      const currentUrl = window.location.href;
+      return billingService.createConnectOnboardingLink({
+        storeId,
+        refreshUrl: currentUrl,
+        returnUrl: currentUrl,
+      });
+    },
+    onSuccess: (result) => {
+      window.location.href = result.onboardingUrl;
+    },
+    onError: (error: any) => {
+      setBillingError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Could not open Stripe Connect onboarding.",
+      );
     },
   });
 
@@ -348,6 +427,201 @@ export function StoreSettings() {
                 </p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Store Photos Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Stripe Billing</CardTitle>
+            <CardDescription>
+              Manage SaaS subscription and Stripe Connect payouts
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!isStripeAllowed ? (
+              <p className="text-sm text-gray-500">
+                Stripe is only available for non-Turkish stores. Current
+                country:{" "}
+                <span className="font-medium">{normalizedCountry}</span>
+              </p>
+            ) : (
+              <>
+                <div className="flex flex-col gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Connect Status
+                    </span>
+                    {connectStatus?.onboardingComplete ? (
+                      <Badge variant="secondary">Connected</Badge>
+                    ) : connectStatus?.hasAccount ? (
+                      <Badge
+                        variant="outline"
+                        className="text-amber-600 border-amber-200 bg-amber-50"
+                      >
+                        Setup Required
+                      </Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-gray-500 bg-gray-50"
+                      >
+                        Not Connected
+                      </Badge>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">
+                      Subscription
+                    </span>
+                    {paymentStatus === "business" ? (
+                      <Badge variant="default">business</Badge>
+                    ) : paymentStatus === "pro" ? (
+                      <Badge variant="default">pro</Badge>
+                    ) : (
+                      <Badge
+                        variant="outline"
+                        className="text-gray-500 bg-gray-50"
+                      >
+                        freemium
+                      </Badge>
+                    )}
+                  </div>
+
+                  {(!connectStatus?.onboardingComplete ||
+                    paymentStatus === "freemium") && (
+                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-4">
+                      <p className="text-xs text-amber-600 flex items-center gap-1">
+                        <AlertCircle className="h-3 w-3" />
+                        Stripe resources will be created when you start an
+                        action below.
+                      </p>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPlan("pro")}
+                          disabled={
+                            paymentStatus === "pro" ||
+                            paymentStatus === "business"
+                          }
+                          className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
+                            selectedPlan === "pro"
+                              ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                              : "border-gray-200 bg-white"
+                          } ${paymentStatus === "pro" || paymentStatus === "business" ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="text-xs font-bold uppercase text-gray-400">
+                              Pro Plan
+                            </h4>
+                            {selectedPlan === "pro" && (
+                              <div className="h-2 w-2 rounded-full bg-blue-600" />
+                            )}
+                          </div>
+                          <p className="font-semibold text-gray-900">$29/mo</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Standard features for growing salons.
+                          </p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedPlan("business")}
+                          disabled={paymentStatus === "business"}
+                          className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
+                            selectedPlan === "business"
+                              ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                              : "border-gray-200 bg-white"
+                          } ${paymentStatus === "business" ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <div className="flex justify-between items-start mb-1">
+                            <h4 className="text-xs font-bold uppercase text-blue-400">
+                              Business Plan
+                            </h4>
+                            {selectedPlan === "business" && (
+                              <div className="h-2 w-2 rounded-full bg-blue-600" />
+                            )}
+                          </div>
+                          <p className="font-semibold text-gray-900">$79/mo</p>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Advanced analytics and multi-location support.
+                          </p>
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {billingError && (
+                  <Alert variant="destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <AlertDescription>{billingError}</AlertDescription>
+                  </Alert>
+                )}
+
+                <div className="flex flex-wrap gap-3">
+                  {paymentStatus !== "business" && (
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setBillingError(null);
+                        startSubscriptionMutation.mutate(selectedPlan);
+                      }}
+                      disabled={
+                        startSubscriptionMutation.isPending ||
+                        (paymentStatus === "pro" && selectedPlan === "pro")
+                      }
+                    >
+                      {startSubscriptionMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Redirecting...
+                        </>
+                      ) : (
+                        <>
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          {paymentStatus === "freemium"
+                            ? "Start Subscription"
+                            : "Upgrade Subscription"}
+                        </>
+                      )}
+                    </Button>
+                  )}
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setBillingError(null);
+                      connectStripeMutation.mutate();
+                    }}
+                    disabled={connectStripeMutation.isPending}
+                  >
+                    {connectStripeMutation.isPending ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Opening...
+                      </>
+                    ) : (
+                      <>
+                        <Link className="h-4 w-4 mr-2" />
+                        Connect Stripe
+                      </>
+                    )}
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => refetchConnectStatus()}
+                  >
+                    Refresh Status
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
