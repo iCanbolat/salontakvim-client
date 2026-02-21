@@ -62,7 +62,6 @@ export function FilesList() {
 
   const {
     searchTerm,
-    view,
     fileTypeFilter,
     selectedCustomerId,
     isInitialLoading,

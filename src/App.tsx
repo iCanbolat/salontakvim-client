@@ -18,26 +18,24 @@ import {
   ResetPasswordPage,
 } from "./pages/auth";
 import { DashboardPage } from "./pages/dashboard";
-import {
-  StoreSettings,
-  ServicesList,
-  StaffList,
-  StaffDetails,
-  LocationsList,
-  AppointmentsList,
-  CustomerDetails,
-  CustomersList,
-  WidgetSettings,
-  Analytics,
-  NotificationSettings,
-  FilesList,
-  FeedbackList,
-} from "./pages/admin";
+import { ServicesList } from "./pages/services";
+import { AppointmentsList } from "./pages/appointments";
+import { CustomersList } from "./pages/customers";
+import { CustomerDetails } from "./pages/customers/CustomerDetails";
+import { FilesList } from "./pages/files-page";
+import FeedbackList from "./pages/feedback-page";
+import { LocationsList } from "./pages/locations";
+import { Analytics } from "./pages/analytics";
+import { StoreSettings } from "./pages/settings/store";
+import { WidgetSettings } from "./pages/settings/widget";
+import { NotificationSettings } from "./pages/settings/notifications";
 import { AppointmentDetailPage } from "./pages/appointments/AppointmentDetail";
 import {
   AcceptInvitationPage,
   StaffSchedule,
   StaffProfile,
+  StaffManagement as StaffList,
+  StaffDetails,
 } from "./pages/staff";
 import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
