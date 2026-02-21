@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { storeService } from "@/services";
+import { useCurrentStore } from "@/hooks";
 import type { UpdateStoreDto } from "@/types";
 
 // Validation schema
@@ -37,14 +38,7 @@ export function useStoreSettings() {
   const [formError, setFormError] = useState<string | null>(null);
 
   // Fetch store data
-  const {
-    data: store,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading } = useCurrentStore();
 
   // Form setup
   const form = useForm<StoreSettingsFormData>({
@@ -125,7 +119,7 @@ export function useStoreSettings() {
       isEditing,
       formError,
       isLoading,
-      error,
+      error: null,
       isPending: updateMutation.isPending,
       isSuccess: updateMutation.isSuccess,
     },

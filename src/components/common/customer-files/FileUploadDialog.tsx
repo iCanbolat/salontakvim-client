@@ -269,6 +269,11 @@ export function FileUploadDialog({
       queryClient.invalidateQueries({
         queryKey: ["activities", storeId],
       });
+      if (appointmentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["appointment", storeId, appointmentId],
+        });
+      }
       queryClient.invalidateQueries({
         queryKey: ["customer-files", storeId, customerId],
       });

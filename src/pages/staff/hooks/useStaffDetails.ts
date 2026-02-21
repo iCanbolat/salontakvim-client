@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { staffService, storeService } from "@/services";
+import { staffService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
+import { useCurrentStore } from "@/hooks";
 
 export function useStaffDetails() {
   const { staffId } = useParams<{ staffId: string }>();
@@ -14,10 +15,7 @@ export function useStaffDetails() {
 
   const isValidStaffId = !!staffId && staffId !== "0";
 
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   const staffDetailsQuery = useQuery({
     queryKey: ["staff-details", store?.id, staffId],

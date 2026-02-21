@@ -36,9 +36,17 @@ import {
   AppointmentsListTable,
 } from "./components";
 import type { Appointment } from "@/types";
+import {
+  useUISettingsStore,
+  type AppointmentView,
+} from "@/stores/uiSettings.store";
 
 export function AppointmentsList() {
   const { user, store, state, data, derived, actions } = useAppointments();
+  const view = useUISettingsStore(
+    (state) => (state.pageViews.appointments || "grid") as AppointmentView,
+  );
+  const setPageView = useUISettingsStore((state) => state.setPageView);
 
   const {
     isCreateDialogOpen,
@@ -47,7 +55,6 @@ export function AppointmentsList() {
     activeTab,
     page,
     searchTerm,
-    view,
     dateRange,
     pendingDateRange,
     isDatePopoverOpen,
@@ -74,7 +81,6 @@ export function AppointmentsList() {
     setIsCreateDialogOpen,
     setStatusUpdateAppointment,
     setSearchTerm,
-    setView,
     setPendingDateRange,
     handleEdit,
     handleCloseDialog,
@@ -145,7 +151,12 @@ export function AppointmentsList() {
         <div className="flex gap-2 mt-4 md:mt-0">
           <Button
             variant="outline"
-            onClick={() => setView(view === "calendar" ? "grid" : "calendar")}
+            onClick={() =>
+              setPageView(
+                "appointments",
+                view === "calendar" ? "grid" : "calendar",
+              )
+            }
             className="hidden md:flex"
           >
             <CalendarIcon className="h-4 w-4 mr-2" />
@@ -170,13 +181,11 @@ export function AppointmentsList() {
       {/* Appointments List with PageView */}
       <PageView<Appointment, AppointmentFilter>
         data={appointments}
+        viewKey="appointments"
         // Search
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search..."
-        // View Toggle
-        view={view === "calendar" ? "grid" : view}
-        onViewChange={(next) => setView(next)}
         // Filter Tabs
         filterTabs={filterTabs}
         activeFilter={activeTab}

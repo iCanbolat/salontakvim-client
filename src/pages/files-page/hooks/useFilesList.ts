@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   keepPreviousData,
   useQuery,
@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { usePagination, useDebouncedSearch } from "@/hooks";
+import { usePagination, useDebouncedSearch, useCurrentStore } from "@/hooks";
+import { useUISettingsStore } from "@/stores/uiSettings.store";
 import {
-  storeService,
   customerFileService,
   customerService,
   appointmentService,
@@ -26,7 +26,14 @@ export function useFilesList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [folderPage, setFolderPage] = useState(1);
 
-  const [view, setView] = useState<"grid" | "list">("list");
+  // Store View preferences
+  const view = useUISettingsStore(
+    (state) => (state.pageViews.files || "list") as "grid" | "list",
+  );
+  const setView = useCallback((nextView: "grid" | "list") => {
+    useUISettingsStore.getState().setPageView("files", nextView);
+  }, []);
+
   const [fileTypeFilter, setFileTypeFilter] = useState<string>("all");
   const [uploadedSort, setUploadedSort] = useState<"asc" | "desc">("desc");
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(
@@ -48,11 +55,7 @@ export function useFilesList() {
     delay: 400,
   });
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch folders (when no customer selected)
   const { data: foldersResponse, isPending: foldersPending } = useQuery({
@@ -259,9 +262,16 @@ export function useFilesList() {
   const deleteMutation = useMutation({
     mutationFn: (file: CustomerFile) =>
       customerFileService.deleteFile(store!.id, file.customerId, file.id),
-    onSuccess: () => {
+    onSuccess: (_data, file) => {
       queryClient.invalidateQueries({ queryKey: ["store-files", store?.id] });
       queryClient.invalidateQueries({ queryKey: ["store-folders", store?.id] });
+
+      if (file.appointmentId && store?.id) {
+        queryClient.invalidateQueries({
+          queryKey: ["appointment", store.id, file.appointmentId],
+        });
+      }
+
       toast.success("File deleted successfully");
     },
     onError: (err: any) => {

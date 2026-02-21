@@ -3,7 +3,7 @@
  */
 
 import { format, isValid } from "date-fns";
-import { tr } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,8 @@ export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
     : null;
   const createdAtLabel =
     createdAtDate && isValid(createdAtDate)
-      ? format(createdAtDate, "d MMMM yyyy, HH:mm", { locale: tr })
-      : "Tarih bilgisi yok";
+      ? format(createdAtDate, "d MMMM yyyy, HH:mm", { locale: enUS })
+      : "No date information";
 
   return (
     <div className="border rounded-lg p-4 space-y-3">
@@ -59,32 +59,30 @@ export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
       {/* Rating */}
       <div className="flex items-center gap-6 flex-wrap">
         <div>
-          <span className="text-xs text-muted-foreground">Genel</span>
+          <span className="text-xs text-muted-foreground">Overall</span>
           <StarDisplay rating={feedback.overallRating} />
         </div>
         {feedback.serviceRating && (
           <div>
-            <span className="text-xs text-muted-foreground">Hizmet</span>
+            <span className="text-xs text-muted-foreground">Service</span>
             <StarDisplay rating={feedback.serviceRating} />
           </div>
         )}
         {feedback.staffRating && (
           <div>
-            <span className="text-xs text-muted-foreground">Personel</span>
+            <span className="text-xs text-muted-foreground">Staff</span>
             <StarDisplay rating={feedback.staffRating} />
           </div>
         )}
         {feedback.cleanlinessRating && (
           <div>
-            <span className="text-xs text-muted-foreground">Temizlik</span>
+            <span className="text-xs text-muted-foreground">Cleanliness</span>
             <StarDisplay rating={feedback.cleanlinessRating} />
           </div>
         )}
         {feedback.valueRating && (
           <div>
-            <span className="text-xs text-muted-foreground">
-              Fiyat/Performans
-            </span>
+            <span className="text-xs text-muted-foreground">Value</span>
             <StarDisplay rating={feedback.valueRating} />
           </div>
         )}
@@ -97,7 +95,7 @@ export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
         )}
         {feedback.staff && (
           <span className="text-muted-foreground">
-            Personel: {feedback.staff.firstName} {feedback.staff.lastName}
+            Staff: {feedback.staff.firstName} {feedback.staff.lastName}
           </span>
         )}
       </div>

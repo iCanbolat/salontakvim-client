@@ -44,7 +44,7 @@ import {
 import { useNotifications } from "../../../contexts/NotificationContext";
 import { activityService } from "../../../services";
 import { notificationService } from "../../../services/notification.service";
-import { RecentActivityList } from "../../dashboard/components/RecentActivityList";
+import { RecentActivityList } from "../../../components/common/RecentActivityList";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { cn } from "../../../lib/utils";

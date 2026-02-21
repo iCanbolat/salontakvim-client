@@ -29,6 +29,7 @@ export function CalendarAppointmentCard({
     completed: "bg-green-100 border-green-300 text-green-800",
     cancelled: "bg-red-100 border-red-300 text-red-800",
     no_show: "bg-gray-100 border-gray-300 text-gray-800",
+    expired: "bg-orange-100 border-orange-300 text-orange-800",
   };
 
   return (
@@ -36,7 +37,7 @@ export function CalendarAppointmentCard({
       onClick={onClick}
       className={cn(
         "text-xs p-1 mb-1 rounded border cursor-pointer hover:shadow-sm transition-shadow",
-        statusColors[appointment.status]
+        statusColors[appointment.status],
       )}
     >
       <div className="font-medium truncate">{startTime}</div>

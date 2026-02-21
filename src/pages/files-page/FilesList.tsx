@@ -397,11 +397,10 @@ export function FilesList() {
       ) : (
         <PageView
           data={paginatedItems}
+          viewKey="files"
           searchValue={searchTerm}
           onSearchChange={actions.setSearchTerm}
           searchPlaceholder="Search files in this folder..."
-          view={view}
-          onViewChange={actions.setView}
           renderGridItem={renderGridItem}
           gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(320px,1fr))]"
           renderTableView={(data) => (

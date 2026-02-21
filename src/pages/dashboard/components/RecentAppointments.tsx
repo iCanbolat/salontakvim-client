@@ -7,11 +7,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppointmentStatusBadge } from "@/pages/appointments/components/AppointmentStatusBadge";
 import { Calendar, Clock, User } from "lucide-react";
-import { appointmentService, storeService } from "@/services";
+import { appointmentService } from "@/services";
 import { format } from "date-fns";
 import { useAuth, useNotifications } from "@/contexts";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useCurrentStore } from "@/hooks";
 
 export function RecentAppointments() {
   const { user } = useAuth();
@@ -37,11 +38,7 @@ export function RecentAppointments() {
     }
   }, [latestNotification, queryClient]);
 
-  // Fetch user's store
-  const { data: store } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store } = useCurrentStore();
 
   // Fetch recent appointments
   const { data: appointmentsData, isLoading } = useQuery({

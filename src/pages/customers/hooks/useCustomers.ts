@@ -6,8 +6,8 @@
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { storeService, customerService } from "@/services";
-import { useDebouncedSearch, usePagination } from "@/hooks";
+import { customerService } from "@/services";
+import { useDebouncedSearch, usePagination, useCurrentStore } from "@/hooks";
 import { useAuth } from "@/contexts";
 import type { CustomerWithStats } from "@/types";
 import { toast } from "sonner";
@@ -26,7 +26,6 @@ export function useCustomers() {
   const [currentPage, setCurrentPage] = useState(
     parseInt(searchParams.get("page") || "1", 10),
   );
-  const [view, setView] = useState<CustomerView>("grid");
   const [selectedCustomers, setSelectedCustomers] = useState<string[]>([]);
   const [isSmsDialogOpen, setIsSmsDialogOpen] = useState(false);
   const [isDiscountDialogOpen, setIsDiscountDialogOpen] = useState(false);
@@ -40,11 +39,7 @@ export function useCustomers() {
     delay: 400,
   });
 
-  // Fetch store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch customers
   const {
@@ -207,7 +202,6 @@ export function useCustomers() {
     store,
     state: {
       searchTerm,
-      view,
       canAssignCoupons,
       selectedCustomers,
       isSmsDialogOpen,
@@ -228,7 +222,6 @@ export function useCustomers() {
     },
     actions: {
       setSearchTerm,
-      setView,
       setIsSmsDialogOpen,
       setIsDiscountDialogOpen,
       goToPage,

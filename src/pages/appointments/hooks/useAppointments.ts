@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   keepPreviousData,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
 import { format } from "date-fns";
-import type { DateRange } from "react-day-picker";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { useDebouncedSearch, useMediaQuery } from "@/hooks";
-import { storeService, appointmentService, staffService } from "@/services";
+import type { DateRange } from "react-day-picker";
+import { useDebouncedSearch, useMediaQuery, useCurrentStore } from "@/hooks";
+import { appointmentService, staffService } from "@/services";
 import { useNotifications, useAuth } from "@/contexts";
 import type {
   Appointment,
@@ -32,17 +32,36 @@ export function useAppointments() {
     useState<Appointment | null>(null);
   const [statusUpdateAppointment, setStatusUpdateAppointment] =
     useState<Appointment | null>(null);
+
+  // Filter State (formerly in Zustand)
   const [activeTab, setActiveTab] = useState<AppointmentFilter>("all");
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTermState] = useState("");
-  const [view, setView] = useState<"grid" | "list" | "calendar">("grid");
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [pendingDateRange, setPendingDateRange] = useState<
     DateRange | undefined
-  >();
+  >(undefined);
+  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
+
+  const toggleStaffSelection = useCallback(
+    (staffId: string, checked: boolean) => {
+      setSelectedStaffIds((prev) =>
+        checked
+          ? prev.includes(staffId)
+            ? prev
+            : [...prev, staffId]
+          : prev.filter((id) => id !== staffId),
+      );
+    },
+    [],
+  );
+
+  const clearStaffSelection = useCallback(() => {
+    setSelectedStaffIds([]);
+  }, []);
+
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
   const [isStaffPopoverOpen, setIsStaffPopoverOpen] = useState(false);
-  const [selectedStaffIds, setSelectedStaffIds] = useState<string[]>([]);
   const [urlSearchOverride, setUrlSearchOverride] = useState<string | null>(
     null,
   );
@@ -56,11 +75,7 @@ export function useAppointments() {
   });
   const searchFilter = (urlSearchOverride ?? debouncedSearch) || undefined;
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch staff member record if user is staff
   const { data: staffMember, isLoading: staffLoading } = useQuery({
@@ -89,52 +104,97 @@ export function useAppointments() {
       return;
     }
 
+    // Status sync
+    const initialStatus = searchParams.get("status") as AppointmentFilter;
+    if (initialStatus && initialStatus !== activeTab) {
+      setActiveTab(initialStatus);
+    }
+
+    // Search sync
     const initialSearch = searchParams.get("search");
     const normalizedSearch = initialSearch?.trim() ?? "";
 
     if (normalizedSearch !== searchTerm) {
-      setSearchTermState(normalizedSearch);
+      setSearchTerm(normalizedSearch);
       setUrlSearchOverride(normalizedSearch || null);
     }
+
+    // Date sync
     const startDateParam = searchParams.get("startDate");
     const endDateParam = searchParams.get("endDate");
-    if (!startDateParam && !endDateParam) return;
 
-    const from = startDateParam
-      ? new Date(`${startDateParam}T00:00:00`)
-      : undefined;
-    const to = endDateParam ? new Date(`${endDateParam}T00:00:00`) : undefined;
+    if (startDateParam || endDateParam) {
+      const from = startDateParam
+        ? new Date(`${startDateParam}T00:00:00`)
+        : undefined;
+      const to = endDateParam
+        ? new Date(`${endDateParam}T00:00:00`)
+        : undefined;
 
-    if (from && Number.isNaN(from.getTime())) return;
-    if (to && Number.isNaN(to.getTime())) return;
+      if (from && !Number.isNaN(from.getTime())) {
+        const hasRangeChanged =
+          from.getTime() !== dateRange?.from?.getTime() ||
+          (to && to.getTime() !== dateRange?.to?.getTime());
 
-    setDateRange({
-      from,
-      to: to ?? from,
-    });
+        if (hasRangeChanged) {
+          setDateRange({
+            from,
+            to: to ?? from,
+          });
+        }
+      }
+    } else if (dateRange) {
+      setDateRange(undefined);
+    }
+
+    // Staff sync
+    const staffIdsParam = searchParams.get("staffIds");
+    const nextStaffIds = staffIdsParam ? staffIdsParam.split(",") : [];
+    if (JSON.stringify(nextStaffIds) !== JSON.stringify(selectedStaffIds)) {
+      setSelectedStaffIds(nextStaffIds);
+    }
   }, [searchParams]);
 
-  const handleSearchChange = (value: string) => {
-    skipSearchParamSync.current = true;
-    setUrlSearchOverride(null);
-    setSearchTermState(value);
+  const handleStatusChange = useCallback(
+    (status: AppointmentFilter) => {
+      skipSearchParamSync.current = true;
+      setActiveTab(status);
 
-    const normalized = value.trim();
-    const nextParams = new URLSearchParams(searchParams);
-
-    if (normalized) {
-      nextParams.set("search", normalized);
-    } else {
-      nextParams.delete("search");
-    }
-
-    const nextSearch = nextParams.toString();
-    const prevSearch = searchParams.toString();
-
-    if (nextSearch !== prevSearch) {
+      const nextParams = new URLSearchParams(searchParams);
+      if (status !== "all") {
+        nextParams.set("status", status);
+      } else {
+        nextParams.delete("status");
+      }
       setSearchParams(nextParams, { replace: true });
-    }
-  };
+    },
+    [searchParams, setSearchParams, setActiveTab],
+  );
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      skipSearchParamSync.current = true;
+      setUrlSearchOverride(null);
+      setSearchTerm(value);
+
+      const normalized = value.trim();
+      const nextParams = new URLSearchParams(searchParams);
+
+      if (normalized) {
+        nextParams.set("search", normalized);
+      } else {
+        nextParams.delete("search");
+      }
+
+      const nextSearch = nextParams.toString();
+      const prevSearch = searchParams.toString();
+
+      if (nextSearch !== prevSearch) {
+        setSearchParams(nextParams, { replace: true });
+      }
+    },
+    [searchParams, setSearchParams, setSearchTerm],
+  );
 
   const statusFilter = activeTab === "all" ? undefined : activeTab;
 
@@ -171,10 +231,7 @@ export function useAppointments() {
             ? selectedStaffIds
             : undefined,
       }),
-    enabled:
-      !!store?.id &&
-      (user?.role !== "staff" || !!staffMember) &&
-      (view !== "calendar" || isMobile),
+    enabled: !!store?.id && (user?.role !== "staff" || !!staffMember),
     placeholderData: keepPreviousData,
   });
 
@@ -205,67 +262,116 @@ export function useAppointments() {
 
   // Reset page on filter change
   useEffect(() => {
-    setPage(1);
-  }, [activeTab, searchFilter, dateRange, selectedStaffIds]);
-
-  // Force grid view on mobile
-  useEffect(() => {
-    if (isMobile && view === "list") {
-      setView("grid");
+    if (page !== 1) {
+      setPage(1);
     }
-  }, [isMobile, view]);
+  }, [activeTab, searchFilter, dateRange, selectedStaffIds, page, setPage]);
 
   // Handlers
-  const handleEdit = (appointment: Appointment) => {
+  const handleEdit = useCallback((appointment: Appointment) => {
     setEditingAppointment(appointment);
-  };
+  }, []);
 
-  const handleViewDetail = (appointment: Appointment) => {
-    navigate(`/${user?.role}/appointments/${appointment.id}`);
-  };
+  const handleViewDetail = useCallback(
+    (appointment: Appointment) => {
+      navigate(`/${user?.role}/appointments/${appointment.id}`);
+    },
+    [navigate, user?.role],
+  );
 
-  const handleCloseDialog = () => {
+  const handleCloseDialog = useCallback(() => {
     setIsCreateDialogOpen(false);
     setEditingAppointment(null);
-  };
+  }, []);
 
-  const handlePageChange = (nextPage: number) => {
-    setPage(nextPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  const handlePageChange = useCallback(
+    (nextPage: number) => {
+      setPage(nextPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    },
+    [setPage],
+  );
 
-  const handleApplyDateRange = () => {
+  const handleApplyDateRange = useCallback(() => {
+    skipSearchParamSync.current = true;
     setDateRange(pendingDateRange);
     setIsDatePopoverOpen(false);
-  };
 
-  const handleClearDateRange = () => {
+    const nextParams = new URLSearchParams(searchParams);
+    if (pendingDateRange?.from) {
+      nextParams.set("startDate", format(pendingDateRange.from, "yyyy-MM-dd"));
+    } else {
+      nextParams.delete("startDate");
+    }
+
+    if (pendingDateRange?.to) {
+      nextParams.set("endDate", format(pendingDateRange.to, "yyyy-MM-dd"));
+    } else {
+      nextParams.delete("endDate");
+    }
+
+    setSearchParams(nextParams, { replace: true });
+  }, [pendingDateRange, searchParams, setSearchParams, setDateRange]);
+
+  const handleClearDateRange = useCallback(() => {
+    skipSearchParamSync.current = true;
     setDateRange(undefined);
     setPendingDateRange(undefined);
-  };
 
-  const handleDatePopoverChange = (open: boolean) => {
-    setIsDatePopoverOpen(open);
-    if (open) {
-      setPendingDateRange(dateRange);
-    } else {
-      setPendingDateRange(undefined);
-    }
-  };
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("startDate");
+    nextParams.delete("endDate");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams, setDateRange, setPendingDateRange]);
 
-  const handleStaffPopoverChange = (open: boolean) => {
+  const handleDatePopoverChange = useCallback(
+    (open: boolean) => {
+      setIsDatePopoverOpen(open);
+      if (open) {
+        setPendingDateRange(dateRange);
+      } else {
+        setPendingDateRange(undefined);
+      }
+    },
+    [dateRange, setPendingDateRange],
+  );
+
+  const handleStaffPopoverChange = useCallback((open: boolean) => {
     setIsStaffPopoverOpen(open);
-  };
+  }, []);
 
-  const handleToggleStaff = (staffId: string, checked: boolean) => {
-    setSelectedStaffIds((prev) =>
-      checked ? [...prev, staffId] : prev.filter((id) => id !== staffId),
-    );
-  };
+  const handleToggleStaff = useCallback(
+    (staffId: string, checked: boolean) => {
+      skipSearchParamSync.current = true;
 
-  const handleClearStaffSelection = () => {
-    setSelectedStaffIds([]);
-  };
+      // Calculate new selection to sync with URL
+      const nextSelection = checked
+        ? selectedStaffIds.includes(staffId)
+          ? selectedStaffIds
+          : [...selectedStaffIds, staffId]
+        : selectedStaffIds.filter((id) => id !== staffId);
+
+      toggleStaffSelection(staffId, checked);
+
+      const nextParams = new URLSearchParams(searchParams);
+      if (nextSelection.length > 0) {
+        nextParams.set("staffIds", nextSelection.join(","));
+      } else {
+        nextParams.delete("staffIds");
+      }
+      setSearchParams(nextParams, { replace: true });
+    },
+    [selectedStaffIds, toggleStaffSelection, searchParams, setSearchParams],
+  );
+
+  const handleClearStaffSelection = useCallback(() => {
+    skipSearchParamSync.current = true;
+    clearStaffSelection();
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("staffIds");
+    setSearchParams(nextParams, { replace: true });
+  }, [clearStaffSelection, searchParams, setSearchParams]);
 
   // Derived Values
   const defaultStatusCounts: AppointmentStatusCounts = {
@@ -329,7 +435,6 @@ export function useAppointments() {
       activeTab,
       page,
       searchTerm,
-      view,
       dateRange,
       pendingDateRange,
       isDatePopoverOpen,
@@ -357,9 +462,8 @@ export function useAppointments() {
       setIsCreateDialogOpen,
       setEditingAppointment,
       setStatusUpdateAppointment,
-      setActiveTab,
+      setActiveTab: handleStatusChange,
       setSearchTerm: handleSearchChange,
-      setView,
       setPage,
       setPendingDateRange,
       setIsDatePopoverOpen,

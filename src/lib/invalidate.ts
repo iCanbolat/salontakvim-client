@@ -7,6 +7,22 @@ export function invalidateAfterAppointmentChange(
   // Appointments list for this store
   queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
 
+  // Appointment detail for this store (any appointment id)
+  queryClient.invalidateQueries({
+    predicate: (query) => {
+      const key = query.queryKey;
+      return key[0] === "appointment" && key[1] === storeId;
+    },
+  });
+
+  // Appointment activity timeline for this store (any appointment id)
+  queryClient.invalidateQueries({
+    predicate: (query) => {
+      const key = query.queryKey;
+      return key[0] === "appointment-activities" && key[1] === storeId;
+    },
+  });
+
   // Recent appointments for dashboard (any location scope)
   queryClient.invalidateQueries({
     predicate: (query) => {

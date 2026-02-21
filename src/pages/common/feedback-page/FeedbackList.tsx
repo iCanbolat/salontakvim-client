@@ -9,8 +9,9 @@ import { AlertCircle, MessageSquare } from "lucide-react";
 
 import { useAuth } from "@/contexts";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { useCurrentStore } from "@/hooks";
 import { toast } from "sonner";
-import { storeService, feedbackService } from "@/services";
+import { feedbackService } from "@/services";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Card,
@@ -47,11 +48,7 @@ export function FeedbackList() {
     setPage(1);
   }, [staffFilter, serviceFilter, debouncedSearch]);
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch dashboard data
   const {
@@ -93,10 +90,10 @@ export function FeedbackList() {
       queryClient.invalidateQueries({
         queryKey: ["feedback-dashboard", store?.id],
       });
-      toast.success("Geri bildirim silindi");
+      toast.success("Feedback deleted");
     },
     onError: () => {
-      toast.error("Geri bildirim silinirken bir hata oluştu");
+      toast.error("An error occurred while deleting feedback");
     },
   });
 
@@ -136,7 +133,7 @@ export function FeedbackList() {
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Geri bildirimler yüklenirken bir hata oluştu.
+            An error occurred while loading feedback.
           </AlertDescription>
         </Alert>
       </div>
@@ -146,8 +143,8 @@ export function FeedbackList() {
   return (
     <div className="container mx-auto py-6 space-y-6">
       <FeedbackHeader
-        title="Müşteri Geri Bildirimleri"
-        subtitle="Müşterilerinizin randevu sonrası gönderdiği değerlendirmeleri görüntüleyin"
+        title="Customer Feedback"
+        subtitle="View ratings submitted by your customers after appointments"
       />
 
       <FeedbackStats stats={stats} />
@@ -167,16 +164,14 @@ export function FeedbackList() {
       {/* Feedback List */}
       <Card>
         <CardHeader>
-          <CardTitle>Değerlendirmeler</CardTitle>
-          <CardDescription>
-            {totalItems} değerlendirme listeleniyor
-          </CardDescription>
+          <CardTitle>Reviews</CardTitle>
+          <CardDescription>{totalItems} reviews listed</CardDescription>
         </CardHeader>
         <CardContent>
           {feedbackList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Henüz geri bildirim yok</p>
+              <p>No feedback yet</p>
             </div>
           ) : (
             <div className="space-y-4">

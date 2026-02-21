@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Calendar, Clock, User, Briefcase, MapPin, Wallet } from "lucide-react";
 import type { Appointment } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 
 interface AppointmentSummaryCardProps {
@@ -52,7 +53,14 @@ export function AppointmentSummaryCard({
             Appointment #{appointment.publicNumber}
           </p>
         </div>
-        <AppointmentStatusBadge status={appointment.status} />
+        <div className="flex items-center gap-2">
+          <AppointmentStatusBadge status={appointment.status} />
+          {appointment.isPaid && (
+            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
+              Paid
+            </Badge>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="grid gap-4 md:grid-cols-2">
         <div className="flex items-start gap-2">

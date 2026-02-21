@@ -191,6 +191,8 @@ export function WidgetSettings() {
 
   if (!settings || !store) return null;
 
+  const isFreemiumStore = store.paymentStatus === "freemium";
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -368,17 +370,29 @@ export function WidgetSettings() {
                       key={item.key}
                       className="flex items-center justify-between"
                     >
-                      <Label>{item.label}</Label>
+                      <Label>
+                        {item.label}
+                        {item.key === "payment" && isFreemiumStore
+                          ? " (Paid plan required)"
+                          : ""}
+                      </Label>
                       <Switch
-                        checked={getCurrentSidebarItem(
-                          item.key as keyof WidgetSettingsType["sidebarMenuItems"],
-                        )}
+                        checked={
+                          item.key === "payment" && isFreemiumStore
+                            ? false
+                            : getCurrentSidebarItem(
+                                item.key as keyof WidgetSettingsType["sidebarMenuItems"],
+                              )
+                        }
+                        disabled={item.key === "payment" && isFreemiumStore}
                         onCheckedChange={(checked) =>
-                          handleUpdate("sidebarMenuItems", {
-                            ...settings.sidebarMenuItems,
-                            ...(pendingChanges.sidebarMenuItems || {}),
-                            [item.key]: checked,
-                          })
+                          item.key === "payment" && isFreemiumStore
+                            ? undefined
+                            : handleUpdate("sidebarMenuItems", {
+                                ...settings.sidebarMenuItems,
+                                ...(pendingChanges.sidebarMenuItems || {}),
+                                [item.key]: checked,
+                              })
                         }
                       />
                     </div>

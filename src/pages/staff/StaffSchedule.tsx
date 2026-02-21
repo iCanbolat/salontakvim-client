@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { TimeOffStatusBadge } from "./components/TimeOffStatusBadge";
 import { Loader2, Plus, Calendar, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts";
-import { breakService, staffService, storeService } from "@/services";
+import { breakService, staffService } from "@/services";
 import type { StaffBreak } from "@/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeOffDialog } from "./components/TimeOffDialog";
+import { useCurrentStore } from "@/hooks";
 
 type SummaryCard = {
   title: string;
@@ -21,10 +22,7 @@ export function StaffSchedule() {
   const { user } = useAuth();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   const {
     data: staffMember,

@@ -2,12 +2,12 @@
  * Appointment Detail Page
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, AlertCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
+
 import { AppointmentDetailHeader } from "./components/AppointmentDetailHeader";
 import { AppointmentSummaryCard } from "./components/AppointmentSummaryCard";
 import { AppointmentFeedbackCard } from "./components/AppointmentFeedbackCard";
@@ -15,11 +15,18 @@ import { AppointmentFileUploadCard } from "./components/AppointmentFileUploadCar
 import { AppointmentCancellationCard } from "./components/AppointmentCancellationCard";
 import { AppointmentFormDialog } from "./components/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "./components/AppointmentStatusDialog";
+import { AppointmentSettlePaymentDialog } from "./components/AppointmentSettlePaymentDialog";
 import { useAppointmentDetail } from "./hooks/useAppointmentDetail";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
-import { appointmentService } from "@/services";
+import {
+  appointmentService,
+  staffService,
+  serviceService,
+  locationService,
+} from "@/services";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import { toast } from "sonner";
+import { RecentActivityList } from "../../components/common/RecentActivityList";
 
 export function AppointmentDetailPage() {
   const {
@@ -41,6 +48,65 @@ export function AppointmentDetailPage() {
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isSettlePaymentDialogOpen, setIsSettlePaymentDialogOpen] =
+    useState(false);
+
+  // Pre-fetch data for edit dialog to prevent UI lag
+  const availabilityParams = useMemo(() => {
+    if (
+      !appointment ||
+      !store ||
+      !appointment.serviceId ||
+      !appointment.staffId
+    )
+      return null;
+    return {
+      storeId: store.id,
+      serviceId: appointment.serviceId,
+      staffId: appointment.staffId,
+      date: new Date(appointment.startDateTime).toISOString().split("T")[0],
+      excludeAppointmentId: appointment.id,
+    };
+  }, [appointment, store]);
+
+  useQuery({
+    queryKey: [
+      "availability",
+      availabilityParams?.storeId,
+      availabilityParams?.serviceId,
+      availabilityParams?.staffId,
+      availabilityParams?.date,
+      availabilityParams?.excludeAppointmentId,
+    ],
+    queryFn: () => appointmentService.getAvailability(availabilityParams!),
+    enabled: !!availabilityParams,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useQuery({
+    queryKey: ["staff-by-service", store?.id, appointment?.serviceId],
+    queryFn: () =>
+      staffService.getStaffMembers(store!.id, {
+        includeHidden: false,
+        serviceId: appointment?.serviceId || undefined,
+      }),
+    enabled: !!store?.id && !!appointment?.serviceId,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useQuery({
+    queryKey: ["services", store?.id],
+    queryFn: () => serviceService.getServices(store!.id),
+    enabled: !!store?.id,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  useQuery({
+    queryKey: ["locations", store?.id],
+    queryFn: () => locationService.getLocations(store!.id),
+    enabled: !!store?.id,
+    staleTime: 5 * 60 * 1000,
+  });
 
   // Set breadcrumb label
   useEffect(() => {
@@ -72,23 +138,21 @@ export function AppointmentDetailPage() {
   });
 
   const settlePaymentMutation = useMutation({
-    mutationFn: (payload: {
-      finalTotalPrice: number;
-      paymentMethod?: "cash" | "card" | "online" | "stripe" | "paypal";
-      markAsPaid?: boolean;
-      internalNotes?: string;
-    }) =>
+    mutationFn: (payload: { finalTotalPrice: number; markAsPaid?: boolean }) =>
       appointmentService.settleAppointmentPayment(store!.id, appointmentId!, {
         ...payload,
       }),
     onSuccess: () => {
       invalidateAfterAppointmentChange(queryClient, store!.id);
       toast.success("Payment settled successfully");
+      setIsSettlePaymentDialogOpen(false);
     },
     onError: (error: any) => {
       toast.error(error.message || "Failed to settle payment");
     },
   });
+
+  const appointmentActivities = appointment?.activities || [];
 
   const handleDelete = () => {
     if (
@@ -98,47 +162,6 @@ export function AppointmentDetailPage() {
     ) {
       deleteMutation.mutate();
     }
-  };
-
-  const handleSettlePayment = () => {
-    if (!appointment) {
-      return;
-    }
-
-    const initialTotal = String(appointment.totalPrice || "0");
-    const finalAmountInput = window.prompt(
-      "Final total amount for this appointment:",
-      initialTotal,
-    );
-
-    if (!finalAmountInput) {
-      return;
-    }
-
-    const finalTotalPrice = Number(finalAmountInput);
-    if (!Number.isFinite(finalTotalPrice) || finalTotalPrice < 0) {
-      toast.error("Please enter a valid amount");
-      return;
-    }
-
-    const methodInput = window
-      .prompt(
-        "Payment method (cash/card/online/stripe/paypal):",
-        appointment.paymentMethod || "cash",
-      )
-      ?.trim()
-      .toLowerCase();
-
-    const allowedMethods = ["cash", "card", "online", "stripe", "paypal"];
-    const paymentMethod = allowedMethods.includes(methodInput || "")
-      ? (methodInput as "cash" | "card" | "online" | "stripe" | "paypal")
-      : undefined;
-
-    settlePaymentMutation.mutate({
-      finalTotalPrice,
-      paymentMethod,
-      markAsPaid: true,
-    });
   };
 
   if (isLoading) {
@@ -173,24 +196,17 @@ export function AppointmentDetailPage() {
         subtitle={`Reference #${appointment.publicNumber}`}
         onEdit={() => setIsEditDialogOpen(true)}
         onChangeStatus={() => setIsStatusDialogOpen(true)}
+        onSettlePayment={
+          appointment.status === "confirmed" ||
+          appointment.status === "completed"
+            ? () => setIsSettlePaymentDialogOpen(true)
+            : undefined
+        }
         onDelete={handleDelete}
         isDeleting={deleteMutation.isPending}
       />
 
       <AppointmentSummaryCard appointment={appointment} />
-
-      {(appointment.status === "confirmed" ||
-        appointment.status === "completed") && (
-        <div className="flex justify-end">
-          <Button
-            variant="outline"
-            onClick={handleSettlePayment}
-            disabled={settlePaymentMutation.isPending}
-          >
-            {settlePaymentMutation.isPending ? "Updating..." : "Settle Payment"}
-          </Button>
-        </div>
-      )}
 
       {appointment.status === "completed" && canShowFeedback && feedback && (
         <AppointmentFeedbackCard feedback={feedback} />
@@ -206,6 +222,13 @@ export function AppointmentDetailPage() {
           files={appointment.files}
         />
       )}
+
+      <RecentActivityList
+        activities={appointmentActivities}
+        title="Randevu Geçmişi"
+        emptyMessage="Henüz bu randevu için bir aktivite bulunmuyor."
+        showViewAll={false}
+      />
 
       {appointment.status === "cancelled" && (
         <AppointmentCancellationCard appointment={appointment} />
@@ -235,6 +258,16 @@ export function AppointmentDetailPage() {
           appointment={appointment}
           open={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
+
+      {isSettlePaymentDialogOpen && (
+        <AppointmentSettlePaymentDialog
+          appointment={appointment}
+          open={isSettlePaymentDialogOpen}
+          onOpenChange={setIsSettlePaymentDialogOpen}
+          onSettle={(data) => settlePaymentMutation.mutate(data)}
+          isPending={settlePaymentMutation.isPending}
         />
       )}
     </div>

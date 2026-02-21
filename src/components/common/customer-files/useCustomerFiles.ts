@@ -175,6 +175,13 @@ export function useCustomerFiles({
       });
       queryClient.invalidateQueries({ queryKey: ["store-files", storeId] });
       queryClient.invalidateQueries({ queryKey: ["store-folders", storeId] });
+
+      if (appointmentId) {
+        queryClient.invalidateQueries({
+          queryKey: ["appointment", storeId, appointmentId],
+        });
+      }
+
       toast.success("Dosya başarıyla silindi");
       setDeleteFileId(null);
     },

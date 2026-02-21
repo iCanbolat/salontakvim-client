@@ -4,7 +4,7 @@
  */
 
 import { useEffect, useState, useMemo } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -27,10 +27,10 @@ export const appointmentSchema = z.object({
   serviceId: z.string().min(1, "Service is required"),
   staffId: z.string().min(1, "Staff member is required"),
   locationId: z.string().optional(),
-  guestFirstName: z.string().min(1, "First name is required"),
-  guestLastName: z.string().min(1, "Last name is required"),
-  guestEmail: z.string().email("Invalid email address"),
-  guestPhone: z.string().optional().or(z.literal("")),
+  customerName: z.string().min(1, "First name is required"),
+  customerLastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+  phone: z.string().optional().or(z.literal("")),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   numberOfPeople: z.number().min(1).max(10),
@@ -54,15 +54,43 @@ export function useAppointmentForm({
 }: UseAppointmentFormProps) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [isEditing, setIsEditing] = useState(!!appointment);
+  const isEditing = !!appointment;
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
 
-  // Update isEditing only when dialog opens
-  useEffect(() => {
-    if (open) {
-      setIsEditing(!!appointment);
+  const defaultFormValues: AppointmentFormData = useMemo(() => {
+    if (appointment) {
+      const startDate = new Date(appointment.startDateTime);
+      return {
+        serviceId: appointment.serviceId || "",
+        staffId: appointment.staffId || "",
+        locationId: appointment.locationId || undefined,
+        customerName:
+          appointment.customerName || appointment.guestInfo?.firstName || "",
+        customerLastName:
+          appointment.customerLastName || appointment.guestInfo?.lastName || "",
+        email: appointment.email || appointment.guestInfo?.email || "",
+        phone: appointment.phone || appointment.guestInfo?.phone || "",
+        date: startDate.toISOString().split("T")[0],
+        time: startDate.toTimeString().slice(0, 5),
+        numberOfPeople: appointment.numberOfPeople,
+        customerNotes: appointment.customerNotes || "",
+      };
     }
-  }, [open, appointment]);
+
+    return {
+      serviceId: "",
+      staffId: "",
+      locationId: undefined,
+      customerName: "",
+      customerLastName: "",
+      email: "",
+      phone: "",
+      date: new Date().toISOString().split("T")[0],
+      time: "09:00",
+      numberOfPeople: 1,
+      customerNotes: "",
+    };
+  }, [appointment]);
 
   // Fetch staff member record if user is staff
   const { data: currentStaffMember } = useQuery({
@@ -78,85 +106,88 @@ export function useAppointmentForm({
   const { data: services } = useQuery({
     queryKey: ["services", storeId],
     queryFn: () => serviceService.getServices(storeId),
-    enabled: open,
+    enabled: true,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Fetch locations
   const { data: locations } = useQuery({
     queryKey: ["locations", storeId],
     queryFn: () => locationService.getLocations(storeId),
-    enabled: open,
+    enabled: true,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   // Form setup
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
     mode: "onBlur",
-    defaultValues: {
-      serviceId: "",
-      staffId: "",
-      locationId: undefined,
-      guestFirstName: "",
-      guestLastName: "",
-      guestEmail: "",
-      guestPhone: "",
-      date: new Date().toISOString().split("T")[0],
-      time: "09:00",
-      numberOfPeople: 1,
-      customerNotes: "",
-    },
+    defaultValues: defaultFormValues,
   });
 
-  const { reset, setValue, watch } = form;
+  const { control, setValue, reset } = form;
 
   // Watch form values
-  const watchServiceId = watch("serviceId");
-  const watchLocationId = watch("locationId");
-  const watchStaffId = watch("staffId");
-  const watchDate = watch("date");
-  const watchTime = watch("time");
+  const watchServiceId = useWatch({ control, name: "serviceId" });
+  const watchLocationId = useWatch({ control, name: "locationId" });
+  const watchStaffId = useWatch({ control, name: "staffId" });
+  const watchDate = useWatch({ control, name: "date" });
+  const watchTime = useWatch({ control, name: "time" });
 
-  // Fetch staff (filtered server-side by service/location)
-  const { data: staff } = useQuery({
-    queryKey: ["staff", storeId, watchServiceId, watchLocationId],
-    queryFn: () =>
-      staffService.getStaffMembers(storeId, {
-        includeHidden: false,
-        serviceId: watchServiceId || undefined,
-        locationId: watchLocationId,
-      }),
-    enabled: open,
-  });
-
-  // Fetch ALL staff for the selected service to filter available locations
-  const { data: allStaffForService } = useQuery({
-    queryKey: ["staff-for-service", storeId, watchServiceId],
+  // Fetch staff by selected service, then filter client-side by selected location
+  const { data: staffByService } = useQuery({
+    queryKey: ["staff-by-service", storeId, watchServiceId],
     queryFn: () =>
       staffService.getStaffMembers(storeId, {
         includeHidden: false,
         serviceId: watchServiceId || undefined,
       }),
-    enabled: open && !!watchServiceId,
+    enabled: open && Boolean(watchServiceId),
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
 
   const filteredLocations = useMemo(() => {
-    if (!watchServiceId || !allStaffForService || !locations) return locations;
+    if (!watchServiceId || !locations || !staffByService) {
+      return [];
+    }
 
     const availableLocationIds = new Set(
-      allStaffForService
-        .map((s) => s.locationId)
+      staffByService
+        .map((member) => member.locationId)
         .filter((id): id is string => Boolean(id)),
     );
+
+    if (availableLocationIds.size === 0) {
+      return locations;
+    }
 
     return locations.filter((location) =>
       availableLocationIds.has(location.id),
     );
-  }, [locations, allStaffForService, watchServiceId]);
+  }, [watchServiceId, locations, staffByService]);
 
-  const selectedService = useMemo(
-    () => services?.find((s) => s.id === watchServiceId),
-    [services, watchServiceId],
-  );
+  const filteredStaff = useMemo(() => {
+    if (!watchServiceId || !staffByService) {
+      return [];
+    }
+
+    if (!watchLocationId) {
+      return staffByService;
+    }
+
+    return staffByService.filter(
+      (member) => !member.locationId || member.locationId === watchLocationId,
+    );
+  }, [watchServiceId, watchLocationId, staffByService]);
 
   const {
     data: availability,
@@ -168,7 +199,6 @@ export function useAppointmentForm({
       storeId,
       watchServiceId,
       watchStaffId,
-      watchLocationId,
       watchDate,
       appointment?.id ?? null,
     ],
@@ -178,16 +208,41 @@ export function useAppointmentForm({
         serviceId: watchServiceId,
         staffId: watchStaffId,
         date: watchDate,
-        locationId: watchLocationId,
         excludeAppointmentId: appointment?.id,
       }),
     enabled:
       open &&
       Boolean(watchDate) &&
       Boolean(watchServiceId) &&
-      Boolean(watchStaffId) &&
-      Boolean(selectedService),
+      Boolean(watchStaffId),
+    staleTime: 5 * 60 * 1000, // Increased to 5 minutes
+    gcTime: 10 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
+
+  useEffect(() => {
+    if (open) {
+      // Formu sıfırla
+      reset(defaultFormValues);
+    }
+  }, [open, reset, defaultFormValues]);
+
+  useEffect(() => {
+    if (!open || !watchServiceId) {
+      return;
+    }
+
+    if (watchLocationId) {
+      const existsInServiceLocations = filteredLocations.some(
+        (location) => location.id === watchLocationId,
+      );
+
+      if (!existsInServiceLocations) {
+        setValue("locationId", undefined, { shouldDirty: true });
+      }
+    }
+  }, [open, watchServiceId, watchLocationId, filteredLocations, setValue]);
 
   const availableSlots: AvailabilityTimeSlot[] = useMemo(
     () => availability?.slots?.filter((slot) => slot.available) ?? [],
@@ -198,40 +253,6 @@ export function useAppointmentForm({
     [availableSlots],
   );
 
-  // Reset form when appointment changes
-  useEffect(() => {
-    if (appointment) {
-      const startDate = new Date(appointment.startDateTime);
-      reset({
-        serviceId: appointment.serviceId || "",
-        staffId: appointment.staffId || "",
-        locationId: appointment.locationId || undefined,
-        guestFirstName: appointment.guestInfo?.firstName || "",
-        guestLastName: appointment.guestInfo?.lastName || "",
-        guestEmail: appointment.guestInfo?.email || "",
-        guestPhone: appointment.guestInfo?.phone || "",
-        date: startDate.toISOString().split("T")[0],
-        time: startDate.toTimeString().slice(0, 5),
-        numberOfPeople: appointment.numberOfPeople,
-        customerNotes: appointment.customerNotes || "",
-      });
-    } else {
-      reset({
-        serviceId: "",
-        staffId: currentStaffMember?.id || "",
-        locationId: undefined,
-        guestFirstName: "",
-        guestLastName: "",
-        guestEmail: "",
-        guestPhone: "",
-        date: new Date().toISOString().split("T")[0],
-        time: "09:00",
-        numberOfPeople: 1,
-        customerNotes: "",
-      });
-    }
-  }, [appointment, reset, open]); // Removed currentStaffMember to prevent re-resetting on data load
-
   // Set default staff if current user is staff and no staff selected
   useEffect(() => {
     if (open && !isEditing && currentStaffMember?.id && !watchStaffId) {
@@ -241,16 +262,16 @@ export function useAppointmentForm({
 
   // If a location is selected, ensure staff belongs to that location
   useEffect(() => {
-    if (!open || !watchLocationId) return;
+    if (!open || !watchLocationId || !filteredStaff.length) return;
 
-    const staffMatchesLocation = staff?.some(
+    const staffMatchesLocation = filteredStaff.some(
       (member) => member.id === watchStaffId,
     );
 
     if (watchStaffId && !staffMatchesLocation) {
       setValue("staffId", "", { shouldDirty: true });
     }
-  }, [staff, open, setValue, watchLocationId, watchStaffId]);
+  }, [filteredStaff, open, setValue, watchLocationId, watchStaffId]);
 
   // Ensure selected time is always one of the available times
   useEffect(() => {
@@ -308,10 +329,10 @@ export function useAppointmentForm({
       serviceId: data.serviceId,
       staffId: data.staffId,
       locationId: data.locationId,
-      guestFirstName: data.guestFirstName,
-      guestLastName: data.guestLastName,
-      guestEmail: data.guestEmail,
-      guestPhone: data.guestPhone || undefined,
+      customerName: data.customerName,
+      customerLastName: data.customerLastName,
+      email: data.email,
+      phone: data.phone || undefined,
       startDateTime,
       numberOfPeople: data.numberOfPeople,
       customerNotes: data.customerNotes || undefined,
@@ -339,7 +360,7 @@ export function useAppointmentForm({
     data: {
       services,
       locations: filteredLocations,
-      staff,
+      staff: filteredStaff,
       availableSlots,
       availableTimes,
       user,
@@ -347,7 +368,6 @@ export function useAppointmentForm({
     actions: {
       onSubmit: form.handleSubmit(onSubmit),
       setValue,
-      watch,
     },
   };
 }

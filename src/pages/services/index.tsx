@@ -25,7 +25,7 @@ import { PageView, TableView } from "@/components/common/page-view";
 import type { Service, Category } from "@/types";
 import { useServices } from "./hooks/useServices";
 import { useCategories } from "./hooks/useCategories";
-import { getServiceColumns } from "./table-columns";
+import { getServiceColumns, getCategoryColumns } from "./table-columns";
 
 export function ServicesList() {
   const {
@@ -46,7 +46,6 @@ export function ServicesList() {
     searchQuery: serviceSearch,
     isCreateDialogOpen: isServiceDialogOpen,
     editingService,
-    view: serviceView,
     isLoading: serviceLoading,
     error: serviceError,
   } = serviceState;
@@ -55,7 +54,6 @@ export function ServicesList() {
     searchQuery: categorySearch,
     isCategoryDialogOpen,
     editingCategory,
-    view: categoryView,
     isLoading: categoryLoading,
     error: categoryError,
   } = categoryState;
@@ -77,9 +75,22 @@ export function ServicesList() {
     endIndex: categoryEnd,
   } = categoryPagination;
 
-  const tableColumns = useMemo(
-    () => getServiceColumns({ onEdit: serviceActions.handleEdit }),
-    [serviceActions.handleEdit],
+  const serviceTableColumns = useMemo(
+    () =>
+      getServiceColumns({
+        onToggleVisibility: serviceActions.handleToggleVisibility,
+        onDelete: serviceActions.handleDelete,
+      }),
+    [serviceActions.handleToggleVisibility, serviceActions.handleDelete],
+  );
+
+  const categoryTableColumns = useMemo(
+    () =>
+      getCategoryColumns({
+        onToggleVisibility: categoryActions.handleToggleVisibility,
+        onDelete: categoryActions.handleDelete,
+      }),
+    [categoryActions.handleToggleVisibility, categoryActions.handleDelete],
   );
 
   const isLoading = serviceLoading || categoryLoading;
@@ -157,11 +168,10 @@ export function ServicesList() {
 
           <PageView<Category>
             data={paginatedCategories}
+            viewKey="categories"
             searchValue={categorySearch}
             onSearchChange={categoryActions.setSearchQuery}
             searchPlaceholder="Search categories..."
-            view={categoryView}
-            onViewChange={categoryActions.setView}
             gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]"
             gridMinHeightClassName="min-h-[500px]"
             renderGridItem={(category) => (
@@ -170,6 +180,14 @@ export function ServicesList() {
                 category={category}
                 storeId={store.id}
                 onEdit={categoryActions.handleEdit}
+              />
+            )}
+            renderTableView={(data) => (
+              <TableView
+                data={data}
+                columns={categoryTableColumns}
+                getRowKey={(category) => category.id}
+                onRowClick={categoryActions.handleEdit}
               />
             )}
             currentPage={categoryPage}
@@ -212,11 +230,10 @@ export function ServicesList() {
 
           <PageView<Service>
             data={paginatedServices}
+            viewKey="services"
             searchValue={serviceSearch}
             onSearchChange={serviceActions.setSearchQuery}
             searchPlaceholder="Search services..."
-            view={serviceView}
-            onViewChange={serviceActions.setView}
             gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
             gridMinHeightClassName="min-h-[500px]"
             renderGridItem={(service) => (
@@ -230,9 +247,9 @@ export function ServicesList() {
             renderTableView={(data) => (
               <TableView
                 data={data}
-                columns={tableColumns}
+                columns={serviceTableColumns}
                 getRowKey={(service) => service.id}
-                onRowClick={serviceActions.setEditingService}
+                onRowClick={serviceActions.handleEdit}
               />
             )}
             currentPage={servicePage}

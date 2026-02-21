@@ -6,8 +6,9 @@
 import { useEffect } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { storeService, customerService } from "@/services";
+import { customerService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
+import { useCurrentStore } from "@/hooks";
 
 // UUID v4 regex pattern
 const UUID_REGEX =
@@ -20,11 +21,7 @@ export function useCustomerDetails() {
 
   const isValidCustomerId = !!customerId && UUID_REGEX.test(customerId);
 
-  // Fetch store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch customer profile
   const {

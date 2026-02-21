@@ -4,7 +4,6 @@
  */
 
 export type UserRole = "admin" | "manager" | "staff" | "customer";
-export type PaymentStatus = "freemium" | "pro" | "business";
 export type AuthProvider = "local" | "google" | "facebook" | "apple";
 
 export interface User {

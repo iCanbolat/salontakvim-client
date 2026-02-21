@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { tr } from "date-fns/locale";
 import {
@@ -35,11 +36,11 @@ import { getStaffTableColumns } from "./table-columns";
 
 export function StaffManagement() {
   const { state, actions, data, pagination } = useStaff();
+  const navigate = useNavigate();
   const {
     activeTab,
     searchTerm,
     timeOffStatus,
-    view,
     isInviteDialogOpen,
     isLoading,
     error,
@@ -53,7 +54,15 @@ export function StaffManagement() {
     timeOffs: timeOffPagination,
   } = pagination;
 
-  const staffTableColumns = useMemo(() => getStaffTableColumns(), []);
+  const staffTableColumns = useMemo(
+    () =>
+      getStaffTableColumns({
+        onToggleVisibility: (id, isVisible) =>
+          actions.toggleVisibility({ staffId: id, isVisible }),
+        onDelete: (id) => actions.deleteStaff(id),
+      }),
+    [actions],
+  );
 
   const statusFilters: { value: "all" | StaffBreakStatus; label: string }[] = [
     { value: "pending", label: "Pending" },
@@ -161,11 +170,10 @@ export function StaffManagement() {
         <TabsContent value="staff" className="space-y-4">
           <PageView<StaffMember>
             data={staffPagination.paginatedItems}
+            viewKey="staff"
             searchValue={searchTerm}
             onSearchChange={actions.setSearchTerm}
             searchPlaceholder="Search staff"
-            view={view}
-            onViewChange={actions.setView}
             gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
             gridMinHeightClassName="min-h-[600px]"
             renderGridItem={(staff) => (
@@ -176,6 +184,7 @@ export function StaffManagement() {
                 data={data}
                 columns={staffTableColumns}
                 getRowKey={(staff) => staff.id}
+                onRowClick={(staff) => navigate(`/staff/${staff.id}`)}
               />
             )}
             currentPage={staffPagination.currentPage}

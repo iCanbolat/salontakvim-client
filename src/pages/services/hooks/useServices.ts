@@ -4,22 +4,19 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { storeService, serviceService } from "@/services";
-import { usePagination } from "@/hooks";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { serviceService } from "@/services";
+import { usePagination, useCurrentStore } from "@/hooks";
 import type { Service } from "@/types";
+import { toast } from "sonner";
 
 export function useServices() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
-  const [view, setView] = useState<"grid" | "list">("grid");
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch services
   const {
@@ -30,6 +27,37 @@ export function useServices() {
     queryKey: ["services", store?.id],
     queryFn: () => serviceService.getServices(store!.id),
     enabled: !!store?.id,
+  });
+
+  // Toggle visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: ({
+      serviceId,
+      isVisible,
+    }: {
+      serviceId: string;
+      isVisible: boolean;
+    }) => serviceService.updateService(store!.id, serviceId, { isVisible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services", store?.id] });
+      toast.success("Service visibility updated");
+    },
+    onError: () => {
+      toast.error("Failed to update service visibility");
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (serviceId: string) =>
+      serviceService.deleteService(store!.id, serviceId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services", store?.id] });
+      toast.success("Service deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete service");
+    },
   });
 
   const isLoading = storeLoading || servicesLoading;
@@ -67,12 +95,24 @@ export function useServices() {
     setEditingService(null);
   };
 
+  const handleToggleVisibility = (service: Service) => {
+    toggleVisibilityMutation.mutate({
+      serviceId: service.id,
+      isVisible: !service.isVisible,
+    });
+  };
+
+  const handleDelete = (service: Service) => {
+    if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
+      deleteMutation.mutate(service.id);
+    }
+  };
+
   return {
     state: {
       searchQuery,
       isCreateDialogOpen,
       editingService,
-      view,
       isLoading,
       error,
     },
@@ -80,9 +120,10 @@ export function useServices() {
       setSearchQuery,
       setIsCreateDialogOpen,
       setEditingService,
-      setView,
       handleEdit,
       handleCloseDialog,
+      handleToggleVisibility,
+      handleDelete,
       goToPage: pagination.goToPage,
     },
     data: {

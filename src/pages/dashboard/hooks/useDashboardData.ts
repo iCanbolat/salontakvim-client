@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts";
+import { useCurrentStore } from "@/hooks";
 import {
   analyticsService,
   activityService,
-  storeService,
   staffService,
   appointmentService,
 } from "@/services";
@@ -15,12 +15,7 @@ export function useDashboardData() {
   const isStoreDashboardRole =
     user?.role === "admin" || user?.role === "manager";
 
-  // 1. Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-    enabled: !!user,
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // 2. Fetch staff member record (works for both staff and admin-who-is-also-staff)
   const { data: staffMember, isLoading: staffLoading } = useQuery({

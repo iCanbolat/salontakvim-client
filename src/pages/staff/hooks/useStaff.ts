@@ -7,8 +7,8 @@ import {
   keepPreviousData,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { storeService, staffService, breakService } from "@/services";
-import { usePagination } from "@/hooks";
+import { staffService, breakService } from "@/services";
+import { usePagination, useCurrentStore } from "@/hooks";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import type { StaffBreakStatus } from "@/types";
 import { useAuth, useNotifications } from "@/contexts";
@@ -25,7 +25,6 @@ export function useStaff() {
   const [timeOffStatus, setTimeOffStatus] =
     useState<TimeOffStatusFilter>("pending");
   const [timeOffPage, setTimeOffPage] = useState(1);
-  const [view, setView] = useState<"grid" | "list">("grid");
 
   const queryClient = useQueryClient();
   const debouncedSearchTerm = useDebouncedSearch(searchTerm);
@@ -63,11 +62,7 @@ export function useStaff() {
     setTimeOffPage(1);
   }, [timeOffStatus]);
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch staff members
   const {
@@ -178,6 +173,35 @@ export function useStaff() {
     },
   });
 
+  const toggleVisibility = useMutation({
+    mutationFn: ({
+      staffId,
+      isVisible,
+    }: {
+      staffId: string;
+      isVisible: boolean;
+    }) => staffService.updateStaffProfile(store!.id, staffId, { isVisible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      toast.success("Staff visibility updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to update staff visibility: " + error.message);
+    },
+  });
+
+  const deleteStaff = useMutation({
+    mutationFn: (staffId: string) =>
+      staffService.deleteStaffMember(store!.id, staffId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      toast.success("Staff member removed");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to remove staff: " + error.message);
+    },
+  });
+
   const pendingInvitations =
     invitations?.filter((inv) => inv.status === "pending") || [];
 
@@ -211,7 +235,6 @@ export function useStaff() {
       activeTab,
       searchTerm,
       timeOffStatus,
-      view,
       isInviteDialogOpen,
       isLoading,
       error,
@@ -220,9 +243,10 @@ export function useStaff() {
       setActiveTab: handleTabChange,
       setSearchTerm: handleSearchChange,
       setTimeOffStatus,
-      setView,
       setIsInviteDialogOpen,
       updateBreakStatus: updateBreakStatus.mutate,
+      toggleVisibility: toggleVisibility.mutate,
+      deleteStaff: deleteStaff.mutate,
       handleCloseInvite: () => setIsInviteDialogOpen(false),
     },
     data: {

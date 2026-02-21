@@ -4,22 +4,19 @@
  */
 
 import { useState, useMemo, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { storeService, categoryService } from "@/services";
-import { usePagination } from "@/hooks";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { categoryService } from "@/services";
+import { usePagination, useCurrentStore } from "@/hooks";
 import type { Category } from "@/types";
+import { toast } from "sonner";
 
 export function useCategories() {
+  const queryClient = useQueryClient();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [view, setView] = useState<"grid" | "list">("grid");
 
-  // Fetch user's store
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   // Fetch categories
   const {
@@ -30,6 +27,37 @@ export function useCategories() {
     queryKey: ["categories", store?.id],
     queryFn: () => categoryService.getCategories(store!.id),
     enabled: !!store?.id,
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (categoryId: string) =>
+      categoryService.deleteCategory(store!.id, categoryId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
+      toast.success("Category deleted");
+    },
+    onError: () => {
+      toast.error("Failed to delete category");
+    },
+  });
+
+  // Toggle visibility mutation
+  const toggleVisibilityMutation = useMutation({
+    mutationFn: ({
+      categoryId,
+      isVisible,
+    }: {
+      categoryId: string;
+      isVisible: boolean;
+    }) => categoryService.updateCategory(store!.id, categoryId, { isVisible }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
+      toast.success("Category visibility updated");
+    },
+    onError: () => {
+      toast.error("Failed to update category visibility");
+    },
   });
 
   const isLoading = storeLoading || categoriesLoading;
@@ -67,12 +95,28 @@ export function useCategories() {
     setEditingCategory(null);
   };
 
+  const handleToggleVisibility = (category: Category) => {
+    toggleVisibilityMutation.mutate({
+      categoryId: category.id,
+      isVisible: !category.isVisible,
+    });
+  };
+
+  const handleDelete = (category: Category) => {
+    if (
+      window.confirm(
+        `Are you sure you want to delete "${category.name}"? This will also remove categories from its services.`,
+      )
+    ) {
+      deleteMutation.mutate(category.id);
+    }
+  };
+
   return {
     state: {
       searchQuery,
       isCategoryDialogOpen,
       editingCategory,
-      view,
       isLoading,
       error,
     },
@@ -80,9 +124,10 @@ export function useCategories() {
       setSearchQuery,
       setIsCategoryDialogOpen,
       setEditingCategory,
-      setView,
       handleEdit,
       handleCloseDialog,
+      handleToggleVisibility,
+      handleDelete,
       goToPage: pagination.goToPage,
     },
     data: {

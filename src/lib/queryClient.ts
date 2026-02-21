@@ -12,3 +12,24 @@ export const queryClient = new QueryClient({
     },
   },
 });
+
+queryClient.setQueryDefaults(["services"], {
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: 60 * 60 * 1000,
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+});
+
+queryClient.setQueryDefaults(["locations"], {
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: 60 * 60 * 1000,
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+});
+
+queryClient.setQueryDefaults(["staff-by-service"], {
+  staleTime: Number.POSITIVE_INFINITY,
+  gcTime: 60 * 60 * 1000,
+  refetchOnWindowFocus: false,
+  refetchOnMount: false,
+});

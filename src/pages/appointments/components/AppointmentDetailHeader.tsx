@@ -8,6 +8,7 @@ import {
   Edit,
   Trash2,
   MessageSquare,
+  CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -24,6 +25,7 @@ interface AppointmentDetailHeaderProps {
   subtitle?: string;
   onEdit?: () => void;
   onChangeStatus?: () => void;
+  onSettlePayment?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
 }
@@ -33,6 +35,7 @@ export function AppointmentDetailHeader({
   subtitle,
   onEdit,
   onChangeStatus,
+  onSettlePayment,
   onDelete,
   isDeleting,
 }: AppointmentDetailHeaderProps) {
@@ -59,7 +62,7 @@ export function AppointmentDetailHeader({
       </div>
 
       <div className="flex items-center gap-2 ml-auto sm:ml-0">
-        {(onEdit || onChangeStatus || onDelete) && (
+        {(onEdit || onChangeStatus || onSettlePayment || onDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="h-9 px-3">
@@ -78,6 +81,12 @@ export function AppointmentDetailHeader({
                 <DropdownMenuItem onClick={onChangeStatus}>
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Change Status
+                </DropdownMenuItem>
+              )}
+              {onSettlePayment && (
+                <DropdownMenuItem onClick={onSettlePayment}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Settle Payment
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />

@@ -3,7 +3,7 @@
  * Allows changing appointment status with optional cancellation reason
  */
 
-import { useState } from "react";
+import { memo, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import {
@@ -86,7 +86,7 @@ const STATUS_OPTIONS: {
   },
 ];
 
-export function AppointmentStatusDialog({
+export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
   appointment,
   open,
   onOpenChange,
@@ -338,4 +338,6 @@ export function AppointmentStatusDialog({
       </DialogContent>
     </Dialog>
   );
-}
+});
+
+AppointmentStatusDialog.displayName = "AppointmentStatusDialog";

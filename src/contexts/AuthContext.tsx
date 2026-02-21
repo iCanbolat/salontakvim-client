@@ -13,6 +13,7 @@ import {
 import { authService } from "@/services";
 import type { User, LoginDto, RegisterDto } from "@/types";
 import { queryClient } from "@/lib/queryClient";
+import { resetCurrentStoreState } from "@/stores/currentStore.store";
 
 interface AuthContextType {
   user: User | null;
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await authService.login(data);
       // Clear cached queries from previous session to avoid cross-user bleed
       queryClient.clear();
+      resetCurrentStoreState();
       // Fetch full user data after login
       const fullUser = await authService.me();
       setUser(fullUser);
@@ -79,6 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authService.register(data);
       queryClient.clear();
+      resetCurrentStoreState();
       // Fetch full user data after registration
       const fullUser = await authService.me();
       setUser(fullUser);
@@ -92,6 +95,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       await authService.logout();
       queryClient.clear();
+      resetCurrentStoreState();
       setUser(null);
     } finally {
       setIsLoading(false);

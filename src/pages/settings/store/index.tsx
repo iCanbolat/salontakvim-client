@@ -597,7 +597,10 @@ export function StoreSettings() {
                       setBillingError(null);
                       connectStripeMutation.mutate();
                     }}
-                    disabled={connectStripeMutation.isPending}
+                    disabled={
+                      connectStripeMutation.isPending ||
+                      paymentStatus === "freemium"
+                    }
                   >
                     {connectStripeMutation.isPending ? (
                       <>
@@ -607,7 +610,9 @@ export function StoreSettings() {
                     ) : (
                       <>
                         <Link className="h-4 w-4 mr-2" />
-                        Connect Stripe
+                        {paymentStatus === "freemium"
+                          ? "Connect Stripe (Pro/Business)"
+                          : "Connect Stripe"}
                       </>
                     )}
                   </Button>

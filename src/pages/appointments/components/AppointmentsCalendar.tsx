@@ -3,7 +3,7 @@
  * Calendar view for appointments with month/week/day views
  */
 
-import { useState, useMemo } from "react";
+import { memo, useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -42,7 +42,9 @@ interface AppointmentsCalendarProps {
 
 type CalendarView = "month" | "week" | "day";
 
-export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
+export const AppointmentsCalendar = memo(function AppointmentsCalendar({
+  storeId,
+}: AppointmentsCalendarProps) {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<CalendarView>("month");
@@ -119,7 +121,7 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
     grouped.forEach((apps, key) => {
       grouped.set(
         key,
-        apps.sort((a, b) => a.startDateTime.localeCompare(b.startDateTime))
+        apps.sort((a, b) => a.startDateTime.localeCompare(b.startDateTime)),
       );
     });
 
@@ -171,13 +173,13 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
               className={cn(
                 "min-h-[120px] border rounded-lg p-2",
                 isCurrentDay && "bg-blue-50 border-blue-300",
-                !isInCurrentMonth && "bg-gray-50 opacity-50"
+                !isInCurrentMonth && "bg-gray-50 opacity-50",
               )}
             >
               <div
                 className={cn(
                   "text-sm font-medium mb-1",
-                  isCurrentDay && "text-blue-600"
+                  isCurrentDay && "text-blue-600",
                 )}
               >
                 {format(day, "d")}
@@ -225,14 +227,14 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
               <div
                 className={cn(
                   "h-12 border-b text-center py-2",
-                  isCurrentDay && "bg-blue-50"
+                  isCurrentDay && "bg-blue-50",
                 )}
               >
                 <div className="font-medium">{format(day, "EEE")}</div>
                 <div
                   className={cn(
                     "text-sm",
-                    isCurrentDay ? "text-blue-600 font-bold" : "text-gray-600"
+                    isCurrentDay ? "text-blue-600 font-bold" : "text-gray-600",
                   )}
                 >
                   {format(day, "d")}
@@ -391,4 +393,6 @@ export function AppointmentsCalendar({ storeId }: AppointmentsCalendarProps) {
       )}
     </div>
   );
-}
+});
+
+AppointmentsCalendar.displayName = "AppointmentsCalendar";

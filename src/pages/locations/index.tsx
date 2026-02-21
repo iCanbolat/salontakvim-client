@@ -10,19 +10,18 @@ import { getLocationColumns } from "./table-columns";
 
 export function LocationsList() {
   const { state, actions, data, pagination } = useLocations();
-  const {
-    searchTerm,
-    isCreateDialogOpen,
-    editingLocation,
-    view,
-    isLoading,
-    error,
-  } = state;
+  const { searchTerm, isCreateDialogOpen, editingLocation, isLoading, error } =
+    state;
   const { store, filteredLocations } = data;
 
   const tableColumns = useMemo(
-    () => getLocationColumns({ onEdit: actions.handleEdit }),
-    [actions.handleEdit],
+    () =>
+      getLocationColumns({
+        onToggleVisibility: (id, isVisible) =>
+          actions.toggleVisibility({ locationId: id, isVisible }),
+        onDelete: (id) => actions.deleteLocation(id),
+      }),
+    [actions],
   );
 
   if (isLoading && !filteredLocations.length) {
@@ -71,11 +70,10 @@ export function LocationsList() {
 
       <PageView<Location>
         data={pagination.paginatedItems}
+        viewKey="locations"
         searchValue={searchTerm}
         onSearchChange={actions.setSearchTerm}
         searchPlaceholder="Search locations..."
-        view={view}
-        onViewChange={actions.setView}
         gridMinColumnClassName="md:grid-cols-2 xl:grid-cols-3"
         gridMinHeightClassName="min-h-[600px]"
         renderGridItem={(location: Location) => (

@@ -69,18 +69,18 @@ export function FeedbackStats({ stats }: FeedbackStatsProps) {
     <>
       <div className="grid gap-4 md:grid-cols-4">
         <StatsCard
-          title="Toplam Değerlendirme"
+          title="Total Reviews"
           value={stats?.totalFeedback || 0}
           icon={MessageSquare}
-          description="Tüm zamanlar"
+          description="All time"
         />
         <StatsCard
-          title="Ortalama Puan"
+          title="Average Rating"
           value={<StarDisplay rating={stats?.averageOverallRating} size="lg" />}
           icon={Star}
         />
         <StatsCard
-          title="Olumlu"
+          title="Positive"
           value={
             stats?.ratingDistribution
               ? (stats.ratingDistribution[4] || 0) +
@@ -88,10 +88,10 @@ export function FeedbackStats({ stats }: FeedbackStatsProps) {
               : 0
           }
           icon={ThumbsUp}
-          description="4+ yıldız"
+          description="4+ stars"
         />
         <StatsCard
-          title="İyileştirme Gerekli"
+          title="Need Improvement"
           value={
             stats?.ratingDistribution
               ? (stats.ratingDistribution[1] || 0) +
@@ -99,14 +99,14 @@ export function FeedbackStats({ stats }: FeedbackStatsProps) {
               : 0
           }
           icon={ThumbsDown}
-          description="2 yıldız ve altı"
+          description="2 stars and below"
         />
       </div>
 
       {stats && stats.totalFeedback > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Puan Dağılımı</CardTitle>
+            <CardTitle className="text-base">Rating Distribution</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">

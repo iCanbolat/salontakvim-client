@@ -11,6 +11,7 @@ import { SearchInput } from "@/components/ui/search-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { ViewToggle } from "../ViewToggle";
+import { useUISettingsStore } from "@/stores/uiSettings.store";
 
 export type FilterTab<T extends string = string> = {
   value: T;
@@ -28,8 +29,9 @@ export type PageViewProps<TData, TFilter extends string = string> = {
   searchPlaceholder?: string;
 
   // View Toggle
-  view: "grid" | "list";
-  onViewChange: (view: "grid" | "list") => void;
+  view?: "grid" | "list";
+  onViewChange?: (view: "grid" | "list") => void;
+  viewKey?: string;
   hideViewToggle?: boolean;
 
   // Filter Tabs (optional)
@@ -76,8 +78,9 @@ export function PageView<TData, TFilter extends string = string>({
   searchValue,
   onSearchChange,
   searchPlaceholder = "Search...",
-  view,
-  onViewChange,
+  view: propsView,
+  onViewChange: propsOnViewChange,
+  viewKey,
   hideViewToggle = false,
   filterTabs,
   activeFilter,
@@ -102,6 +105,20 @@ export function PageView<TData, TFilter extends string = string>({
   contentClassName,
   headerActions,
 }: PageViewProps<TData, TFilter>) {
+  const storeView = useUISettingsStore((state) =>
+    viewKey ? (state.pageViews[viewKey] as "grid" | "list") : undefined,
+  );
+  const setPageView = useUISettingsStore((state) => state.setPageView);
+
+  const activeView = (propsView || storeView || "grid") as "grid" | "list";
+
+  const handleViewChange = (newView: "grid" | "list") => {
+    if (viewKey) {
+      setPageView(viewKey, newView);
+    }
+    propsOnViewChange?.(newView);
+  };
+
   const renderContent = () => {
     if (data.length === 0) {
       return (
@@ -122,13 +139,13 @@ export function PageView<TData, TFilter extends string = string>({
       <div
         className={cn(
           "flex flex-col",
-          view === "grid" &&
+          activeView === "grid" &&
             totalPages > 1 &&
             (gridMinHeightClassName ?? "min-h-[650px]"),
-          view === "list" && "h-full"
+          activeView === "list" && "h-full",
         )}
       >
-        {view === "list" && renderTableView ? (
+        {activeView === "list" && renderTableView ? (
           renderTableView(data)
         ) : (
           <div
@@ -136,7 +153,7 @@ export function PageView<TData, TFilter extends string = string>({
               "grid grid-cols-1 gap-4 items-stretch transition-all duration-300",
               gridMinColumnClassName ??
                 "md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]",
-              gridClassName
+              gridClassName,
             )}
           >
             {data.map((item, index) => renderGridItem(item, index))}
@@ -162,7 +179,7 @@ export function PageView<TData, TFilter extends string = string>({
     <Tabs
       value={activeFilter}
       onValueChange={(v) => onFilterChange?.(v as TFilter)}
-      className={cn(view === "list" && "h-full")}
+      className={cn(activeView === "list" && "h-full")}
     >
       <div className="overflow-x-auto -mx-2 px-2 mb-4">
         <TabsList className="inline-flex w-auto min-w-full">
@@ -180,7 +197,7 @@ export function PageView<TData, TFilter extends string = string>({
       </div>
       <TabsContent
         value={activeFilter!}
-        className={cn(view === "list" && "h-full")}
+        className={cn(activeView === "list" && "h-full")}
       >
         {renderContent()}
       </TabsContent>
@@ -190,11 +207,11 @@ export function PageView<TData, TFilter extends string = string>({
   );
 
   return (
-    <Card className={cn(view === "list" && "h-full", cardClassName)}>
+    <Card className={cn(activeView === "list" && "h-full", cardClassName)}>
       <CardHeader
         className={cn(
           "flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between",
-          headerClassName
+          headerClassName,
         )}
       >
         {/* Search */}
@@ -216,8 +233,8 @@ export function PageView<TData, TFilter extends string = string>({
           {/* View Toggle */}
           {!hideViewToggle && (
             <ViewToggle
-              view={view}
-              onChange={onViewChange}
+              view={activeView}
+              onChange={handleViewChange}
               className="hidden md:flex"
             />
           )}
@@ -225,7 +242,7 @@ export function PageView<TData, TFilter extends string = string>({
       </CardHeader>
 
       <CardContent
-        className={cn(view === "list" && "h-full", contentClassName)}
+        className={cn(activeView === "list" && "h-full", contentClassName)}
       >
         {mainContent}
       </CardContent>

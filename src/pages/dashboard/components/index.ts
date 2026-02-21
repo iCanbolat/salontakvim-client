@@ -4,7 +4,7 @@
 
 export * from "./MetricCard";
 export * from "./AppointmentStatusBreakdown";
-export * from "./RecentActivityList";
+export * from "../../../components/common/RecentActivityList";
 export * from "./QuickStats";
 export * from "./RecentAppointments";
 export * from "./UpcomingAppointments";

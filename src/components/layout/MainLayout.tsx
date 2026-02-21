@@ -10,10 +10,16 @@ import { Header } from "./Header";
 import { MobileNav } from "./MobileNav";
 import { BreadcrumbProvider } from "@/contexts/BreadcrumbContext";
 import { cn } from "@/lib/utils";
+import { useUISettingsStore } from "@/stores/uiSettings.store";
 
 export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const isSidebarCollapsed = useUISettingsStore(
+    (state) => state.isSidebarCollapsed,
+  );
+  const toggleSidebarCollapsed = useUISettingsStore(
+    (state) => state.toggleSidebarCollapsed,
+  );
   const { pathname } = useLocation();
 
   // Scroll to top on route change
@@ -31,12 +37,12 @@ export function MainLayout() {
         <div
           className={cn(
             "hidden lg:fixed lg:inset-y-0 lg:flex lg:flex-col transition-all duration-300 z-20",
-            isSidebarCollapsed ? "lg:w-20" : "lg:w-64"
+            isSidebarCollapsed ? "lg:w-20" : "lg:w-64",
           )}
         >
           <Sidebar
             isCollapsed={isSidebarCollapsed}
-            onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            onToggle={toggleSidebarCollapsed}
           />
         </div>
 
@@ -44,7 +50,7 @@ export function MainLayout() {
         <div
           className={cn(
             "flex flex-col min-h-screen transition-all duration-300",
-            isSidebarCollapsed ? "lg:pl-20" : "lg:pl-64"
+            isSidebarCollapsed ? "lg:pl-20" : "lg:pl-64",
           )}
         >
           {/* Header */}

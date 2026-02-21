@@ -5,16 +5,13 @@
 
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { appointmentService, storeService } from "@/services";
+import { useCurrentStore } from "@/hooks";
+import { appointmentService } from "@/services";
 import type { Appointment } from "@/types";
 
 export function useAppointmentDetail() {
   const { appointmentId } = useParams<{ appointmentId: string }>();
-
-  const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store, isLoading: storeLoading } = useCurrentStore();
 
   const {
     data: appointment,

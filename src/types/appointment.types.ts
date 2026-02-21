@@ -3,6 +3,8 @@
  * Matches backend appointment DTOs
  */
 
+import type { RecentActivity } from "./analytics.types";
+
 export type AppointmentStatus =
   | "pending"
   | "confirmed"
@@ -31,6 +33,9 @@ export interface Appointment {
   storeId: string;
   customerId?: string;
   customerName?: string;
+  customerLastName?: string;
+  email?: string;
+  phone?: string;
   customerNumber?: number; // For easy customer search
   serviceId?: string;
   serviceName?: string;
@@ -52,6 +57,7 @@ export interface Appointment {
   paidAt?: string;
   feedback?: any;
   files?: any[];
+  activities?: RecentActivity[];
   customerNotes?: string;
   internalNotes?: string;
   cancelledAt?: string;
@@ -69,6 +75,10 @@ export interface CreateAppointmentDto {
   serviceId?: string;
   staffId?: string;
   locationId?: string;
+  customerName?: string;
+  customerLastName?: string;
+  email?: string;
+  phone?: string;
   guestFirstName?: string;
   guestLastName?: string;
   guestEmail?: string;
@@ -103,9 +113,7 @@ export interface UpdateAppointmentStatusDto {
 
 export interface SettleAppointmentPaymentDto {
   finalTotalPrice: number;
-  paymentMethod?: "cash" | "card" | "online" | "stripe" | "paypal";
   markAsPaid?: boolean;
-  internalNotes?: string;
 }
 
 export interface AppointmentFilters {

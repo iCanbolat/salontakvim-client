@@ -43,6 +43,7 @@ import HostedWidgetPage from "./pages/widget/HostedWidgetPage";
 import FeedbackPage from "./pages/public/FeedbackPage";
 import CancelAppointmentPage from "./pages/public/CancelAppointmentPage";
 import { authService } from "./services";
+import { CurrentStoreBootstrap } from "./hooks";
 
 function App() {
   return (
@@ -50,6 +51,8 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <NotificationProvider>
+            <CurrentStoreBootstrap />
+
             {/* Toast notifications */}
             <Toaster position="top-right" richColors />
 

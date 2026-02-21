@@ -4,12 +4,18 @@ import type { PaginatedResponse, RecentActivity } from "@/types";
 class ActivityService {
   async getRecentActivities(
     storeId: string,
-    options?: { limit?: number; locationId?: string },
+    options?: { limit?: number; locationId?: string; appointmentId?: string },
   ): Promise<RecentActivity[]> {
     const limit = options?.limit ?? 10;
     const response = await axiosInstance.get<RecentActivity[]>(
       `/stores/${storeId}/activities`,
-      { params: { limit, locationId: options?.locationId } },
+      {
+        params: {
+          limit,
+          locationId: options?.locationId,
+          appointmentId: options?.appointmentId,
+        },
+      },
     );
     return response.data;
   }

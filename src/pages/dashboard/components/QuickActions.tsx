@@ -5,11 +5,10 @@
 
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, UserPlus, Settings, BarChart3 } from "lucide-react";
-import { storeService } from "@/services";
+import { useCurrentStore } from "@/hooks";
 import { AppointmentFormDialog } from "@/pages/appointments/components/AppointmentFormDialog";
 import { InviteStaffDialog } from "@/pages/staff/components/InviteStaffDialog";
 
@@ -18,11 +17,7 @@ export function QuickActions() {
   const [isAppointmentDialogOpen, setIsAppointmentDialogOpen] = useState(false);
   const [isInviteStaffDialogOpen, setIsInviteStaffDialogOpen] = useState(false);
 
-  // Fetch user's store
-  const { data: store } = useQuery({
-    queryKey: ["my-store"],
-    queryFn: () => storeService.getMyStore(),
-  });
+  const { store } = useCurrentStore();
 
   const actions = [
     {

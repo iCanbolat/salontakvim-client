@@ -42,7 +42,7 @@ export function FeedbackFilters({
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
           <Filter className="h-4 w-4" />
-          Filtreler
+          Filters
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -52,8 +52,8 @@ export function FeedbackFilters({
             <Input
               placeholder={
                 canFilterByStaffService
-                  ? "Müşteri, personel veya yorum ara..."
-                  : "Müşteri veya yorum ara..."
+                  ? "Search customer, staff or reviews..."
+                  : "Search customer or reviews..."
               }
               value={searchTerm}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -64,14 +64,14 @@ export function FeedbackFilters({
             <>
               <Select value={staffFilter} onValueChange={onStaffFilterChange}>
                 <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Personel seçin" />
+                  <SelectValue placeholder="Select staff" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Personel</SelectItem>
+                  <SelectItem value="all">All Staff</SelectItem>
                   {staffList?.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>
                       {`${staff.firstName || ""} ${staff.lastName || ""}`.trim() ||
-                        "İsimsiz Personel"}
+                        "Unnamed Staff"}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -81,10 +81,10 @@ export function FeedbackFilters({
                 onValueChange={onServiceFilterChange}
               >
                 <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue placeholder="Hizmet seçin" />
+                  <SelectValue placeholder="Select service" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Hizmetler</SelectItem>
+                  <SelectItem value="all">All Services</SelectItem>
                   {servicesList?.map((service) => (
                     <SelectItem key={service.id} value={service.id}>
                       {service.name}
