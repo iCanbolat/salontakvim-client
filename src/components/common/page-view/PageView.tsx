@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { ViewToggle } from "../ViewToggle";
 import { useUISettingsStore } from "@/stores/uiSettings.store";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 export type FilterTab<T extends string = string> = {
   value: T;
@@ -110,9 +111,14 @@ export function PageView<TData, TFilter extends string = string>({
   );
   const setPageView = useUISettingsStore((state) => state.setPageView);
 
-  const activeView = (propsView || storeView || "grid") as "grid" | "list";
+  const isTabletOrSmaller = useMediaQuery("(max-width: 1024px)");
+
+  const activeView = (
+    isTabletOrSmaller ? "grid" : propsView || storeView || "grid"
+  ) as "grid" | "list";
 
   const handleViewChange = (newView: "grid" | "list") => {
+    if (isTabletOrSmaller) return;
     if (viewKey) {
       setPageView(viewKey, newView);
     }
@@ -231,7 +237,7 @@ export function PageView<TData, TFilter extends string = string>({
           {headerActions}
 
           {/* View Toggle */}
-          {!hideViewToggle && (
+          {!hideViewToggle && !isTabletOrSmaller && (
             <ViewToggle
               view={activeView}
               onChange={handleViewChange}

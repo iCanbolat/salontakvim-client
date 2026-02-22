@@ -5,21 +5,32 @@
 
 import { format } from "date-fns";
 import { memo, useMemo } from "react";
-import { Edit } from "lucide-react";
+import { Edit, MoreVertical, Trash2, MessageSquare } from "lucide-react";
 import type { Appointment } from "@/types";
 import { TableView, type TableColumn } from "@/components/common/page-view";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppointmentsListTableProps {
   appointments: Appointment[];
   onEdit: (appointment: Appointment) => void;
+  onDelete: (id: string) => void;
+  onChangeStatus?: (appointment: Appointment) => void;
   onRowClick?: (appointment: Appointment) => void;
 }
 
 export const AppointmentsListTable = memo(function AppointmentsListTable({
   appointments,
   onEdit,
+  onDelete,
+  onChangeStatus,
   onRowClick,
 }: AppointmentsListTableProps) {
   const columns: TableColumn<Appointment>[] = useMemo(
@@ -99,21 +110,64 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         key: "actions",
         header: "",
         render: (appointment) => (
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit(appointment);
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <DropdownMenuItem
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(appointment);
+                }}
+              >
+                <Edit className="h-4 w-4 mr-2" />
+                Edit
+              </DropdownMenuItem>
+              {onChangeStatus && (
+                <DropdownMenuItem
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onChangeStatus(appointment);
+                  }}
+                >
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Change Status
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (
+                    confirm(
+                      "Are you sure you want to delete this appointment? This action cannot be undone.",
+                    )
+                  ) {
+                    onDelete(appointment.id);
+                  }
+                }}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ),
         cellClassName: "text-right",
       },
     ],
-    [onEdit],
+    [onEdit, onDelete, onChangeStatus],
   );
 
   return (

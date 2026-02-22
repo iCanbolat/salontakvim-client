@@ -186,7 +186,7 @@ export function StaffDetails() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
+                  <div className="grid gap-4 grid-cols-[repeat(auto-fill,minmax(232px,1fr))]">
                     {DAY_LABELS.map((day) => {
                       const hours = workingHours?.find(
                         (h) => h.dayOfWeek === day.value,
@@ -194,19 +194,27 @@ export function StaffDetails() {
                       return (
                         <div
                           key={day.value}
-                          className="flex items-center justify-between rounded-lg border p-3"
+                          className="flex items-center justify-between rounded-lg border p-3 flex-wrap gap-2"
                         >
-                          <span className="font-medium capitalize">
+                          <span className="font-medium capitalize text-sm">
                             {day.label}
                           </span>
                           <div className="flex items-center gap-2">
                             {hours && hours.isActive ? (
-                              <Badge variant="outline">
+                              <Badge
+                                variant="outline"
+                                className="font-mono text-[12px]"
+                              >
                                 {hours.startTime.substring(0, 5)} -{" "}
                                 {hours.endTime.substring(0, 5)}
                               </Badge>
                             ) : (
-                              <Badge variant="secondary">Closed</Badge>
+                              <Badge
+                                variant="secondary"
+                                className="text-[12px]"
+                              >
+                                Closed
+                              </Badge>
                             )}
                           </div>
                         </div>

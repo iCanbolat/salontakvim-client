@@ -4,7 +4,6 @@
  */
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Link } from "react-router-dom";
 import {
   Calendar,
@@ -134,7 +133,7 @@ export function RecentActivityList({
     return activities.length === 0 ? (
       emptyState
     ) : (
-      <ScrollArea style={{ maxHeight }}>{content}</ScrollArea>
+      <div style={{ maxHeight, overflow: "auto" }}>{content}</div>
     );
   }
 
@@ -161,7 +160,7 @@ export function RecentActivityList({
         {activities.length === 0 ? (
           emptyState
         ) : (
-          <ScrollArea style={{ maxHeight }}>{content}</ScrollArea>
+          <div style={{ maxHeight, overflow: "auto" }}>{content}</div>
         )}
       </CardContent>
     </Card>

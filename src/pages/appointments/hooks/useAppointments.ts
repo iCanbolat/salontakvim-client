@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   keepPreviousData,
+  useMutation,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -10,6 +11,8 @@ import type { DateRange } from "react-day-picker";
 import { useDebouncedSearch, useMediaQuery, useCurrentStore } from "@/hooks";
 import { appointmentService, staffService } from "@/services";
 import { useNotifications, useAuth } from "@/contexts";
+import { toast } from "sonner";
+import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import type {
   Appointment,
   AppointmentStatus,
@@ -233,6 +236,18 @@ export function useAppointments() {
       }),
     enabled: !!store?.id && (user?.role !== "staff" || !!staffMember),
     placeholderData: keepPreviousData,
+  });
+
+  const deleteAppointment = useMutation({
+    mutationFn: (appointmentId: string) =>
+      appointmentService.deleteAppointment(store!.id, appointmentId),
+    onSuccess: () => {
+      invalidateAfterAppointmentChange(queryClient, store!.id);
+      toast.success("Appointment deleted");
+    },
+    onError: (err: Error) => {
+      toast.error(`Delete failed: ${err.message}`);
+    },
   });
 
   // Handle real-time updates via notifications
@@ -478,6 +493,8 @@ export function useAppointments() {
       handleStaffPopoverChange,
       handleToggleStaff,
       handleClearStaffSelection,
+      handleDelete: (appointmentId: string) =>
+        deleteAppointment.mutate(appointmentId),
     },
   };
 }

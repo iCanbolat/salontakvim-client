@@ -205,6 +205,8 @@ export function AppointmentsList() {
           <AppointmentsListTable
             appointments={data}
             onEdit={handleEdit}
+            onDelete={actions.handleDelete}
+            onChangeStatus={setStatusUpdateAppointment}
             onRowClick={actions.handleViewDetail}
           />
         )}
