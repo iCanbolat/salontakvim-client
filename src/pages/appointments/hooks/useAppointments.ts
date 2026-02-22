@@ -289,9 +289,9 @@ export function useAppointments() {
 
   const handleViewDetail = useCallback(
     (appointment: Appointment) => {
-      navigate(`/${user?.role}/appointments/${appointment.id}`);
+      navigate(`/appointments/${appointment.id}`);
     },
-    [navigate, user?.role],
+    [navigate],
   );
 
   const handleCloseDialog = useCallback(() => {
