@@ -47,6 +47,9 @@ export function RecentAppointments() {
       appointmentService.getAppointments(store!.id, {
         limit: 5,
         locationId: managerLocationId,
+        sortBy: "createdAt",
+        sortOrder: "desc",
+        prioritizePending: true,
       }),
     enabled: !!store?.id,
   });

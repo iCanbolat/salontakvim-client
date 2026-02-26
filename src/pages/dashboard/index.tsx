@@ -127,7 +127,7 @@ export function DashboardPage() {
         {/* Fourth Row - Appointments & Activity */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <RecentAppointments />
-          <RecentActivityList activities={adminData.activities} />
+          <RecentActivityList activities={adminData.activities} maxHeight="400px" />
         </div>
       </div>
     );

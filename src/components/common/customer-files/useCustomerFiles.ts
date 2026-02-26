@@ -246,7 +246,7 @@ export function useCustomerFiles({
     setIsPreviewOpen(true);
     setPreviewImageUrl(null);
 
-    if (file.fileType === "image") {
+    if (file.fileType === "image" || file.fileType === "pdf") {
       try {
         setIsPreviewLoading(true);
         const { blob } = await customerFileService.downloadFile(

@@ -43,25 +43,24 @@ export function AppointmentDetailHeader({
 
   return (
     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-      <div className="flex flex-col gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-            {title}
-          </h1>
-          {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
+          {title}
+        </h1>
+        {subtitle && <p className="text-gray-600 mt-1">{subtitle}</p>}
+      </div>
+
+      <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto">
         <Button
           size="sm"
-          className="h-8 w-fit transition-all hover:bg-gray-100"
+          className="h-9 transition-all hover:bg-gray-100 whitespace-nowrap"
           variant="outline"
           onClick={() => navigate(-1)}
         >
-          <ArrowLeft className="h-5 w-5" />
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Appointments
         </Button>
-      </div>
 
-      <div className="flex items-center gap-2 ml-auto sm:ml-0">
         {(onEdit || onChangeStatus || onSettlePayment || onDelete) && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

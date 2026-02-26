@@ -37,6 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
+import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import { useCurrentStore } from "@/hooks/useCurrentStore";
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -53,6 +55,7 @@ export function AppointmentCard({
 }: AppointmentCardProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { store } = useCurrentStore();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -88,16 +91,8 @@ export function AppointmentCard({
     onChangeStatus?.(appointment);
   };
 
-  // Customer name
-  const guestName = appointment.guestInfo
-    ? `${appointment.guestInfo.firstName || ""} ${
-        appointment.guestInfo.lastName || ""
-      }`.trim()
-    : "";
-
   const customerDisplayName =
     appointment.customerName ||
-    guestName ||
     (appointment.customerId
       ? `Customer #${appointment.customerId}`
       : "Customer");
@@ -138,7 +133,10 @@ export function AppointmentCard({
               <CardTitle className="text-lg">{customerDisplayName}</CardTitle>
             </div>
             <CardDescription className="mb-2">
-              Appointment #{appointment.publicNumber}
+              {formatAppointmentNumber(
+                appointment.publicNumber,
+                store?.country,
+              )}
             </CardDescription>
             <AppointmentStatusBadge status={appointment.status} />
           </div>
@@ -256,11 +254,11 @@ export function AppointmentCard({
               <span className="text-sm font-bold text-blue-700">
                 ${appointment.totalPrice}
               </span>
-              {appointment.isPaid && (
+              {/* {appointment.isPaid && (
                 <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">
                   Paid
                 </span>
-              )}
+              )} */}
             </div>
           </div>
         </div>

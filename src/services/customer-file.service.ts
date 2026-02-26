@@ -28,6 +28,25 @@ export interface CustomerFileListResponse extends PaginatedResponse<CustomerFile
   totalSize: number;
 }
 
+export interface FilePreviewAppointment {
+  id: string;
+  startDateTime: string;
+  serviceName: string | null;
+  staffName: string | null;
+}
+
+export interface FilePreviewContext {
+  appointment: FilePreviewAppointment | null;
+}
+
+export interface FileCustomerSummary {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  fullName: string;
+}
+
 export interface FolderStats {
   customerId: string;
   customerName: string;
@@ -165,6 +184,27 @@ export const customerFileService = {
   ): Promise<CustomerFile> {
     const response = await axiosInstance.get<CustomerFile>(
       `/stores/${storeId}/customers/${customerId}/files/${fileId}`,
+    );
+    return response.data;
+  },
+
+  async getFilePreviewContext(
+    storeId: string,
+    customerId: string,
+    fileId: string,
+  ): Promise<FilePreviewContext> {
+    const response = await axiosInstance.get<FilePreviewContext>(
+      `/stores/${storeId}/customers/${customerId}/files/${fileId}/preview-context`,
+    );
+    return response.data;
+  },
+
+  async getCustomerSummary(
+    storeId: string,
+    customerId: string,
+  ): Promise<FileCustomerSummary> {
+    const response = await axiosInstance.get<FileCustomerSummary>(
+      `/stores/${storeId}/customers/${customerId}/files/customer-summary`,
     );
     return response.data;
   },

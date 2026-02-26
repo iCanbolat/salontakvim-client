@@ -1,5 +1,5 @@
 import { format } from "date-fns";
-import { Mail, Phone, Calendar, User, X } from "lucide-react";
+import { Mail, Phone, Calendar, User, X, CheckCircle } from "lucide-react";
 import type { CustomerProfile as CustomerProfileType } from "@/types";
 import {
   Dialog,
@@ -69,7 +69,7 @@ export function CustomerProfileContent({
               <User className="h-5 w-5" />
               {fullName}
             </CardTitle>
-            <div className="flex gap-2">
+            {/* <div className="flex gap-2">
               {!customer.isActive && (
                 <Badge variant="secondary">Inactive</Badge>
               )}
@@ -78,7 +78,7 @@ export function CustomerProfileContent({
                   Verified
                 </Badge>
               )}
-            </div>
+            </div> */}
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -205,8 +205,9 @@ export function CustomerProfileContent({
                       {appointment.isPaid && (
                         <Badge
                           variant="outline"
-                          className="text-green-600 mt-1"
+                          className="bg-green-100 text-green-800 border-green-300 mt-1"
                         >
+                          <CheckCircle className="h-3 w-3" />
                           Paid
                         </Badge>
                       )}

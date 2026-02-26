@@ -31,7 +31,7 @@ export function UpcomingAppointments({
       (apt) =>
         isAfter(parseISO(apt.startDateTime), tomorrow) &&
         apt.status !== "cancelled" &&
-        apt.status !== "no_show"
+        apt.status !== "no_show",
     )
     .sort((a, b) => a.startDateTime.localeCompare(b.startDateTime))
     .slice(0, 5);
@@ -49,12 +49,7 @@ export function UpcomingAppointments({
         {upcomingAppointments.length > 0 ? (
           <div className="space-y-3">
             {upcomingAppointments.map((appointment) => {
-              const customerName =
-                appointment.customerName ||
-                (appointment.guestInfo
-                  ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`.trim()
-                  : undefined) ||
-                "Customer";
+              const customerName = appointment.customerName || "Customer";
 
               return (
                 <div
@@ -69,7 +64,7 @@ export function UpcomingAppointments({
                     <div className="text-sm text-gray-600">
                       {format(
                         parseISO(appointment.startDateTime),
-                        "MMM d, yyyy 'at' HH:mm"
+                        "MMM d, yyyy 'at' HH:mm",
                       )}
                     </div>
                     {(appointment.serviceName || appointment.serviceId) && (
@@ -99,4 +94,3 @@ export function UpcomingAppointments({
     </Card>
   );
 }
-

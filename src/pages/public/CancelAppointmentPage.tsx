@@ -4,16 +4,10 @@ import { appointmentService } from "@/services";
 import type { Appointment } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Calendar,
-  Clock,
-  MapPin,
-  User,
-  Tag,
-  Info,
-} from "lucide-react";
+import { Calendar, Clock, MapPin, User, Tag, Info } from "lucide-react";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { formatAppointmentNumber } from "@/utils/appointment.utils";
 
 type PageState =
   | { status: "loading" }
@@ -140,7 +134,8 @@ export default function CancelAppointmentPage() {
                 )}
               </p>
               <p className="text-sm text-gray-500 italic mt-2 border-t pt-2">
-                Referans: {state.appointment.publicNumber}
+                Referans:{" "}
+                {formatAppointmentNumber(state.appointment.publicNumber)}
               </p>
             </div>
           </div>
@@ -262,7 +257,7 @@ export default function CancelAppointmentPage() {
                     Randevu No
                   </p>
                   <p className="font-bold text-gray-900 leading-tight">
-                    #{appointment.publicNumber}
+                    {formatAppointmentNumber(appointment.publicNumber)}
                   </p>
                 </div>
               </div>

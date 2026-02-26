@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/common/PaginationControls";
-import { ViewToggle } from "../ViewToggle";
+import { ViewToggle } from "./ViewToggle";
 import { useUISettingsStore } from "@/stores/uiSettings.store";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 

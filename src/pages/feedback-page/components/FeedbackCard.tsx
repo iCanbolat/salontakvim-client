@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/contexts";
 import type { FeedbackWithDetails } from "@/types";
 import { StarDisplay } from "./FeedbackRating";
 
@@ -18,6 +19,9 @@ interface FeedbackCardProps {
 }
 
 export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   const createdAtDate = feedback.createdAt
     ? new Date(feedback.createdAt)
     : null;
@@ -46,14 +50,16 @@ export function FeedbackCard({ feedback, onDelete }: FeedbackCardProps) {
             <p className="text-sm text-muted-foreground">{createdAtLabel}</p>
           </div>
         </div>
-        <Button
-          className="text-red-600"
-          onClick={() => onDelete(feedback.id)}
-          variant="ghost"
-          size={"icon"}
-        >
-          <Trash2 className="h-5 w-5" />
-        </Button>
+        {isAdmin && (
+          <Button
+            className="text-red-600"
+            onClick={() => onDelete(feedback.id)}
+            variant="ghost"
+            size={"icon"}
+          >
+            <Trash2 className="h-5 w-5" />
+          </Button>
+        )}
       </div>
 
       {/* Rating */}

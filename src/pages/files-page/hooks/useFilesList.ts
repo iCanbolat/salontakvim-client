@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   keepPreviousData,
   useQuery,
@@ -9,13 +9,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { usePagination, useDebouncedSearch, useCurrentStore } from "@/hooks";
 import { useUISettingsStore } from "@/stores/uiSettings.store";
-import {
-  customerFileService,
-  customerService,
-  appointmentService,
-} from "@/services";
+import { customerFileService } from "@/services";
 import type { CustomerFile } from "@/services/customer-file.service";
-import type { CustomerWithStats, Appointment } from "@/types";
 
 export function useFilesList() {
   const navigate = useNavigate();
@@ -43,10 +38,15 @@ export function useFilesList() {
   // Preview state
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<CustomerFile | null>(null);
-  const [previewAppointment, setPreviewAppointment] =
-    useState<Appointment | null>(null);
+  const [previewAppointment, setPreviewAppointment] = useState<{
+    id: string;
+    startDateTime: string;
+    serviceName: string | null;
+    staffName: string | null;
+  } | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const previewBlobCache = useRef<Map<string, string>>(new Map());
 
   const customersBasePath = "/customers";
 
@@ -95,11 +95,11 @@ export function useFilesList() {
     placeholderData: keepPreviousData,
   });
 
-  // Fetch selected customer profile details when in folder view
+  // Fetch selected customer summary details when in folder view
   const { data: selectedCustomerProfile } = useQuery({
-    queryKey: ["customer", store?.id, selectedCustomerId],
+    queryKey: ["customer-files-summary", store?.id, selectedCustomerId],
     queryFn: () =>
-      customerService.getCustomerProfile(store!.id, selectedCustomerId!),
+      customerFileService.getCustomerSummary(store!.id, selectedCustomerId!),
     enabled: !!store?.id && !!selectedCustomerId,
   });
 
@@ -111,17 +111,6 @@ export function useFilesList() {
   // Current logic for folders handles names from server response.
 
   const folders = foldersResponse?.data || [];
-
-  const customerMap = useMemo(() => {
-    const map = new Map<string, CustomerWithStats>();
-    if (selectedCustomerProfile) {
-      map.set(
-        selectedCustomerProfile.customer.id,
-        selectedCustomerProfile.customer,
-      );
-    }
-    return map;
-  }, [selectedCustomerProfile]);
 
   // Sync search term from URL
   useEffect(() => {
@@ -183,11 +172,10 @@ export function useFilesList() {
   // Clean up preview URL on unmount
   useEffect(() => {
     return () => {
-      if (previewImageUrl) {
-        URL.revokeObjectURL(previewImageUrl);
-      }
+      previewBlobCache.current.forEach((url) => URL.revokeObjectURL(url));
+      previewBlobCache.current.clear();
     };
-  }, [previewImageUrl]);
+  }, []);
 
   const handleDownload = async (file: CustomerFile) => {
     try {
@@ -218,27 +206,31 @@ export function useFilesList() {
 
     setIsPreviewLoading(true);
     try {
-      // Fetch appointment detail if linked
-      if (file.appointmentId) {
-        try {
-          const appointment = await appointmentService.getAppointment(
-            store!.id,
-            file.appointmentId,
-          );
-          setPreviewAppointment(appointment);
-        } catch (err) {
-          console.error("Failed to fetch appointment detail for file", err);
-          // Don't show toast error here as it's secondary to the file preview itself
-        }
-      }
-
-      if (file.fileType === "image") {
-        const { blob } = await customerFileService.downloadStoreFile(
+      // Fetch lightweight preview context (appointment summary only)
+      try {
+        const previewContext = await customerFileService.getFilePreviewContext(
           store!.id,
+          file.customerId,
           file.id,
         );
-        const url = URL.createObjectURL(blob);
-        setPreviewImageUrl(url);
+        setPreviewAppointment(previewContext.appointment);
+      } catch (err) {
+        console.error("Failed to fetch file preview context", err);
+      }
+
+      if (file.fileType === "image" || file.fileType === "pdf") {
+        const cachedUrl = previewBlobCache.current.get(file.id);
+        if (cachedUrl) {
+          setPreviewImageUrl(cachedUrl);
+        } else {
+          const { blob } = await customerFileService.downloadStoreFile(
+            store!.id,
+            file.id,
+          );
+          const url = URL.createObjectURL(blob);
+          previewBlobCache.current.set(file.id, url);
+          setPreviewImageUrl(url);
+        }
       }
     } catch (err: any) {
       const message = err?.response?.data?.message || err?.message;
@@ -307,7 +299,7 @@ export function useFilesList() {
       activeFiles: filesResponse?.data || [],
       activeFolder:
         folders.find((f) => f.customerId === selectedCustomerId) || null,
-      customerMap,
+      selectedCustomerSummary: selectedCustomerProfile ?? null,
     },
     paging: {
       paginatedItems,

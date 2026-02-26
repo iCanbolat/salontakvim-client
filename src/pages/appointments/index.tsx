@@ -162,7 +162,7 @@ export function AppointmentsList() {
             <CalendarIcon className="h-4 w-4 mr-2" />
             {view === "calendar" ? "List View" : "Calendar View"}
           </Button>
-          {user?.role === "admin" && (
+          {(user?.role === "admin" || user?.role === "manager") && (
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Appointment
@@ -223,7 +223,7 @@ export function AppointmentsList() {
         emptyDescription={emptyDescription}
         emptyAction={
           activeTab === "all" &&
-          user?.role === "admin" && (
+          (user?.role === "admin" || user?.role === "manager") && (
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               New Appointment
@@ -232,7 +232,7 @@ export function AppointmentsList() {
         }
         headerActions={
           <div className="flex w-full flex-col gap-2 md:w-auto md:flex-row">
-            {user?.role === "admin" && (
+            {(user?.role === "admin" || user?.role === "manager") && (
               <Popover
                 open={isStaffPopoverOpen}
                 onOpenChange={handleStaffPopoverChange}

@@ -16,9 +16,7 @@ export function CalendarAppointmentCard({
   appointment,
   onClick,
 }: CalendarAppointmentCardProps) {
-  const customerName = appointment.guestInfo
-    ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-    : "Customer";
+  const customerName = appointment.customerName || "Customer";
 
   const startTime = format(new Date(appointment.startDateTime), "HH:mm");
 

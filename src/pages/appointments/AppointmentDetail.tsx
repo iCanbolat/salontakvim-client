@@ -10,8 +10,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 import { AppointmentDetailHeader } from "./components/AppointmentDetailHeader";
 import { AppointmentSummaryCard } from "./components/AppointmentSummaryCard";
-import { AppointmentFeedbackCard } from "./components/AppointmentFeedbackCard";
-import { AppointmentFileUploadCard } from "./components/AppointmentFileUploadCard";
 import { AppointmentCancellationCard } from "./components/AppointmentCancellationCard";
 import { AppointmentFormDialog } from "./components/AppointmentFormDialog";
 import { AppointmentStatusDialog } from "./components/AppointmentStatusDialog";
@@ -27,6 +25,8 @@ import {
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 import { toast } from "sonner";
 import { RecentActivityList } from "../../components/common/RecentActivityList";
+import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import { CustomerFiles } from "@/components/common/customer-files";
 
 export function AppointmentDetailPage() {
   const {
@@ -37,7 +37,6 @@ export function AppointmentDetailPage() {
     feedbackError,
     feedbackLoading,
     feedback,
-    canShowFeedback,
     appointmentId,
   } = useAppointmentDetail();
 
@@ -111,7 +110,10 @@ export function AppointmentDetailPage() {
   // Set breadcrumb label
   useEffect(() => {
     if (appointment?.publicNumber) {
-      setBreadcrumbLabel(pathname, `Appointment: ${appointment.publicNumber}`);
+      setBreadcrumbLabel(
+        pathname,
+        formatAppointmentNumber(appointment.publicNumber, store?.country),
+      );
     }
     return () => {
       clearBreadcrumbLabel(pathname);
@@ -193,9 +195,16 @@ export function AppointmentDetailPage() {
     <div className="space-y-6">
       <AppointmentDetailHeader
         title="Appointment Details"
-        subtitle={`Reference #${appointment.publicNumber}`}
+        subtitle={formatAppointmentNumber(
+          appointment.publicNumber,
+          store?.country,
+        )}
         onEdit={() => setIsEditDialogOpen(true)}
-        onChangeStatus={() => setIsStatusDialogOpen(true)}
+        onChangeStatus={
+          appointment.status !== "completed"
+            ? () => setIsStatusDialogOpen(true)
+            : undefined
+        }
         onSettlePayment={
           appointment.status === "confirmed" ||
           appointment.status === "completed"
@@ -206,33 +215,35 @@ export function AppointmentDetailPage() {
         isDeleting={deleteMutation.isPending}
       />
 
-      <AppointmentSummaryCard appointment={appointment} />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <AppointmentSummaryCard appointment={appointment} feedback={feedback} />
 
-      {appointment.status === "completed" && canShowFeedback && feedback && (
-        <AppointmentFeedbackCard feedback={feedback} />
-      )}
-
-      {(appointment.status === "confirmed" ||
-        appointment.status === "completed") && (
-        <AppointmentFileUploadCard
-          storeId={store.id}
-          customerId={appointment.customerId}
-          appointmentId={appointment.id}
-          isReadOnly={appointment.status === "completed"}
-          files={appointment.files}
+        <RecentActivityList
+          activities={appointmentActivities}
+          title="Randevu Geçmişi"
+          emptyMessage="Henüz bu randevu için bir aktivite bulunmuyor."
+          showViewAll={false}
+          maxHeight="530px"
         />
-      )}
 
-      <RecentActivityList
-        activities={appointmentActivities}
-        title="Randevu Geçmişi"
-        emptyMessage="Henüz bu randevu için bir aktivite bulunmuyor."
-        showViewAll={false}
-      />
+        {(appointment.status === "confirmed" ||
+          appointment.status === "completed") &&
+          appointment.customerId && (
+            <div className="md:col-span-2">
+              <CustomerFiles
+                storeId={store.id}
+                customerId={appointment.customerId}
+                appointmentId={appointment.id}
+                isReadOnly={appointment.status === "completed"}
+                files={appointment.files}
+              />
+            </div>
+          )}
 
-      {appointment.status === "cancelled" && (
-        <AppointmentCancellationCard appointment={appointment} />
-      )}
+        {appointment.status === "cancelled" && (
+          <AppointmentCancellationCard appointment={appointment} />
+        )}
+      </div>
 
       {feedbackError && !feedbackLoading && (
         <Alert variant="destructive">

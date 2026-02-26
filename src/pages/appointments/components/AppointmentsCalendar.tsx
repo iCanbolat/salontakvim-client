@@ -299,9 +299,7 @@ export const AppointmentsCalendar = memo(function AppointmentsCalendar({
                 <CardContent className="p-3">
                   <div className="flex justify-between items-start mb-1">
                     <span className="font-medium">
-                      {appointment.guestInfo
-                        ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`
-                        : "Customer"}
+                      {appointment.customerName || "Customer"}
                     </span>
                     <span className="text-xs text-gray-500">
                       {format(parseISO(appointment.startDateTime), "HH:mm")} -{" "}

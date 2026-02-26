@@ -46,18 +46,13 @@ export function TodaysSchedule({ appointments }: TodaysScheduleProps) {
             {todayAppointments.map((appointment) => {
               const startTime = format(
                 parseISO(appointment.startDateTime),
-                "HH:mm"
+                "HH:mm",
               );
               const endTime = format(
                 parseISO(appointment.endDateTime),
-                "HH:mm"
+                "HH:mm",
               );
-              const customerName =
-                appointment.customerName ||
-                (appointment.guestInfo
-                  ? `${appointment.guestInfo.firstName} ${appointment.guestInfo.lastName}`.trim()
-                  : undefined) ||
-                "Customer";
+              const customerName = appointment.customerName || "Customer";
 
               return (
                 <div
@@ -143,4 +138,3 @@ export function TodaysSchedule({ appointments }: TodaysScheduleProps) {
     </Card>
   );
 }
-

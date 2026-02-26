@@ -73,8 +73,14 @@ export function FilesList() {
     isPreviewLoading,
   } = state;
 
-  const { store, filesData, folders, activeFiles, activeFolder, customerMap } =
-    data;
+  const {
+    store,
+    filesData,
+    folders,
+    activeFiles,
+    activeFolder,
+    selectedCustomerSummary,
+  } = data;
 
   const {
     paginatedItems,
@@ -291,16 +297,12 @@ export function FilesList() {
     );
   }
 
-  const selectedCustomer = selectedCustomerId
-    ? customerMap.get(selectedCustomerId)
-    : null;
+  const selectedCustomer = selectedCustomerSummary;
 
   console.log(selectedCustomer);
 
   const selectedCustomerLabel = selectedCustomer
-    ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`.trim() ||
-      selectedCustomer.email ||
-      "Customer"
+    ? selectedCustomer.fullName
     : activeFolder?.customerName
       ? activeFolder.customerName
       : selectedCustomerId

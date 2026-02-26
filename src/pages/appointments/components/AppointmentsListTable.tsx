@@ -10,6 +10,8 @@ import type { Appointment } from "@/types";
 import { TableView, type TableColumn } from "@/components/common/page-view";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 import { Button } from "@/components/ui/button";
+import { useCurrentStore } from "@/hooks/useCurrentStore";
+import { formatAppointmentNumber } from "@/utils/appointment.utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
   onChangeStatus,
   onRowClick,
 }: AppointmentsListTableProps) {
+  const { store } = useCurrentStore();
   const columns: TableColumn<Appointment>[] = useMemo(
     () => [
       {
@@ -40,7 +43,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         header: "#",
         render: (appointment) => (
           <span className="font-mono text-muted-foreground">
-            {appointment.publicNumber}
+            {formatAppointmentNumber(appointment.publicNumber, store?.country)}
           </span>
         ),
         headerClassName: "w-20",
@@ -51,9 +54,9 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         render: (appointment) => (
           <div className="flex flex-col">
             <span className="font-medium">{appointment.customerName}</span>
-            {appointment.guestInfo?.phone && (
+            {appointment.phone && (
               <span className="text-sm text-muted-foreground">
-                {appointment.guestInfo.phone}
+                {appointment.phone}
               </span>
             )}
           </div>
@@ -167,7 +170,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         cellClassName: "text-right",
       },
     ],
-    [onEdit, onDelete, onChangeStatus],
+    [onEdit, onDelete, onChangeStatus, store?.country],
   );
 
   return (

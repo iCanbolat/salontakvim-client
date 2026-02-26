@@ -26,6 +26,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { appointmentService } from "@/services";
+import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import { useCurrentStore } from "@/hooks/useCurrentStore";
 import type { Appointment, AppointmentStatus } from "@/types";
 import { CheckCircle2, Clock, XCircle, UserX, AlertCircle } from "lucide-react";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
@@ -61,14 +63,6 @@ const STATUS_OPTIONS: {
     iconClass: "text-blue-600",
   },
   {
-    value: "completed",
-    label: "Tamamlandı",
-    icon: CheckCircle2,
-    description: "Randevu başarıyla tamamlandı",
-    colorClass: "bg-green-100 text-green-800 border-green-300",
-    iconClass: "text-green-600",
-  },
-  {
     value: "cancelled",
     label: "İptal Edildi",
     icon: XCircle,
@@ -91,6 +85,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
   open,
   onOpenChange,
 }: AppointmentStatusDialogProps) {
+  const { store } = useCurrentStore();
   const queryClient = useQueryClient();
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus>(
     appointment.status,
@@ -149,6 +144,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
 
   const requiresCancellationReason =
     selectedStatus === "cancelled" || selectedStatus === "no_show";
+  const isCompleted = appointment.status === "completed";
 
   const currentStatusOption = STATUS_OPTIONS.find(
     (opt) => opt.value === appointment.status,
@@ -163,7 +159,8 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
         <DialogHeader>
           <DialogTitle>Randevu Durumunu Güncelle</DialogTitle>
           <DialogDescription>
-            Randevu #{appointment.publicNumber} için yeni durum seçin
+            {formatAppointmentNumber(appointment.publicNumber, store?.country)}{" "}
+            için yeni durum seçin
           </DialogDescription>
         </DialogHeader>
 
@@ -202,6 +199,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                 onValueChange={(value) =>
                   setSelectedStatus(value as AppointmentStatus)
                 }
+                disabled={isCompleted}
               >
                 <SelectTrigger className="w-full h-14! font-medium" id="status">
                   <SelectValue placeholder="Durum seçin" />
@@ -280,6 +278,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={3}
                 maxLength={1000}
+                disabled={isCompleted}
               />
               <p className="text-xs text-muted-foreground text-right">
                 {internalNotes.length}/1000
@@ -312,6 +311,12 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                 </div>
               </div>
             )}
+
+            {isCompleted && (
+              <p className="text-xs text-muted-foreground">
+                Tamamlanan randevularda durum manuel olarak değiştirilemez.
+              </p>
+            )}
           </div>
         </DialogBody>
 
@@ -328,6 +333,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
             type="button"
             onClick={handleSubmit}
             disabled={
+              isCompleted ||
               updateStatusMutation.isPending ||
               selectedStatus === appointment.status
             }

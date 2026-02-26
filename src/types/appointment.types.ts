@@ -13,13 +13,6 @@ export type AppointmentStatus =
   | "expired"
   | "no_show";
 
-export interface GuestInfo {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone?: string;
-}
-
 export interface AppointmentExtra {
   id: string;
   extraId: string;
@@ -44,7 +37,6 @@ export interface Appointment {
   locationId?: string;
   locationName?: string;
   storeName?: string;
-  guestInfo?: GuestInfo;
   startDateTime: string;
   endDateTime: string;
   numberOfPeople: number;
@@ -75,14 +67,10 @@ export interface CreateAppointmentDto {
   serviceId?: string;
   staffId?: string;
   locationId?: string;
-  customerName?: string;
+  customerFirstName?: string;
   customerLastName?: string;
-  email?: string;
-  phone?: string;
-  guestFirstName?: string;
-  guestLastName?: string;
-  guestEmail?: string;
-  guestPhone?: string;
+  customerEmail?: string;
+  customerPhone?: string;
   startDateTime: string;
   numberOfPeople: number;
   customerNotes?: string;
@@ -128,6 +116,9 @@ export interface AppointmentFilters {
   page?: number;
   limit?: number;
   search?: string;
+  sortBy?: "createdAt" | "startDateTime";
+  sortOrder?: "asc" | "desc";
+  prioritizePending?: boolean;
 }
 
 export interface AppointmentStatusCounts {

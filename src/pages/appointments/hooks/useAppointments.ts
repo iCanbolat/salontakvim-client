@@ -36,7 +36,7 @@ export function useAppointments() {
   const [statusUpdateAppointment, setStatusUpdateAppointment] =
     useState<Appointment | null>(null);
 
-  // Filter State (formerly in Zustand)
+  // Filter State
   const [activeTab, setActiveTab] = useState<AppointmentFilter>("all");
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -71,7 +71,7 @@ export function useAppointments() {
   const skipSearchParamSync = useRef(false);
 
   const isMobile = useMediaQuery("(max-width: 767px)");
-  const itemsPerPage = 8;
+  const itemsPerPage = 12;
   const debouncedSearch = useDebouncedSearch(searchTerm, {
     minLength: 2,
     delay: 400,
@@ -90,14 +90,17 @@ export function useAppointments() {
     enabled: !!store?.id && user?.role === "staff",
   });
 
-  // Fetch staff options for admin filter
+  // Fetch staff options for admin/manager filter
   const { data: staffOptions = [], isLoading: staffOptionsLoading } = useQuery({
-    queryKey: ["staff-members", store?.id],
+    queryKey: ["staff-members", store?.id, user?.role, user?.locationId],
     queryFn: () =>
       staffService.getStaffMembers(store!.id, {
         includeHidden: true,
+        locationId:
+          user?.role === "manager" ? (user.locationId ?? undefined) : undefined,
       }),
-    enabled: !!store?.id && user?.role === "admin",
+    enabled:
+      !!store?.id && (user?.role === "admin" || user?.role === "manager"),
   });
 
   // Sync with search params
@@ -230,9 +233,12 @@ export function useAppointments() {
         endDate: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : undefined,
         staffId: user?.role === "staff" ? staffMember?.id : undefined,
         staffIds:
-          user?.role === "admin" && selectedStaffIds.length > 0
+          (user?.role === "admin" || user?.role === "manager") &&
+          selectedStaffIds.length > 0
             ? selectedStaffIds
             : undefined,
+        locationId:
+          user?.role === "manager" ? (user.locationId ?? undefined) : undefined,
       }),
     enabled: !!store?.id && (user?.role !== "staff" || !!staffMember),
     placeholderData: keepPreviousData,
@@ -275,12 +281,32 @@ export function useAppointments() {
     queryClient,
   ]);
 
-  // Reset page on filter change
+  const filterResetKey = useMemo(
+    () =>
+      JSON.stringify({
+        activeTab,
+        searchFilter: searchFilter ?? null,
+        from: dateRange?.from ? format(dateRange.from, "yyyy-MM-dd") : null,
+        to: dateRange?.to ? format(dateRange.to, "yyyy-MM-dd") : null,
+        selectedStaffIds,
+        staffIdFilter:
+          user?.role === "staff" ? (staffMember?.id ?? null) : null,
+      }),
+    [
+      activeTab,
+      searchFilter,
+      dateRange?.from,
+      dateRange?.to,
+      selectedStaffIds,
+      user?.role,
+      staffMember?.id,
+    ],
+  );
+
+  // Reset page only when filter inputs change
   useEffect(() => {
-    if (page !== 1) {
-      setPage(1);
-    }
-  }, [activeTab, searchFilter, dateRange, selectedStaffIds, page, setPage]);
+    setPage(1);
+  }, [filterResetKey]);
 
   // Handlers
   const handleEdit = useCallback((appointment: Appointment) => {

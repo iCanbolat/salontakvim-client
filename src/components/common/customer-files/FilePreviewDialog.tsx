@@ -7,9 +7,15 @@ import {
 } from "@/components/ui/dialog";
 import { Loader2, Calendar, User, ShoppingBag } from "lucide-react";
 import { type CustomerFile } from "@/services/customer-file.service";
-import type { Appointment } from "@/types";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+
+interface PreviewAppointment {
+  id: string;
+  startDateTime: string;
+  serviceName: string | null;
+  staffName: string | null;
+}
 
 interface FilePreviewDialogProps {
   isOpen: boolean;
@@ -17,7 +23,7 @@ interface FilePreviewDialogProps {
   file: CustomerFile | null;
   imageUrl: string | null;
   isLoading: boolean;
-  appointment?: Appointment;
+  appointment?: PreviewAppointment;
 }
 
 export function FilePreviewDialog({

@@ -13,7 +13,7 @@ export function AppointmentCancellationCard({
   appointment,
 }: AppointmentCancellationCardProps) {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>Cancellation Reason</CardTitle>
       </CardHeader>

@@ -11,6 +11,5 @@ export * from "./AppointmentsCalendar";
 export * from "./AppointmentsListTable";
 export * from "./AppointmentDetailHeader";
 export * from "./AppointmentSummaryCard";
-export * from "./AppointmentFeedbackCard";
-export * from "./AppointmentFileUploadCard";
 export * from "./AppointmentCancellationCard";
+export * from "./AppointmentSettlePaymentDialog";

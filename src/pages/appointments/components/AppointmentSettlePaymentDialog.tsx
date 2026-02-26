@@ -121,9 +121,10 @@ export function AppointmentSettlePaymentDialog({
                       />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Mark as Paid</FormLabel>
+                      <FormLabel>Ödendi Olarak İşaretle</FormLabel>
                       <p className="text-sm text-muted-foreground">
-                        This will record the appointment as fully paid.
+                        Bu işlem ödemeyi kaydedecek ve randevuyu otomatik olarak
+                        tamamlandı durumuna getirecektir.
                       </p>
                     </div>
                   </FormItem>

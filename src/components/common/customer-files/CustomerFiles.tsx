@@ -62,7 +62,7 @@ export function CustomerFiles({
 
   if (error) {
     return (
-      <Card>
+      <Card className="h-full">
         <CardContent className="py-8 text-center text-red-500">
           Failed to load files. Please try again.
         </CardContent>
@@ -71,7 +71,7 @@ export function CustomerFiles({
   }
 
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -207,7 +207,7 @@ export function CustomerFiles({
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
                   <div className="hidden md:flex items-center gap-1">
-                    {file.fileType === "image" && (
+                    {(file.fileType === "image" || file.fileType === "pdf") && (
                       <Button
                         variant="ghost"
                         size="icon"
@@ -225,41 +225,54 @@ export function CustomerFiles({
                     >
                       <Download className="h-4 w-4" />
                     </Button>
+                    {!isReadOnly && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => actions.setDeleteFileId(file.id)}
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        title="Delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
 
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      {file.fileType === "image" && (
+                  <div className="md:hidden">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        {(file.fileType === "image" ||
+                          file.fileType === "pdf") && (
+                          <DropdownMenuItem
+                            onClick={() => actions.handlePreview(file)}
+                          >
+                            <Eye className="h-4 w-4 mr-2" />
+                            Preview
+                          </DropdownMenuItem>
+                        )}
                         <DropdownMenuItem
-                          onClick={() => actions.handlePreview(file)}
-                          className="md:hidden"
+                          onClick={() => actions.handleDownload(file)}
                         >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Preview
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
                         </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        onClick={() => actions.handleDownload(file)}
-                      >
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </DropdownMenuItem>
-                      {!isReadOnly && (
-                        <DropdownMenuItem
-                          onClick={() => actions.setDeleteFileId(file.id)}
-                          className="text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Delete
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                        {!isReadOnly && (
+                          <DropdownMenuItem
+                            onClick={() => actions.setDeleteFileId(file.id)}
+                            className="text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4 mr-2" />
+                            Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
               </div>
             ))}
