@@ -23,11 +23,9 @@ const storeSettingsSchema = z.object({
     .optional()
     .or(z.literal("")),
   phone: z.string().max(50).optional().or(z.literal("")),
-  currency: z
-    .string()
-    .length(3, "Currency code must be 3 characters (e.g., USD, EUR, TRY)")
-    .optional()
-    .or(z.literal("")),
+  currency: z.enum(["TRY", "USD", "EUR", "GBP"], {
+    errorMap: () => ({ message: "Please select a supported currency" }),
+  }),
 });
 
 export type StoreSettingsFormData = z.infer<typeof storeSettingsSchema>;

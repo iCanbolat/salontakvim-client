@@ -364,7 +364,7 @@ export function FilesList() {
           onViewChange={() => null}
           hideViewToggle
           renderGridItem={(folder) => renderFolderCard(folder)}
-          gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]"
+          gridMinColumnWidth={260}
           currentPage={folderPage}
           totalPages={folderTotalPages}
           onPageChange={goToFolderPage}
@@ -403,7 +403,7 @@ export function FilesList() {
           onSearchChange={actions.setSearchTerm}
           searchPlaceholder="Search files in this folder..."
           renderGridItem={renderGridItem}
-          gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(320px,1fr))]"
+          gridMinColumnWidth={320}
           renderTableView={(data) => (
             <TableView
               data={data}

@@ -37,7 +37,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreVertical } from "lucide-react";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
-import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import {
+  formatAppointmentNumber,
+  formatCurrency,
+} from "@/utils/appointment.utils";
 import { useCurrentStore } from "@/hooks/useCurrentStore";
 
 interface AppointmentCardProps {
@@ -252,13 +255,8 @@ export function AppointmentCard({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-bold text-blue-700">
-                ${appointment.totalPrice}
+                {formatCurrency(appointment.totalPrice, store?.currency)}
               </span>
-              {/* {appointment.isPaid && (
-                <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded font-bold uppercase">
-                  Paid
-                </span>
-              )} */}
             </div>
           </div>
         </div>

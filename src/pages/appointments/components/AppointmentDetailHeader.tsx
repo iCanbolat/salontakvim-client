@@ -28,6 +28,9 @@ interface AppointmentDetailHeaderProps {
   onSettlePayment?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  isEditDisabled?: boolean;
+  isStatusDisabled?: boolean;
+  isSettleDisabled?: boolean;
 }
 
 export function AppointmentDetailHeader({
@@ -38,6 +41,9 @@ export function AppointmentDetailHeader({
   onSettlePayment,
   onDelete,
   isDeleting,
+  isEditDisabled,
+  isStatusDisabled,
+  isSettleDisabled,
 }: AppointmentDetailHeaderProps) {
   const navigate = useNavigate();
 
@@ -71,19 +77,25 @@ export function AppointmentDetailHeader({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               {onEdit && (
-                <DropdownMenuItem onClick={onEdit}>
+                <DropdownMenuItem onClick={onEdit} disabled={isEditDisabled}>
                   <Edit className="h-4 w-4 mr-2" />
                   Edit
                 </DropdownMenuItem>
               )}
               {onChangeStatus && (
-                <DropdownMenuItem onClick={onChangeStatus}>
+                <DropdownMenuItem
+                  onClick={onChangeStatus}
+                  disabled={isStatusDisabled}
+                >
                   <MessageSquare className="h-4 w-4 mr-2" />
                   Change Status
                 </DropdownMenuItem>
               )}
               {onSettlePayment && (
-                <DropdownMenuItem onClick={onSettlePayment}>
+                <DropdownMenuItem
+                  onClick={onSettlePayment}
+                  disabled={isSettleDisabled}
+                >
                   <CreditCard className="h-4 w-4 mr-2" />
                   Settle Payment
                 </DropdownMenuItem>

@@ -3,17 +3,20 @@ import { Mail, Phone, Calendar, MessageSquare, Tag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CustomerWithStats } from "@/types";
 import type { TableColumn } from "@/components/common/page-view";
+import { formatCustomerNumber } from "@/utils/customer.utils";
 
 interface GetCustomerColumnsProps {
   canAssignCoupons: boolean;
   onSms: (customer: CustomerWithStats) => void;
   onDiscount: (customer: CustomerWithStats) => void;
+  country?: string;
 }
 
 export const getCustomerColumns = ({
   canAssignCoupons,
   onSms,
   onDiscount,
+  country,
 }: GetCustomerColumnsProps): TableColumn<CustomerWithStats>[] => [
   {
     key: "customer",
@@ -24,7 +27,7 @@ export const getCustomerColumns = ({
           {customer.firstName} {customer.lastName}
         </span>
         <span className="text-xs text-gray-500">
-          #{customer.publicNumber || customer.id}
+          {formatCustomerNumber(customer.publicNumber, country)}
         </span>
       </div>
     ),

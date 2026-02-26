@@ -66,12 +66,14 @@ export function CustomersList() {
           setSelectedCustomers([customer.id]);
           setIsSmsDialogOpen(true);
         },
+        country: store?.country,
       }),
     [
       canAssignCoupons,
       setSelectedCustomers,
       setIsDiscountDialogOpen,
       setIsSmsDialogOpen,
+      store?.country,
     ],
   );
 
@@ -177,8 +179,8 @@ export function CustomersList() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search customers..."
-        gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]"
-        gridMinHeightClassName="min-h-[600px]"
+        gridMinColumnWidth={260}
+        gridMinHeight={600}
         renderGridItem={(customer) => (
           <CustomerCard
             key={customer.id}

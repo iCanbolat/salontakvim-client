@@ -22,7 +22,7 @@ export function QuickActions() {
   const actions = [
     {
       label: "New Appointment",
-      description: "Schedule a new appointment",
+      description: "Schedule an appointment",
       icon: Calendar,
       onClick: () => setIsAppointmentDialogOpen(true),
       color: "bg-blue-50 text-blue-600 hover:bg-blue-100",

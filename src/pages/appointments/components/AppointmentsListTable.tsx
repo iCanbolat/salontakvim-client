@@ -11,7 +11,10 @@ import { TableView, type TableColumn } from "@/components/common/page-view";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 import { Button } from "@/components/ui/button";
 import { useCurrentStore } from "@/hooks/useCurrentStore";
-import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import {
+  formatAppointmentNumber,
+  formatCurrency,
+} from "@/utils/appointment.utils";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -103,7 +106,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         header: "Price",
         render: (appointment) => (
           <span className="font-medium">
-            ₺{Number(appointment.totalPrice).toFixed(2)}
+            {formatCurrency(appointment.totalPrice, store?.currency)}
           </span>
         ),
         hideOnMobile: true,

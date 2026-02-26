@@ -74,8 +74,8 @@ export function LocationsList() {
         searchValue={searchTerm}
         onSearchChange={actions.setSearchTerm}
         searchPlaceholder="Search locations..."
-        gridMinColumnClassName="md:grid-cols-2 xl:grid-cols-3"
-        gridMinHeightClassName="min-h-[600px]"
+        gridMinColumnWidth="md:grid-cols-2 xl:grid-cols-3"
+        gridMinHeight={600}
         renderGridItem={(location: Location) => (
           <LocationCard
             key={location.id}

@@ -25,6 +25,13 @@ import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { Badge } from "../../../components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
 import { useStoreSettings } from "./hooks/useStoreSettings";
 import { storeService } from "@/services/store.service";
 import { billingService } from "@/services/billing.service";
@@ -38,6 +45,7 @@ export function StoreSettings() {
     register,
     setValue,
     setFocus,
+    watch,
     formState: { errors, isDirty },
   } = form;
 
@@ -390,20 +398,30 @@ export function StoreSettings() {
             {/* Currency */}
             <div className="space-y-2">
               <Label htmlFor="currency">Currency Code</Label>
-              <Input
-                id="currency"
-                {...register("currency")}
+              <Select
                 disabled={!isEditing}
-                placeholder="USD"
-                maxLength={3}
-              />
+                value={watch("currency")}
+                onValueChange={(val: "TRY" | "USD" | "EUR" | "GBP") =>
+                  setValue("currency", val, { shouldDirty: true })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select a currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY (₺) - Turkish Lira</SelectItem>
+                  <SelectItem value="USD">USD ($) - US Dollar</SelectItem>
+                  <SelectItem value="EUR">EUR (€) - Euro</SelectItem>
+                  <SelectItem value="GBP">GBP (£) - British Pound</SelectItem>
+                </SelectContent>
+              </Select>
               {errors.currency && (
                 <p className="text-sm text-red-600">
                   {errors.currency.message}
                 </p>
               )}
               <p className="text-sm text-gray-500">
-                3-letter currency code (e.g., USD, EUR, GBP, TRY)
+                Supported currencies: TRY, USD, EUR, GBP
               </p>
             </div>
 

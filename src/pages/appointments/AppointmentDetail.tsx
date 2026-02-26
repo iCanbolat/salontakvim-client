@@ -200,11 +200,12 @@ export function AppointmentDetailPage() {
           store?.country,
         )}
         onEdit={() => setIsEditDialogOpen(true)}
-        onChangeStatus={
-          appointment.status !== "completed"
-            ? () => setIsStatusDialogOpen(true)
-            : undefined
+        isEditDisabled={
+          appointment.status === "completed" ||
+          appointment.status === "cancelled"
         }
+        onChangeStatus={() => setIsStatusDialogOpen(true)}
+        isStatusDisabled={appointment.status === "completed"}
         onSettlePayment={
           appointment.status === "confirmed" ||
           appointment.status === "completed"

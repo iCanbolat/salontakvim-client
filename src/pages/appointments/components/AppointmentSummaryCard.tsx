@@ -14,10 +14,12 @@ import {
 } from "lucide-react";
 import type { Appointment, Feedback } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 import { useCurrentStore } from "@/hooks/useCurrentStore";
-import { formatAppointmentNumber } from "@/utils/appointment.utils";
+import {
+  formatAppointmentNumber,
+  formatCurrency,
+} from "@/utils/appointment.utils";
 
 interface AppointmentSummaryCardProps {
   appointment: Appointment;
@@ -94,11 +96,6 @@ export function AppointmentSummaryCard({
         </div>
         <div className="flex flex-col items-end gap-2 shrink-0">
           <AppointmentStatusBadge status={appointment.status} />
-          {/* {appointment.isPaid && (
-            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
-              Paid
-            </Badge>
-          )} */}
         </div>
       </CardHeader>
       <CardContent className="grid gap-0 md:h-[540px] overflow-y-auto">
@@ -173,15 +170,15 @@ export function AppointmentSummaryCard({
           </div>
           <div className="flex flex-col items-end">
             <p className="text-sm font-bold text-blue-700">
-              ₺{total.toFixed(2)}
+              {formatCurrency(total, store?.currency)}
             </p>
             {deposit > 0 && (
               <div className="flex flex-col items-end mt-1 space-y-0.5">
                 <p className="text-[10px] text-muted-foreground">
-                  Deposit: ₺{deposit.toFixed(2)}
+                  Deposit: {formatCurrency(deposit, store?.currency)}
                 </p>
                 <p className="text-[10px] text-muted-foreground font-medium">
-                  Remaining: ₺{remaining.toFixed(2)}
+                  Remaining: {formatCurrency(remaining, store?.currency)}
                 </p>
               </div>
             )}

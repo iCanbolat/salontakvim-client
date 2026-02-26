@@ -78,7 +78,7 @@ export function useServices() {
   // Pagination
   const pagination = usePagination({
     items: filteredServices,
-    itemsPerPage: 12, // Increased from 6 for better UX
+    itemsPerPage: 12,  
   });
 
   // Reset to first page on search

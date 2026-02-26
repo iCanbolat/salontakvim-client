@@ -4,12 +4,14 @@
  * with search, filters, custom header actions, and pagination support.
  */
 
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SearchInput } from "@/components/ui/search-input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PaginationControls } from "@/components/common/PaginationControls";
+import { Button } from "@/components/ui/button";
+import { ArrowUp } from "lucide-react";
 import { ViewToggle } from "./ViewToggle";
 import { useUISettingsStore } from "@/stores/uiSettings.store";
 import { useMediaQuery } from "@/hooks/useMediaQuery";
@@ -43,10 +45,10 @@ export type PageViewProps<TData, TFilter extends string = string> = {
   // Grid View
   renderGridItem: (item: TData, index: number) => ReactNode;
   gridClassName?: string;
-  /** Optional override for grid column min width (e.g. "md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]") */
-  gridMinColumnClassName?: string;
-  /** Optional override for grid min-height when paginated */
-  gridMinHeightClassName?: string;
+  /** Min column width or direct class like "md:grid-cols-2" */
+  gridMinColumnWidth?: string | number;
+  /** Direct height value like 500 or "500px" */
+  gridMinHeight?: string | number;
 
   // Table/List View
   renderTableView?: (data: TData[]) => ReactNode;
@@ -88,8 +90,8 @@ export function PageView<TData, TFilter extends string = string>({
   onFilterChange,
   renderGridItem,
   gridClassName,
-  gridMinColumnClassName,
-  gridMinHeightClassName,
+  gridMinColumnWidth,
+  gridMinHeight,
   renderTableView,
   currentPage,
   totalPages,
@@ -112,6 +114,19 @@ export function PageView<TData, TFilter extends string = string>({
   const setPageView = useUISettingsStore((state) => state.setPageView);
 
   const isTabletOrSmaller = useMediaQuery("(max-width: 1024px)");
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollTop(window.scrollY > 400);
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const activeView = (
     isTabletOrSmaller ? "grid" : propsView || storeView || "grid"
@@ -141,15 +156,37 @@ export function PageView<TData, TFilter extends string = string>({
       );
     }
 
+    const minHeightStyle =
+      activeView === "grid" && totalPages > 1 && gridMinHeight
+        ? {
+            minHeight:
+              typeof gridMinHeight === "number"
+                ? `${gridMinHeight}px`
+                : gridMinHeight,
+          }
+        : activeView === "grid" && totalPages > 1
+          ? { minHeight: "650px" }
+          : undefined;
+
+    const gridColumnClass =
+      typeof gridMinColumnWidth === "number"
+        ? `md:grid-cols-[repeat(auto-fill,minmax(${gridMinColumnWidth}px,1fr))]`
+        : typeof gridMinColumnWidth === "string" &&
+            gridMinColumnWidth.includes("grid-cols")
+          ? gridMinColumnWidth
+          : `md:grid-cols-[repeat(auto-fill,minmax(${gridMinColumnWidth || "260px"},1fr))]`;
+
     return (
       <div
         className={cn(
           "flex flex-col",
           activeView === "grid" &&
             totalPages > 1 &&
-            (gridMinHeightClassName ?? "min-h-[650px]"),
+            !gridMinHeight &&
+            "min-h-[650px]",
           activeView === "list" && "h-full",
         )}
+        style={minHeightStyle}
       >
         {activeView === "list" && renderTableView ? (
           renderTableView(data)
@@ -157,8 +194,7 @@ export function PageView<TData, TFilter extends string = string>({
           <div
             className={cn(
               "grid grid-cols-1 gap-4 items-stretch transition-all duration-300",
-              gridMinColumnClassName ??
-                "md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]",
+              gridColumnClass,
               gridClassName,
             )}
           >
@@ -213,45 +249,59 @@ export function PageView<TData, TFilter extends string = string>({
   );
 
   return (
-    <Card className={cn(activeView === "list" && "h-full", cardClassName)}>
-      <CardHeader
-        className={cn(
-          "flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between",
-          headerClassName,
-        )}
-      >
-        {/* Search */}
-        {onSearchChange && (
-          <div className="w-full md:w-64">
-            <SearchInput
-              value={searchValue ?? ""}
-              onChange={onSearchChange}
-              placeholder={searchPlaceholder}
-              className="w-full"
-            />
-          </div>
-        )}
-
-        <div className="flex flex-col sm:flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          {/* Additional Header Actions */}
-          {headerActions}
-
-          {/* View Toggle */}
-          {!hideViewToggle && !isTabletOrSmaller && (
-            <ViewToggle
-              view={activeView}
-              onChange={handleViewChange}
-              className="hidden md:flex"
-            />
+    <>
+      <Card className={cn(activeView === "list" && "h-full", cardClassName)}>
+        <CardHeader
+          className={cn(
+            "flex flex-col gap-4 mb-4 md:flex-row md:items-center md:justify-between",
+            headerClassName,
           )}
-        </div>
-      </CardHeader>
+        >
+          {/* Search */}
+          {onSearchChange && (
+            <div className="w-full md:w-64">
+              <SearchInput
+                value={searchValue ?? ""}
+                onChange={onSearchChange}
+                placeholder={searchPlaceholder}
+                className="w-full"
+              />
+            </div>
+          )}
 
-      <CardContent
-        className={cn(activeView === "list" && "h-full", contentClassName)}
-      >
-        {mainContent}
-      </CardContent>
-    </Card>
+          <div className="flex flex-col sm:flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+            {/* Additional Header Actions */}
+            {headerActions}
+
+            {/* View Toggle */}
+            {!hideViewToggle && !isTabletOrSmaller && (
+              <ViewToggle
+                view={activeView}
+                onChange={handleViewChange}
+                className="hidden md:flex"
+              />
+            )}
+          </div>
+        </CardHeader>
+
+        <CardContent
+          className={cn(activeView === "list" && "h-full", contentClassName)}
+        >
+          {mainContent}
+        </CardContent>
+      </Card>
+
+      {/* Scroll to Top Button for Mobile */}
+      {isTabletOrSmaller && showScrollTop && (
+        <Button
+          variant="outline"
+          size="icon"
+          className="fixed bottom-14 right-4 z-50 rounded-full shadow-lg bg-white/90 backdrop-blur-sm border-gray-200 hover:bg-white animate-in fade-in slide-in-from-bottom-4 duration-300"
+          onClick={scrollToTop}
+        >
+          <ArrowUp className="h-5 w-5 text-gray-700" />
+        </Button>
+      )}
+    </>
   );
 }

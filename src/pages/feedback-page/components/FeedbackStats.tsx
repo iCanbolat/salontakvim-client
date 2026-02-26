@@ -5,7 +5,6 @@
 import { MessageSquare, Star, ThumbsDown, ThumbsUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { FeedbackStats } from "@/types";
-import { StarDisplay } from "./FeedbackRating";
 
 function StatsCard({
   title,
@@ -75,8 +74,9 @@ export function FeedbackStats({ stats }: FeedbackStatsProps) {
           description="All time"
         />
         <StatsCard
-          title="Average Rating"
-          value={<StarDisplay rating={stats?.averageOverallRating} size="lg" />}
+          title="Avg. Rating"
+          value={`${stats?.averageOverallRating}`}
+          description="Out of 5"
           icon={Star}
         />
         <StatsCard
@@ -91,7 +91,7 @@ export function FeedbackStats({ stats }: FeedbackStatsProps) {
           description="4+ stars"
         />
         <StatsCard
-          title="Need Improvement"
+          title="Negative"
           value={
             stats?.ratingDistribution
               ? (stats.ratingDistribution[1] || 0) +

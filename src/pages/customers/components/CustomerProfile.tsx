@@ -13,6 +13,9 @@ import { AppointmentStatusBadge } from "@/pages/appointments/components";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { CustomerFiles } from "@/components/common/customer-files";
+import { useCurrentStore } from "@/hooks";
+import { formatCustomerNumber } from "@/utils/customer.utils";
+import { formatCurrency } from "@/utils/appointment.utils";
 
 interface CustomerProfileProps {
   profile: CustomerProfileType | null;
@@ -52,12 +55,15 @@ export function CustomerProfile({
 
 export function CustomerProfileContent({
   profile,
-  storeId,
+  storeId: propStoreId,
 }: CustomerProfileContentProps) {
+  const { store } = useCurrentStore();
   const { customer, appointments } = profile;
   const fullName =
     `${customer.firstName || ""} ${customer.lastName || ""}`.trim() ||
     "No Name";
+
+  const storeId = propStoreId || store?.id;
 
   return (
     <div className="space-y-6">
@@ -65,20 +71,15 @@ export function CustomerProfileContent({
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              {fullName}
-            </CardTitle>
-            {/* <div className="flex gap-2">
-              {!customer.isActive && (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
-              {customer.emailVerified && (
-                <Badge variant="outline" className="text-green-600">
-                  Verified
-                </Badge>
-              )}
-            </div> */}
+            <div className="space-y-1">
+              <CardTitle className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                {fullName}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">
+                {formatCustomerNumber(customer.publicNumber, store?.country)}
+              </p>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -151,7 +152,7 @@ export function CustomerProfileContent({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              ${customer.totalSpent}
+              {formatCurrency(customer.totalSpent, store?.currency)}
             </div>
           </CardContent>
         </Card>
@@ -200,7 +201,10 @@ export function CustomerProfileContent({
                     </div>
                     <div className="text-right whitespace-nowrap">
                       <div className="font-semibold text-blue-600">
-                        ${appointment.totalPrice}
+                        {formatCurrency(
+                          appointment.totalPrice,
+                          store?.currency,
+                        )}
                       </div>
                       {appointment.isPaid && (
                         <Badge

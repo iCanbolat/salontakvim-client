@@ -14,6 +14,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useCurrentStore } from "@/hooks";
+import { formatCustomerNumber } from "@/utils/customer.utils";
 
 interface CustomerCardProps {
   customer: CustomerWithStats;
@@ -28,6 +30,7 @@ export function CustomerCard({
   isSelected,
   onSelectChange,
 }: CustomerCardProps) {
+  const { store } = useCurrentStore();
   const fullName =
     `${customer.firstName || ""} ${customer.lastName || ""}`.trim() ||
     "No Name";
@@ -42,17 +45,9 @@ export function CustomerCard({
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <CardTitle className="text-lg">{fullName}</CardTitle>
-              {/* {!customer.isActive && (
-                <Badge variant="secondary">Inactive</Badge>
-              )}
-              {customer.emailVerified && (
-                <Badge variant="outline" className="text-green-600">
-                  Verified
-                </Badge>
-              )} */}
             </div>
             <CardDescription>
-              Customer #{customer.publicNumber || customer.id}
+              {formatCustomerNumber(customer.publicNumber, store?.country)}
             </CardDescription>
           </div>
           <Checkbox

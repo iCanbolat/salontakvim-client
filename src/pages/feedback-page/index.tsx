@@ -149,18 +149,6 @@ export function FeedbackList() {
 
       <FeedbackStats stats={stats} />
 
-      <FeedbackFilters
-        canFilterByStaffService={canFilterByStaffService}
-        searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
-        staffFilter={staffFilter}
-        onStaffFilterChange={setStaffFilter}
-        serviceFilter={serviceFilter}
-        onServiceFilterChange={setServiceFilter}
-        staffList={staffList}
-        servicesList={servicesList}
-      />
-
       {/* Feedback List */}
       <Card>
         <CardHeader>
@@ -168,13 +156,25 @@ export function FeedbackList() {
           <CardDescription>{totalItems} reviews listed</CardDescription>
         </CardHeader>
         <CardContent>
+          <FeedbackFilters
+            canFilterByStaffService={canFilterByStaffService}
+            searchTerm={searchTerm}
+            onSearchChange={setSearchTerm}
+            staffFilter={staffFilter}
+            onStaffFilterChange={setStaffFilter}
+            serviceFilter={serviceFilter}
+            onServiceFilterChange={setServiceFilter}
+            staffList={staffList}
+            servicesList={servicesList}
+          />
+
           {feedbackList.length === 0 ? (
             <div className="text-center py-12 text-muted-foreground">
               <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
               <p>No feedback yet</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="space-y-4 md:h-96 overflow-y-auto">
               {feedbackList.map((feedback, index) => (
                 <FeedbackCard
                   key={
