@@ -10,6 +10,7 @@ import {
   customerFileService,
   type CustomerFile,
   type CustomerFileListResponse,
+  type FilePreviewAppointment,
 } from "@/services/customer-file.service";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 
@@ -38,6 +39,8 @@ export function useCustomerFiles({
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<CustomerFile | null>(null);
+  const [previewAppointment, setPreviewAppointment] =
+    useState<FilePreviewAppointment | null>(null);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
 
@@ -245,10 +248,22 @@ export function useCustomerFiles({
     setPreviewFile(file);
     setIsPreviewOpen(true);
     setPreviewImageUrl(null);
+    setPreviewAppointment(null);
 
-    if (file.fileType === "image" || file.fileType === "pdf") {
+    setIsPreviewLoading(true);
+    try {
       try {
-        setIsPreviewLoading(true);
+        const previewContext = await customerFileService.getFilePreviewContext(
+          storeId,
+          customerId,
+          file.id,
+        );
+        setPreviewAppointment(previewContext.appointment);
+      } catch (err) {
+        console.error("Failed to fetch file preview context", err);
+      }
+
+      if (file.fileType === "image" || file.fileType === "pdf") {
         const { blob } = await customerFileService.downloadFile(
           storeId,
           customerId,
@@ -256,12 +271,12 @@ export function useCustomerFiles({
         );
         const url = URL.createObjectURL(blob);
         setPreviewImageUrl(url);
-      } catch (err: any) {
-        const message = err?.response?.data?.message || err?.message;
-        toast.error(message || "Önizleme yüklenemedi");
-      } finally {
-        setIsPreviewLoading(false);
       }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || err?.message;
+      toast.error(message || "Önizleme yüklenemedi");
+    } finally {
+      setIsPreviewLoading(false);
     }
   };
 
@@ -281,6 +296,7 @@ export function useCustomerFiles({
       droppedFiles,
       isPreviewOpen,
       previewFile,
+      previewAppointment,
       previewImageUrl,
       isPreviewLoading,
       deleteFileId,

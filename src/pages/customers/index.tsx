@@ -179,8 +179,8 @@ export function CustomersList() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         searchPlaceholder="Search customers..."
-        gridMinColumnWidth={260}
-        gridMinHeight={600}
+        gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]"
+        gridMinHeightClassName="min-h-[600px]"
         renderGridItem={(customer) => (
           <CustomerCard
             key={customer.id}

@@ -190,6 +190,7 @@ export function AppointmentsList() {
         filterTabs={filterTabs}
         activeFilter={activeTab}
         onFilterChange={actions.setActiveTab}
+        
         // Grid View
         renderGridItem={(appointment) => (
           <AppointmentCard

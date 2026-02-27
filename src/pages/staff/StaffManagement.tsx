@@ -174,8 +174,8 @@ export function StaffManagement() {
             searchValue={searchTerm}
             onSearchChange={actions.setSearchTerm}
             searchPlaceholder="Search staff"
-            gridMinColumnWidth={300}
-            gridMinHeight={600}
+            gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
+            gridMinHeightClassName="min-h-[600px]"
             renderGridItem={(staff) => (
               <StaffCard key={staff.id} staff={staff} storeId={store.id} />
             )}

@@ -32,8 +32,23 @@ export interface CustomerWithStats extends Customer {
 export interface CustomerProfile {
   customer: CustomerWithStats;
   appointments: Appointment[];
+  smsHistory?: CustomerSmsHistoryItem[];
   notes?: CustomerNote[];
   tags?: string[];
+}
+
+export interface CustomerSmsHistoryItem {
+  id: string;
+  message: string;
+  createdAt: string;
+  metadata?: {
+    action?: "sms_sent" | "sms_failed";
+    reason?: "no_phone" | "invalid_phone";
+    isBulk?: boolean;
+    senderRole?: string;
+    preview?: string;
+    [key: string]: unknown;
+  };
 }
 
 /**

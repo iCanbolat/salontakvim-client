@@ -172,8 +172,8 @@ export function ServicesList() {
             searchValue={categorySearch}
             onSearchChange={categoryActions.setSearchQuery}
             searchPlaceholder="Search categories..."
-            gridMinColumnWidth={280}
-            gridMinHeight={500}
+            gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(280px,1fr))]"
+            gridMinHeightClassName="min-h-[500px]"
             renderGridItem={(category) => (
               <CategoryCard
                 key={category.id}
@@ -234,8 +234,8 @@ export function ServicesList() {
             searchValue={serviceSearch}
             onSearchChange={serviceActions.setSearchQuery}
             searchPlaceholder="Search services..."
-            gridMinColumnWidth={300}
-            gridMinHeight={500}
+            gridMinColumnClassName="md:grid-cols-[repeat(auto-fill,minmax(300px,1fr))]"
+            gridMinHeightClassName="min-h-[500px]"
             renderGridItem={(service) => (
               <ServiceCard
                 key={service.id}

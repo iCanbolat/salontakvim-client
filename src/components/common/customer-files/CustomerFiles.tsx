@@ -302,6 +302,7 @@ export function CustomerFiles({
         isOpen={state.isPreviewOpen}
         onOpenChange={actions.setIsPreviewOpen}
         file={state.previewFile}
+        appointment={state.previewAppointment || undefined}
         imageUrl={state.previewImageUrl}
         isLoading={state.isPreviewLoading}
       />

@@ -364,7 +364,6 @@ export function FilesList() {
           onViewChange={() => null}
           hideViewToggle
           renderGridItem={(folder) => renderFolderCard(folder)}
-          gridMinColumnWidth={260}
           currentPage={folderPage}
           totalPages={folderTotalPages}
           onPageChange={goToFolderPage}
@@ -403,7 +402,6 @@ export function FilesList() {
           onSearchChange={actions.setSearchTerm}
           searchPlaceholder="Search files in this folder..."
           renderGridItem={renderGridItem}
-          gridMinColumnWidth={320}
           renderTableView={(data) => (
             <TableView
               data={data}

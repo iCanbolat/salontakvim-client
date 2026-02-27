@@ -45,10 +45,8 @@ export type PageViewProps<TData, TFilter extends string = string> = {
   // Grid View
   renderGridItem: (item: TData, index: number) => ReactNode;
   gridClassName?: string;
-  /** Min column width or direct class like "md:grid-cols-2" */
-  gridMinColumnWidth?: string | number;
-  /** Direct height value like 500 or "500px" */
-  gridMinHeight?: string | number;
+  gridMinColumnClassName?: string;
+  gridMinHeightClassName?: string;
 
   // Table/List View
   renderTableView?: (data: TData[]) => ReactNode;
@@ -90,8 +88,8 @@ export function PageView<TData, TFilter extends string = string>({
   onFilterChange,
   renderGridItem,
   gridClassName,
-  gridMinColumnWidth,
-  gridMinHeight,
+  gridMinColumnClassName,
+  gridMinHeightClassName,
   renderTableView,
   currentPage,
   totalPages,
@@ -156,37 +154,18 @@ export function PageView<TData, TFilter extends string = string>({
       );
     }
 
-    const minHeightStyle =
-      activeView === "grid" && totalPages > 1 && gridMinHeight
-        ? {
-            minHeight:
-              typeof gridMinHeight === "number"
-                ? `${gridMinHeight}px`
-                : gridMinHeight,
-          }
-        : activeView === "grid" && totalPages > 1
-          ? { minHeight: "650px" }
-          : undefined;
-
-    const gridColumnClass =
-      typeof gridMinColumnWidth === "number"
-        ? `md:grid-cols-[repeat(auto-fill,minmax(${gridMinColumnWidth}px,1fr))]`
-        : typeof gridMinColumnWidth === "string" &&
-            gridMinColumnWidth.includes("grid-cols")
-          ? gridMinColumnWidth
-          : `md:grid-cols-[repeat(auto-fill,minmax(${gridMinColumnWidth || "260px"},1fr))]`;
+    const minHeightClass =
+      activeView === "grid" && totalPages > 1
+        ? gridMinHeightClassName || "min-h-[650px]"
+        : undefined;
 
     return (
       <div
         className={cn(
           "flex flex-col",
-          activeView === "grid" &&
-            totalPages > 1 &&
-            !gridMinHeight &&
-            "min-h-[650px]",
+          minHeightClass,
           activeView === "list" && "h-full",
         )}
-        style={minHeightStyle}
       >
         {activeView === "list" && renderTableView ? (
           renderTableView(data)
@@ -194,7 +173,8 @@ export function PageView<TData, TFilter extends string = string>({
           <div
             className={cn(
               "grid grid-cols-1 gap-4 items-stretch transition-all duration-300",
-              gridColumnClass,
+              gridMinColumnClassName ||
+                "md:grid-cols-[repeat(auto-fill,minmax(260px,1fr))]",
               gridClassName,
             )}
           >
