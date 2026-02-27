@@ -19,6 +19,7 @@ import {
   customerFileService,
   type CustomerFile,
 } from "@/services/customer-file.service";
+import { invalidateCustomerFileDomain } from "./query-utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -98,6 +99,8 @@ interface FileUploadDialogProps {
   onSuccess?: () => void;
 }
 
+const UPLOAD_CONCURRENCY = 3;
+
 export function FileUploadDialog({
   isOpen,
   onOpenChange,
@@ -138,21 +141,71 @@ export function FileUploadDialog({
         ? uploadTags.split(",").map((t) => t.trim())
         : undefined;
 
-      const results = [];
-      for (const file of files) {
-        const result = await customerFileService.uploadFile(
-          storeId,
-          customerId,
-          file,
-          {
-            description: description || undefined,
-            tags,
-            appointmentId,
-          },
-        );
-        results.push(result);
+      type UploadOutcome = {
+        index: number;
+        result?: CustomerFile;
+        error?: Error;
+      };
+
+      const outcomes = new Array<UploadOutcome>(files.length);
+      const workerCount = Math.max(
+        1,
+        Math.min(UPLOAD_CONCURRENCY, files.length),
+      );
+      let nextIndex = 0;
+
+      await Promise.all(
+        Array.from({ length: workerCount }, async () => {
+          while (true) {
+            const currentIndex = nextIndex;
+            nextIndex += 1;
+
+            if (currentIndex >= files.length) {
+              return;
+            }
+
+            const file = files[currentIndex];
+            try {
+              const result = await customerFileService.uploadFile(
+                storeId,
+                customerId,
+                file,
+                {
+                  description: description || undefined,
+                  tags,
+                  appointmentId,
+                },
+              );
+              outcomes[currentIndex] = { index: currentIndex, result };
+            } catch (error) {
+              outcomes[currentIndex] = {
+                index: currentIndex,
+                error:
+                  error instanceof Error
+                    ? error
+                    : new Error("Dosya yüklenemedi"),
+              };
+            }
+          }
+        }),
+      );
+
+      const successfulResults = outcomes
+        .filter((outcome) => outcome?.result)
+        .sort((a, b) => a.index - b.index)
+        .map((outcome) => outcome.result as CustomerFile);
+
+      const failedCount = outcomes.filter((outcome) => outcome?.error).length;
+
+      if (!successfulResults.length) {
+        const firstError = outcomes.find((outcome) => outcome?.error)?.error;
+        throw firstError || new Error("Dosyalar yüklenemedi");
       }
-      return results;
+
+      return {
+        results: successfulResults,
+        failedCount,
+      };
     },
     onMutate: async (values) => {
       await queryClient.cancelQueries({
@@ -226,7 +279,7 @@ export function FileUploadDialog({
 
       return { previousData, tempIds: tempFiles.map((file) => file.id) };
     },
-    onSuccess: (results) => {
+    onSuccess: ({ results, failedCount }) => {
       queryClient.setQueriesData(
         {
           predicate: (query) =>
@@ -269,17 +322,20 @@ export function FileUploadDialog({
       queryClient.invalidateQueries({
         queryKey: ["activities", storeId],
       });
-      if (appointmentId) {
-        queryClient.invalidateQueries({
-          queryKey: ["appointment", storeId, appointmentId],
-        });
-      }
-      queryClient.invalidateQueries({
-        queryKey: ["customer-files", storeId, customerId],
+
+      invalidateCustomerFileDomain(queryClient, {
+        storeId,
+        customerId,
+        appointmentId,
       });
-      queryClient.invalidateQueries({ queryKey: ["store-files", storeId] });
-      queryClient.invalidateQueries({ queryKey: ["store-folders", storeId] });
-      toast.success(`${results.length} dosya başarıyla yüklendi`);
+
+      if (failedCount > 0) {
+        toast.warning(
+          `${results.length} dosya yüklendi, ${failedCount} dosya yüklenemedi`,
+        );
+      } else {
+        toast.success(`${results.length} dosya başarıyla yüklendi`);
+      }
       resetForm();
       onSuccess?.();
     },

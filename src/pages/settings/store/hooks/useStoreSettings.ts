@@ -43,12 +43,12 @@ export function useStoreSettings() {
     resolver: zodResolver(storeSettingsSchema),
     values: store
       ? {
-          name: store.name,
-          slug: store.slug,
+          name: store.name || "",
+          slug: store.slug || "",
           description: store.description || "",
           email: store.email || "",
           phone: store.phone || "",
-          currency: store.currency || "USD",
+          currency: (store.currency as any) || "TRY",
         }
       : undefined,
   });

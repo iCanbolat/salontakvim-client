@@ -18,7 +18,6 @@ import {
   Clock,
   ChevronLeft,
   ChevronRight,
-  FileText,
   MessageSquare,
   UserCog,
 } from "lucide-react";

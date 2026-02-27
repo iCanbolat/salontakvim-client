@@ -13,6 +13,7 @@ import {
   type FilePreviewAppointment,
 } from "@/services/customer-file.service";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
+import { invalidateCustomerFileDomain } from "./query-utils";
 
 interface UseCustomerFilesProps {
   storeId: string;
@@ -173,17 +174,11 @@ export function useCustomerFiles({
       return { previousData };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["customer-files", storeId, customerId],
+      invalidateCustomerFileDomain(queryClient, {
+        storeId,
+        customerId,
+        appointmentId,
       });
-      queryClient.invalidateQueries({ queryKey: ["store-files", storeId] });
-      queryClient.invalidateQueries({ queryKey: ["store-folders", storeId] });
-
-      if (appointmentId) {
-        queryClient.invalidateQueries({
-          queryKey: ["appointment", storeId, appointmentId],
-        });
-      }
 
       toast.success("Dosya başarıyla silindi");
       setDeleteFileId(null);
