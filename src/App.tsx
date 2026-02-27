@@ -22,7 +22,6 @@ import { ServicesList } from "./pages/services";
 import { AppointmentsList } from "./pages/appointments";
 import { CustomersList } from "./pages/customers";
 import { CustomerDetails } from "./pages/customers/CustomerDetails";
-import { FilesList } from "./pages/files-page";
 import FeedbackList from "./pages/feedback-page";
 import { LocationsList } from "./pages/locations";
 import { Analytics } from "./pages/analytics";
@@ -95,7 +94,6 @@ function App() {
                     path="/customers/:customerId"
                     element={<CustomerDetails />}
                   />
-                  <Route path="/files" element={<FilesList />} />
                   <Route path="/feedback" element={<FeedbackList />} />
                   <Route
                     path="/notifications"

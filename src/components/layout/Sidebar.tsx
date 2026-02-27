@@ -78,12 +78,6 @@ const adminNavItems: NavItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Folders",
-    href: "/files",
-    icon: FileText,
-    roles: ["admin"],
-  },
-  {
     label: "Feedback",
     href: "/feedback",
     icon: MessageSquare,
@@ -141,12 +135,6 @@ const staffNavItems: NavItem[] = [
     roles: ["staff"],
   },
   {
-    label: "Files",
-    href: "/files",
-    icon: FileText,
-    roles: ["staff"],
-  },
-  {
     label: "Feedback",
     href: "/feedback",
     icon: MessageSquare,
@@ -196,12 +184,6 @@ const managerNavItems: NavItem[] = [
     label: "Customers",
     href: "/customers",
     icon: UserCircle,
-    roles: ["manager"],
-  },
-  {
-    label: "Folders",
-    href: "/files",
-    icon: FileText,
     roles: ["manager"],
   },
   {

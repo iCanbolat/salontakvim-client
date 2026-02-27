@@ -39,26 +39,6 @@ export interface FilePreviewContext {
   appointment: FilePreviewAppointment | null;
 }
 
-export interface FileCustomerSummary {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string | null;
-  fullName: string;
-}
-
-export interface FolderStats {
-  customerId: string;
-  customerName: string;
-  fileCount: number;
-  totalSize: number;
-  lastUploadedAt: string;
-}
-
-export interface FolderListResponse extends PaginatedResponse<FolderStats> {
-  totalSize: number;
-}
-
 export interface UploadFileOptions {
   description?: string;
   tags?: string[];
@@ -71,80 +51,6 @@ export interface UpdateFileOptions {
 }
 
 export const customerFileService = {
-  /**
-   * Get all files for a store (admin sees all, staff sees only their customers' files)
-   */
-  async getAllStoreFiles(
-    storeId: string,
-    options?: {
-      fileType?: string;
-      search?: string;
-      limit?: number;
-      page?: number;
-    },
-  ): Promise<CustomerFileListResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.fileType) params.append("fileType", options.fileType);
-    if (options?.search) params.append("search", options.search);
-    if (options?.limit) params.append("limit", options.limit.toString());
-    if (options?.page) params.append("page", options.page.toString());
-
-    const response = await axiosInstance.get<CustomerFileListResponse>(
-      `/stores/${storeId}/files?${params.toString()}`,
-    );
-    return response.data;
-  },
-
-  /**
-   * Get store file folders (grouped by customer)
-   */
-  async getFolders(
-    storeId: string,
-    options?: {
-      search?: string;
-      limit?: number;
-      page?: number;
-    },
-  ): Promise<FolderListResponse> {
-    const params = new URLSearchParams();
-
-    if (options?.search) params.append("search", options.search);
-    if (options?.limit) params.append("limit", options.limit.toString());
-    if (options?.page) params.append("page", options.page.toString());
-
-    const response = await axiosInstance.get<FolderListResponse>(
-      `/stores/${storeId}/files/folders?${params.toString()}`,
-    );
-    return response.data;
-  },
-
-  /**
-   * Download a store-level file with auth
-   */
-  async downloadStoreFile(
-    storeId: string,
-    fileId: string,
-  ): Promise<{ blob: Blob; fileName: string }> {
-    const response = await axiosInstance.get(
-      `/stores/${storeId}/files/${fileId}/download`,
-      { responseType: "blob" },
-    );
-
-    const disposition = response.headers["content-disposition"] || "";
-    let fileName = "download";
-    const match = disposition.match(/filename="?([^";]+)"?/i);
-    if (match && match[1]) {
-      try {
-        fileName = decodeURIComponent(match[1]);
-      } catch {
-        fileName = match[1];
-      }
-    }
-
-    return { blob: response.data, fileName };
-  },
-
   /**
    * Get all files for a customer
    */
@@ -195,16 +101,6 @@ export const customerFileService = {
   ): Promise<FilePreviewContext> {
     const response = await axiosInstance.get<FilePreviewContext>(
       `/stores/${storeId}/customers/${customerId}/files/${fileId}/preview-context`,
-    );
-    return response.data;
-  },
-
-  async getCustomerSummary(
-    storeId: string,
-    customerId: string,
-  ): Promise<FileCustomerSummary> {
-    const response = await axiosInstance.get<FileCustomerSummary>(
-      `/stores/${storeId}/customers/${customerId}/files/customer-summary`,
     );
     return response.data;
   },
