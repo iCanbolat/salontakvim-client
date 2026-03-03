@@ -6,7 +6,6 @@ import {
   Code,
   AlertCircle,
   RotateCcw,
-  Loader2,
   Eye,
   Save,
   Globe2,
@@ -39,6 +38,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { WidgetPreview } from "./components/WidgetPreview";
 import { useWidgetSettings } from "./hooks/useWidgetSettings";
+import { PageLoader } from "@/components/common/PageLoader";
 import type { WidgetSettings as WidgetSettingsType } from "@/types/widget.types";
 
 export function WidgetSettings() {
@@ -173,11 +173,7 @@ export function WidgetSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

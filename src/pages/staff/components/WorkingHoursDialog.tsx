@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Trash2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { staffService } from "@/services";
@@ -24,16 +24,22 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import type { StaffMember, CreateWorkingHoursDto, DayOfWeek } from "@/types";
+import type {
+  StaffMember,
+  DayOfWeek,
+  WorkingHourEntry,
+  WorkingHours,
+} from "@/types";
 
 interface WorkingHoursDialogProps {
   storeId: string;
   staff: StaffMember;
+  workingHours?: WorkingHours[];
   open: boolean;
   onClose: () => void;
 }
 
-type WorkingHoursFormValue = CreateWorkingHoursDto & { isActive: boolean };
+type WorkingHoursFormValue = WorkingHourEntry & { isActive: boolean };
 
 const DAYS_OF_WEEK: { value: DayOfWeek; label: string }[] = [
   { value: "monday", label: "Monday" },
@@ -55,6 +61,7 @@ const normalizeTime = (value: string) => {
 export function WorkingHoursDialog({
   storeId,
   staff,
+  workingHours,
   open,
   onClose,
 }: WorkingHoursDialogProps) {
@@ -62,16 +69,6 @@ export function WorkingHoursDialog({
   const [editingHours, setEditingHours] = useState<
     Partial<Record<DayOfWeek, WorkingHoursFormValue>>
   >({});
-
-  const {
-    data: workingHours,
-    isLoading,
-    refetch,
-  } = useQuery({
-    queryKey: ["working-hours", storeId, staff.id],
-    queryFn: () => staffService.getWorkingHours(storeId, staff.id),
-    enabled: open,
-  });
 
   useEffect(() => {
     if (workingHours) {
@@ -88,33 +85,17 @@ export function WorkingHoursDialog({
     }
   }, [workingHours]);
 
-  const createMutation = useMutation({
-    mutationFn: async (data: CreateWorkingHoursDto) =>
-      staffService.createWorkingHours(storeId, staff.id, data),
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: CreateWorkingHoursDto;
-    }) => staffService.updateWorkingHours(storeId, staff.id, id, data),
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) =>
-      staffService.deleteWorkingHours(storeId, staff.id, id),
+  const bulkMutation = useMutation({
+    mutationFn: async (schedule: WorkingHourEntry[]) =>
+      staffService.bulkUpsertWorkingHours(storeId, staff.id, { schedule }),
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["working-hours", storeId, staff.id],
-      });
       queryClient.invalidateQueries({
         queryKey: ["staff-details", storeId, staff.id],
       });
-      toast.success("Schedule updated");
-      refetch();
+      toast.success("Schedule updated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to update working hours. Please try again.");
     },
   });
 
@@ -159,11 +140,9 @@ export function WorkingHoursDialog({
   };
 
   const handleDeleteDay = (dayOfWeek: DayOfWeek) => {
-    const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
     const dayLabel =
       DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.label || dayOfWeek;
-    if (existing && confirm(`Remove ${dayLabel} from schedule?`)) {
-      deleteMutation.mutate(existing.id);
+    if (confirm(`Remove ${dayLabel} from schedule?`)) {
       setEditingHours((prev) => {
         const newState = { ...prev };
         delete newState[dayOfWeek];
@@ -195,55 +174,39 @@ export function WorkingHoursDialog({
   };
 
   const handleSaveAll = async () => {
-    const entries = Object.entries(editingHours).filter(
-      (entry): entry is [DayOfWeek, WorkingHoursFormValue] => Boolean(entry[1]),
-    );
+    // Build the full schedule from editing state
+    const schedule: WorkingHourEntry[] = Object.entries(editingHours)
+      .filter(
+        (entry): entry is [DayOfWeek, WorkingHoursFormValue] =>
+          Boolean(entry[1]) && entry[1].isActive,
+      )
+      .map(([, data]) => ({
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        isActive: data.isActive,
+      }));
 
-    const changePromises = entries
-      .map(([dayOfWeek, data]) => {
-        const existing = workingHours?.find((h) => h.dayOfWeek === dayOfWeek);
-        const existingStart = existing ? normalizeTime(existing.startTime) : "";
-        const existingEnd = existing ? normalizeTime(existing.endTime) : "";
-        const hasChanges = existing
-          ? data.startTime !== existingStart ||
-            data.endTime !== existingEnd ||
-            data.isActive !== existing.isActive
-          : data.isActive; // only create if active
-
-        if (!hasChanges) {
-          return null;
-        }
-
-        if (existing) {
-          return updateMutation.mutateAsync({ id: existing.id, data });
-        }
-
-        return createMutation.mutateAsync(data);
-      })
-      .filter(Boolean) as Promise<unknown>[];
+    // Validate start < end for each entry
+    for (const entry of schedule) {
+      if (entry.startTime >= entry.endTime) {
+        const dayLabel =
+          DAYS_OF_WEEK.find((d) => d.value === entry.dayOfWeek)?.label ||
+          entry.dayOfWeek;
+        toast.error(`${dayLabel}: End time must be after start time`);
+        return;
+      }
+    }
 
     try {
-      if (changePromises.length > 0) {
-        await Promise.all(changePromises);
-        queryClient.invalidateQueries({
-          queryKey: ["working-hours", storeId, staff.id],
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["staff-details", storeId, staff.id],
-        });
-        toast.success("Schedule updated successfully");
-        refetch();
-      }
+      await bulkMutation.mutateAsync(schedule);
       onClose();
-    } catch (error) {
-      // handled via individual mutation states
+    } catch {
+      // error handled in mutation onError
     }
   };
 
-  const isPending =
-    createMutation.isPending ||
-    updateMutation.isPending ||
-    deleteMutation.isPending;
+  const isPending = bulkMutation.isPending;
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -259,7 +222,7 @@ export function WorkingHoursDialog({
         </DialogHeader>
 
         <DialogBody>
-          {isLoading ? (
+          {!workingHours ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
             </div>
@@ -401,9 +364,7 @@ export function WorkingHoursDialog({
                 </div>
               )}
 
-              {(createMutation.isError ||
-                updateMutation.isError ||
-                deleteMutation.isError) && (
+              {bulkMutation.isError && (
                 <Alert variant="destructive">
                   <AlertDescription>
                     Failed to update working hours. Please try again.
@@ -426,7 +387,7 @@ export function WorkingHoursDialog({
           <Button
             type="button"
             onClick={handleSaveAll}
-            disabled={isPending || isLoading}
+            disabled={isPending || !workingHours}
           >
             {isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
             Save All Changes

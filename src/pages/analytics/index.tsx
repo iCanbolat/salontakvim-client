@@ -46,6 +46,7 @@ import {
 import { Alert, AlertDescription } from "../../components/ui/alert";
 import { DateRangePreset } from "../../types";
 import { useAnalytics } from "./hooks/useAnalytics";
+import { PageLoader } from "@/components/common/PageLoader";
 
 const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#8884D8"];
 
@@ -63,11 +64,7 @@ export function Analytics() {
   } = data;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {
@@ -222,7 +219,7 @@ export function Analytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={300} debounce={120}>
                 <LineChart data={appointmentsByDate}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -235,6 +232,7 @@ export function Analytics() {
                     stroke="#0088FE"
                     strokeWidth={2}
                     name="Appointments"
+                    isAnimationActive={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -251,7 +249,7 @@ export function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={250} debounce={120}>
                   <PieChart>
                     <Pie
                       data={appointmentsByStatus}
@@ -264,6 +262,7 @@ export function Analytics() {
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
+                      isAnimationActive={false}
                     >
                       {appointmentsByStatus.map(
                         (_entry: any, index: number) => (
@@ -289,7 +288,7 @@ export function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={250} debounce={180}>
                   <BarChart data={appointmentsByService}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
@@ -300,7 +299,12 @@ export function Analytics() {
                     />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="count" fill="#00C49F" name="Bookings" />
+                    <Bar
+                      dataKey="count"
+                      fill="#00C49F"
+                      name="Bookings"
+                      isAnimationActive={false}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>
@@ -319,7 +323,7 @@ export function Analytics() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={300} debounce={120}>
                 <LineChart data={revenueByDate}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
@@ -332,6 +336,7 @@ export function Analytics() {
                     stroke="#00C49F"
                     strokeWidth={2}
                     name="Revenue (₺)"
+                    isAnimationActive={false}
                   />
                   <Line
                     type="monotone"
@@ -339,6 +344,7 @@ export function Analytics() {
                     stroke="#0088FE"
                     strokeWidth={2}
                     name="Appointments"
+                    isAnimationActive={false}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -355,7 +361,7 @@ export function Analytics() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
+                <ResponsiveContainer width="100%" height={250} debounce={120}>
                   <BarChart data={revenueByService}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis
@@ -366,7 +372,12 @@ export function Analytics() {
                     />
                     <YAxis />
                     <Tooltip />
-                    <Bar dataKey="revenue" fill="#FFBB28" name="Revenue (₺)" />
+                    <Bar
+                      dataKey="revenue"
+                      fill="#FFBB28"
+                      name="Revenue (₺)"
+                      isAnimationActive={false}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </CardContent>

@@ -22,6 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentStore } from "@/hooks";
+import { PageLoader } from "@/components/common/PageLoader";
 
 const profileSchema = z.object({
   bio: z.string().max(500, "Bio too long").optional(),
@@ -218,11 +219,7 @@ export function StaffProfile() {
     .toUpperCase();
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!staffMember && user?.role !== "admin") {

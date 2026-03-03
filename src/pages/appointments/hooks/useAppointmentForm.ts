@@ -3,39 +3,66 @@
  * Encapsulates the logic for the appointment creation and editing form.
  */
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useAuth } from "@/contexts";
 import {
   appointmentService,
+  customerService,
   serviceService,
   staffService,
   locationService,
 } from "@/services";
 import type {
   Appointment,
+  CustomerWithStats,
   CreateAppointmentDto,
   AvailabilityTimeSlot,
   AvailabilityResponse,
+  PaginatedResponse,
 } from "@/types";
+import { useDebouncedSearch } from "@/hooks";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
 
-export const appointmentSchema = z.object({
+const appointmentBaseSchema = z.object({
   serviceId: z.string().min(1, "Service is required"),
   staffId: z.string().min(1, "Staff member is required"),
   locationId: z.string().optional(),
-  customerName: z.string().min(1, "First name is required"),
-  customerLastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
   phone: z.string().optional().or(z.literal("")),
   date: z.string().min(1, "Date is required"),
   time: z.string().min(1, "Time is required"),
   numberOfPeople: z.number().min(1).max(10),
   customerNotes: z.string().optional().or(z.literal("")),
 });
+
+const existingCustomerSchema = appointmentBaseSchema.extend({
+  isNewCustomer: z.literal(false),
+  customerId: z.string().min(1, "Customer is required"),
+  customerName: z.string().optional(),
+  customerLastName: z.string().optional(),
+  email: z.string().optional().or(z.literal("")),
+});
+
+const newCustomerSchema = appointmentBaseSchema.extend({
+  isNewCustomer: z.literal(true),
+  customerId: z.string().optional(),
+  customerName: z.string().min(1, "First name is required"),
+  customerLastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Invalid email address"),
+});
+
+export const appointmentSchema = z.discriminatedUnion("isNewCustomer", [
+  existingCustomerSchema,
+  newCustomerSchema,
+]);
 
 export type AppointmentFormData = z.infer<typeof appointmentSchema>;
 
@@ -56,6 +83,12 @@ export function useAppointmentForm({
   const queryClient = useQueryClient();
   const isEditing = !!appointment;
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const debouncedCustomerSearch = useDebouncedSearch(customerSearch, {
+    delay: 400,
+    minLength: 2,
+  });
+  const normalizedCustomerSearch = customerSearch.trim();
 
   const defaultFormValues: AppointmentFormData = useMemo(() => {
     if (appointment) {
@@ -64,6 +97,8 @@ export function useAppointmentForm({
         serviceId: appointment.serviceId || "",
         staffId: appointment.staffId || "",
         locationId: appointment.locationId || undefined,
+        isNewCustomer: !appointment.customerId,
+        customerId: appointment.customerId || "",
         customerName: appointment.customerName || "",
         customerLastName: appointment.customerLastName || "",
         email: appointment.email || "",
@@ -79,6 +114,8 @@ export function useAppointmentForm({
       serviceId: "",
       staffId: "",
       locationId: undefined,
+      isNewCustomer: true,
+      customerId: "",
       customerName: "",
       customerLastName: "",
       email: "",
@@ -122,6 +159,53 @@ export function useAppointmentForm({
     refetchOnMount: false,
   });
 
+  // Fetch customers for existing-customer selection
+  const {
+    data: customersResponse,
+    isPending: isCustomersPending,
+    isFetching: isCustomersFetching,
+  } = useQuery<PaginatedResponse<CustomerWithStats>>({
+    queryKey: ["appointment-form-customers", storeId, debouncedCustomerSearch],
+    queryFn: () =>
+      customerService.getCustomers(storeId, {
+        page: 1,
+        limit: 50, // Increased limit for better selection without infinite scroll for now
+        search: debouncedCustomerSearch || undefined,
+      }),
+    enabled: open,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const isCustomerSearchDebouncing =
+    normalizedCustomerSearch.length >= 2 &&
+    debouncedCustomerSearch !== normalizedCustomerSearch;
+
+  const isCustomersInitialLoading = isCustomersPending && !customersResponse;
+  const isCustomersSearching =
+    isCustomerSearchDebouncing ||
+    (isCustomersFetching && !isCustomersInitialLoading);
+
+  const customers = useMemo<CustomerWithStats[]>(
+    () => customersResponse?.data ?? [],
+    [customersResponse],
+  );
+
+  const onCustomerSearchChange = useCallback((value: string) => {
+    setCustomerSearch(value);
+  }, []);
+
+  // Set initial customer for editing
+  useEffect(() => {
+    if (open && isEditing && appointment?.customerId) {
+      // In case the initial customer isn't in the first page of the infinite scroll,
+      // we don't need to do anything special here as the SearchableSelect
+      //'s selectedOption useMemo will find it if it's there.
+      // In production, we might want a getCustomerById call to ensure it's loaded.
+    }
+  }, [open, isEditing, appointment?.customerId]);
+
   // Form setup
   const form = useForm<AppointmentFormData>({
     resolver: zodResolver(appointmentSchema),
@@ -129,7 +213,7 @@ export function useAppointmentForm({
     defaultValues: defaultFormValues,
   });
 
-  const { control, setValue, reset } = form;
+  const { control, setValue, reset, getValues } = form;
 
   // Watch form values
   const watchServiceId = useWatch({ control, name: "serviceId" });
@@ -137,6 +221,8 @@ export function useAppointmentForm({
   const watchStaffId = useWatch({ control, name: "staffId" });
   const watchDate = useWatch({ control, name: "date" });
   const watchTime = useWatch({ control, name: "time" });
+  const watchIsNewCustomer = useWatch({ control, name: "isNewCustomer" });
+  const watchCustomerId = useWatch({ control, name: "customerId" });
 
   // Fetch staff by selected service, then filter client-side by selected location
   const { data: staffByService } = useQuery({
@@ -225,6 +311,46 @@ export function useAppointmentForm({
       reset(defaultFormValues);
     }
   }, [open, reset, defaultFormValues]);
+
+  useEffect(() => {
+    if (!open || watchIsNewCustomer || !watchCustomerId) {
+      return;
+    }
+
+    const selectedCustomer = customers.find(
+      (customer) => customer.id === watchCustomerId,
+    );
+
+    if (!selectedCustomer) {
+      return;
+    }
+
+    const currentValues = getValues();
+    const nextFirstName = selectedCustomer.firstName || "";
+    const nextLastName = selectedCustomer.lastName || "";
+    const nextEmail = selectedCustomer.email || "";
+    const nextPhone = selectedCustomer.phone || "";
+
+    if (currentValues.customerName !== nextFirstName) {
+      setValue("customerName", nextFirstName, { shouldDirty: true });
+    }
+    if (currentValues.customerLastName !== nextLastName) {
+      setValue("customerLastName", nextLastName, { shouldDirty: true });
+    }
+    if (currentValues.email !== nextEmail) {
+      setValue("email", nextEmail, { shouldDirty: true });
+    }
+    if (currentValues.phone !== nextPhone) {
+      setValue("phone", nextPhone, { shouldDirty: true });
+    }
+  }, [
+    customers,
+    getValues,
+    open,
+    setValue,
+    watchCustomerId,
+    watchIsNewCustomer,
+  ]);
 
   useEffect(() => {
     if (!open || !watchServiceId) {
@@ -327,14 +453,19 @@ export function useAppointmentForm({
       serviceId: data.serviceId,
       staffId: data.staffId,
       locationId: data.locationId,
-      customerFirstName: data.customerName,
-      customerLastName: data.customerLastName,
-      customerEmail: data.email,
-      customerPhone: data.phone || undefined,
       startDateTime,
       numberOfPeople: data.numberOfPeople,
       customerNotes: data.customerNotes || undefined,
     };
+
+    if (!data.isNewCustomer && data.customerId) {
+      appointmentData.customerId = data.customerId;
+    } else {
+      appointmentData.customerFirstName = data.customerName?.trim();
+      appointmentData.customerLastName = data.customerLastName?.trim();
+      appointmentData.customerEmail = data.email?.trim();
+      appointmentData.customerPhone = data.phone || undefined;
+    }
 
     if (isEditing) {
       updateMutation.mutate(appointmentData);
@@ -361,11 +492,15 @@ export function useAppointmentForm({
       staff: filteredStaff,
       availableSlots,
       availableTimes,
+      customers,
+      isCustomersInitialLoading,
+      isCustomersSearching,
       user,
     },
     actions: {
       onSubmit: form.handleSubmit(onSubmit),
       setValue,
+      onCustomerSearchChange,
     },
   };
 }

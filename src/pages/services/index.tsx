@@ -4,14 +4,7 @@
  */
 
 import { useMemo } from "react";
-import {
-  Plus,
-  Loader2,
-  AlertCircle,
-  Search,
-  Layers,
-  Briefcase,
-} from "lucide-react";
+import { Plus, AlertCircle, Search, Layers, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -21,6 +14,7 @@ import {
   CategoryCard,
   CategoryFormDialog,
 } from "./components";
+import { PageLoader } from "@/components/common/PageLoader";
 import { PageView, TableView } from "@/components/common/page-view";
 import type { Service, Category } from "@/types";
 import { useServices } from "./hooks/useServices";
@@ -97,11 +91,7 @@ export function ServicesList() {
   const error = serviceError || categoryError;
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

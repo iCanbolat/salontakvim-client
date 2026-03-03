@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/form";
 import { useWatch } from "react-hook-form";
 import { useAppointmentForm } from "../hooks/useAppointmentForm";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 import type { Appointment } from "@/types";
 
 interface AppointmentFormDialogProps {
@@ -73,19 +75,29 @@ export const AppointmentFormDialog = memo(function AppointmentFormDialog({
     isAvailabilityError,
   } = state;
 
-  const { services, locations, staff, availableSlots, availableTimes, user } =
-    data;
+  const {
+    services,
+    locations,
+    staff,
+    availableSlots,
+    availableTimes,
+    customers,
+    isCustomersInitialLoading,
+    isCustomersSearching,
+    user,
+  } = data;
 
   const {
     control,
     formState: { isDirty },
   } = form;
 
-  const { onSubmit, setValue } = actions;
+  const { onSubmit, setValue, onCustomerSearchChange } = actions;
 
   const watchServiceId = useWatch({ control, name: "serviceId" });
   const watchDate = useWatch({ control, name: "date" });
   const watchStaffId = useWatch({ control, name: "staffId" });
+  const watchIsNewCustomer = useWatch({ control, name: "isNewCustomer" });
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -217,75 +229,159 @@ export const AppointmentFormDialog = memo(function AppointmentFormDialog({
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={control}
-                  name="customerName"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        First Name <span className="text-red-500">*</span>
-                      </FormLabel>
+              <FormField
+                control={control}
+                name="isNewCustomer"
+                render={({ field }) => (
+                  <FormItem className="rounded-md border p-3">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <FormLabel className="m-0">
+                          Register New Customer
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Disable to select an existing customer from your
+                          store.
+                        </p>
+                      </div>
                       <FormControl>
-                        <Input placeholder="John" {...field} />
+                        <Switch
+                          checked={field.value}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            if (checked) {
+                              setValue("customerId", "", { shouldDirty: true });
+                            }
+                          }}
+                        />
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
+              {!watchIsNewCustomer && (
                 <FormField
                   control={control}
-                  name="customerLastName"
+                  name="customerId"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>
-                        Last Name <span className="text-red-500">*</span>
+                        Customer <span className="text-red-500">*</span>
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Doe" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Email <span className="text-red-500">*</span>
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="email"
-                          placeholder="john@example.com"
-                          {...field}
+                        <SearchableSelect
+                          mode="server"
+                          options={customers.map((c) => ({
+                            value: c.id,
+                            label:
+                              `${c.firstName || ""} ${c.lastName || ""}`.trim() ||
+                              c.email ||
+                              "Customer",
+                            description: c.phone || c.email || undefined,
+                          }))}
+                          value={field.value || ""}
+                          onValueChange={field.onChange}
+                          onSearchChange={onCustomerSearchChange}
+                          isLoading={isCustomersInitialLoading}
+                          isSearching={isCustomersSearching}
+                          placeholder="Select customer..."
+                          searchPlaceholder="Search by name, email or phone..."
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+              )}
 
-                <FormField
-                  control={control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone (optional)</FormLabel>
-                      <FormControl>
-                        <Input placeholder="+1 (555) 123-4567" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              {watchIsNewCustomer && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="customerName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          First Name <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="John"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="customerLastName"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Last Name <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="Doe"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {watchIsNewCustomer && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormField
+                    control={control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>
+                          Email <span className="text-red-500">*</span>
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            type="email"
+                            placeholder="john@example.com"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone (optional)</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="+1 (555) 123-4567"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField

@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2, AlertCircle } from "lucide-react";
+import { ArrowLeft, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageLoader } from "@/components/common/PageLoader";
 import { CustomerProfileContent } from "./components";
 import { useCustomerDetails } from "./hooks/useCustomerDetails";
 
@@ -40,9 +41,7 @@ export function CustomerDetails() {
       </div>
 
       {isLoading ? (
-        <div className="flex items-center justify-center h-64">
-          <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-        </div>
+        <PageLoader className="h-64" />
       ) : profile && store ? (
         <CustomerProfileContent profile={profile} storeId={store.id} />
       ) : profileError ? (

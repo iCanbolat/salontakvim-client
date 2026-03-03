@@ -24,6 +24,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { PageView, TableView } from "@/components/common/page-view";
+import { PageLoader } from "@/components/common/PageLoader";
 import { PaginationControls } from "@/components/common/PaginationControls";
 import { StaffCard, InvitationCard, InviteStaffDialog } from "./components";
 import type {
@@ -107,11 +108,7 @@ export function StaffManagement() {
   };
 
   if (isLoading && !staffMembers) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

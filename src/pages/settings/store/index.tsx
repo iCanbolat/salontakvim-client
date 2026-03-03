@@ -25,6 +25,7 @@ import { Button } from "../../../components/ui/button";
 import { Textarea } from "../../../components/ui/textarea";
 import { Alert, AlertDescription } from "../../../components/ui/alert";
 import { Badge } from "../../../components/ui/badge";
+import { PageLoader } from "@/components/common/PageLoader";
 import {
   Select,
   SelectContent,
@@ -214,11 +215,7 @@ export function StoreSettings() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error || !store) {

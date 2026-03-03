@@ -123,6 +123,17 @@ export interface UpdateWorkingHoursDto {
   isActive?: boolean;
 }
 
+export interface WorkingHourEntry {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
+  isActive?: boolean;
+}
+
+export interface BulkUpsertWorkingHoursDto {
+  schedule: WorkingHourEntry[];
+}
+
 export interface StaffBreak {
   id: string;
   staffId: string;

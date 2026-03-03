@@ -8,7 +8,6 @@ import {
   DollarSign,
   Users,
   UserCog,
-  Loader2,
   AlertCircle,
   CheckCircle2,
   Clock,
@@ -26,6 +25,7 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageLoader } from "@/components/common/PageLoader";
 import { useDashboardData } from "./hooks/useDashboardData";
 
 export function DashboardPage() {
@@ -35,11 +35,7 @@ export function DashboardPage() {
     user?.role === "admin" || user?.role === "manager";
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // Admin Dashboard UI
@@ -127,7 +123,10 @@ export function DashboardPage() {
         {/* Fourth Row - Appointments & Activity */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
           <RecentAppointments />
-          <RecentActivityList activities={adminData.activities} maxHeight="400px" />
+          <RecentActivityList
+            activities={adminData.activities}
+            maxHeight="400px"
+          />
         </div>
       </div>
     );

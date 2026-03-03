@@ -4,17 +4,11 @@
  */
 
 import { useMemo } from "react";
-import {
-  Loader2,
-  AlertCircle,
-  Users,
-  MessageSquare,
-  Tag,
-  X,
-} from "lucide-react";
+import { AlertCircle, Users, MessageSquare, Tag, X } from "lucide-react";
 import type { CustomerWithStats } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageLoader } from "@/components/common/PageLoader";
 import { CustomerCard, SmsDialog, DiscountDialog } from "./components";
 import { PageView, TableView } from "@/components/common/page-view";
 import { useCustomers } from "./hooks/useCustomers";
@@ -78,11 +72,7 @@ export function CustomersList() {
   );
 
   if (isInitialLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

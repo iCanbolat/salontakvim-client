@@ -3,10 +3,11 @@
  */
 
 import { useState, useEffect, useMemo } from "react";
-import { Loader2, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageLoader } from "@/components/common/PageLoader";
 
 import { AppointmentDetailHeader } from "./components/AppointmentDetailHeader";
 import { AppointmentSummaryCard } from "./components/AppointmentSummaryCard";
@@ -167,11 +168,7 @@ export function AppointmentDetailPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (appointmentError || !appointment || !store) {

@@ -248,23 +248,26 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
       <div
         className={cn(
           "flex items-center h-16 border-b border-gray-200 transition-all duration-300",
-          isCollapsed ? "px-4 justify-center" : "px-6",
+          isCollapsed ? "px-4 justify-start" : "px-3",
         )}
       >
-        <div className="flex items-center gap-3 overflow-hidden">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+        <div className="flex items-center overflow-hidden">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center shrink-0 ml-1">
             <span className="text-white font-bold text-lg">S</span>
           </div>
-          {!isCollapsed && (
-            <div className="transition-opacity duration-300 opacity-100">
-              <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap">
-                SalonTakvim
-              </h1>
-              <p className="text-xs text-gray-500 capitalize">
-                {user?.role} Panel
-              </p>
-            </div>
-          )}
+          <div
+            className={cn(
+              "transition-all duration-300 ease-in-out flex flex-col justify-center overflow-hidden",
+              isCollapsed ? "w-0 opacity-0" : "w-40 opacity-100 ml-3",
+            )}
+          >
+            <h1 className="text-lg font-bold text-gray-900 whitespace-nowrap leading-tight">
+              SalonTakvim
+            </h1>
+            <p className="text-[10px] text-gray-500 capitalize leading-tight">
+              {user?.role} Panel
+            </p>
+          </div>
         </div>
       </div>
 
@@ -278,8 +281,8 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               title={isCollapsed ? item.label : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                  isCollapsed ? "justify-center px-2" : "px-3",
+                  "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 overflow-hidden",
+                  isCollapsed ? "justify-start px-4" : "px-3",
                   isActive
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-700 hover:bg-gray-100 hover:text-gray-900",
@@ -289,14 +292,16 @@ export function Sidebar({ isCollapsed, onToggle }: SidebarProps) {
               <item.icon
                 className={cn(
                   "w-5 h-5 shrink-0 transition-transform duration-200",
-                  !isCollapsed && "group-hover:scale-110",
                 )}
               />
-              {!isCollapsed && (
-                <span className="transition-opacity duration-300 opacity-100 whitespace-nowrap">
-                  {item.label}
-                </span>
-              )}
+              <div
+                className={cn(
+                  "transition-all duration-300 ease-in-out flex items-center overflow-hidden",
+                  isCollapsed ? "w-0 opacity-0" : "w-40 opacity-100",
+                )}
+              >
+                <span className="whitespace-nowrap ml-3">{item.label}</span>
+              </div>
             </NavLink>
           ))}
         </nav>

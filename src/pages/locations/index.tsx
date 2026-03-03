@@ -1,7 +1,8 @@
 import { useMemo } from "react";
-import { Plus, Loader2, AlertCircle, MapPin } from "lucide-react";
+import { Plus, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "../../components/ui/button";
 import { Alert, AlertDescription } from "../../components/ui/alert";
+import { PageLoader } from "@/components/common/PageLoader";
 import { PageView, TableView } from "../../components/common/page-view";
 import { LocationCard, LocationFormDialog } from "./components";
 import type { Location } from "../../types";
@@ -25,11 +26,7 @@ export function LocationsList() {
   );
 
   if (isLoading && !filteredLocations.length) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {

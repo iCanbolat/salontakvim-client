@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { analyticsService } from "@/services/analytics.service";
@@ -17,9 +17,12 @@ export function useAnalytics() {
     queryFn: storeService.getMyStore,
   });
 
-  const analyticsQuery: AnalyticsQuery = {
-    dateRange: dateRange as any,
-  };
+  const analyticsQuery = useMemo<AnalyticsQuery>(
+    () => ({
+      dateRange: dateRange as any,
+    }),
+    [dateRange],
+  );
 
   // Get appointment analytics
   const {
@@ -73,46 +76,61 @@ export function useAnalytics() {
   const error = appointmentError || revenueError;
 
   // Prepare chart data
-  const appointmentsByDate =
-    appointmentData?.byDate.map((item) => ({
-      date: new Date(item.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      count: item.count,
-      revenue: parseFloat(item.revenue),
-    })) || [];
+  const appointmentsByDate = useMemo(
+    () =>
+      appointmentData?.byDate.map((item) => ({
+        date: new Date(item.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        count: item.count,
+        revenue: parseFloat(item.revenue),
+      })) || [],
+    [appointmentData?.byDate],
+  );
 
-  const appointmentsByStatus =
-    appointmentData?.byStatus.map((item) => ({
-      name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
-      value: item.count,
-      percentage: item.percentage,
-    })) || [];
+  const appointmentsByStatus = useMemo(
+    () =>
+      appointmentData?.byStatus.map((item) => ({
+        name: item.status.charAt(0).toUpperCase() + item.status.slice(1),
+        value: item.count,
+        percentage: item.percentage,
+      })) || [],
+    [appointmentData?.byStatus],
+  );
 
-  const appointmentsByService =
-    appointmentData?.byService.slice(0, 10).map((item) => ({
-      name: item.serviceName,
-      count: item.count,
-      revenue: parseFloat(item.revenue),
-    })) || [];
+  const appointmentsByService = useMemo(
+    () =>
+      appointmentData?.byService.slice(0, 10).map((item) => ({
+        name: item.serviceName,
+        count: item.count,
+        revenue: parseFloat(item.revenue),
+      })) || [],
+    [appointmentData?.byService],
+  );
 
-  const revenueByDate =
-    revenueData?.byDate.map((item) => ({
-      date: new Date(item.date).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      }),
-      revenue: parseFloat(item.revenue),
-      appointments: item.appointmentCount,
-    })) || [];
+  const revenueByDate = useMemo(
+    () =>
+      revenueData?.byDate.map((item) => ({
+        date: new Date(item.date).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+        }),
+        revenue: parseFloat(item.revenue),
+        appointments: item.appointmentCount,
+      })) || [],
+    [revenueData?.byDate],
+  );
 
-  const revenueByService =
-    revenueData?.byService.slice(0, 10).map((item) => ({
-      name: item.serviceName,
-      revenue: parseFloat(item.revenue),
-      percentage: item.percentage,
-    })) || [];
+  const revenueByService = useMemo(
+    () =>
+      revenueData?.byService.slice(0, 10).map((item) => ({
+        name: item.serviceName,
+        revenue: parseFloat(item.revenue),
+        percentage: item.percentage,
+      })) || [],
+    [revenueData?.byService],
+  );
 
   return {
     state: {

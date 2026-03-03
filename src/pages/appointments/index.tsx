@@ -11,7 +11,9 @@ import {
   X,
   Users,
 } from "lucide-react";
+import { useEffect } from "react";
 import { format } from "date-fns";
+import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Calendar } from "@/components/ui/calendar";
@@ -22,7 +24,9 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { PageView } from "@/components/common/page-view";
+import { PageLoader } from "@/components/common/PageLoader";
 import { cn } from "@/lib/utils";
+import { customerService } from "@/services";
 
 import {
   useAppointments,
@@ -42,6 +46,7 @@ import {
 } from "@/stores/uiSettings.store";
 
 export function AppointmentsList() {
+  const queryClient = useQueryClient();
   const { user, store, state, data, derived, actions } = useAppointments();
   const view = useUISettingsStore(
     (state) => (state.pageViews.appointments || "grid") as AppointmentView,
@@ -106,12 +111,24 @@ export function AppointmentsList() {
       ? "Create your first appointment to get started"
       : "No appointments match this status filter";
 
+  useEffect(() => {
+    if (!store?.id) {
+      return;
+    }
+
+    void queryClient.prefetchQuery({
+      queryKey: ["appointment-form-customers", store.id, ""],
+      queryFn: () =>
+        customerService.getCustomers(store.id, {
+          page: 1,
+          limit: 50,
+        }),
+      staleTime: 5 * 60 * 1000,
+    });
+  }, [queryClient, store?.id]);
+
   if (isInitialLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error) {
@@ -190,7 +207,6 @@ export function AppointmentsList() {
         filterTabs={filterTabs}
         activeFilter={activeTab}
         onFilterChange={actions.setActiveTab}
-        
         // Grid View
         renderGridItem={(appointment) => (
           <AppointmentCard

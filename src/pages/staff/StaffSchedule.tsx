@@ -4,13 +4,14 @@ import { format, parseISO, isToday, isFuture, compareAsc } from "date-fns";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { TimeOffStatusBadge } from "./components/TimeOffStatusBadge";
-import { Loader2, Plus, Calendar, Clock, AlertCircle } from "lucide-react";
+import { Plus, Calendar, Clock, AlertCircle } from "lucide-react";
 import { useAuth } from "@/contexts";
 import { breakService, staffService } from "@/services";
 import type { StaffBreak } from "@/types";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeOffDialog } from "./components/TimeOffDialog";
 import { useCurrentStore } from "@/hooks";
+import { PageLoader } from "@/components/common/PageLoader";
 
 type SummaryCard = {
   title: string;
@@ -92,11 +93,7 @@ export function StaffSchedule() {
   );
 
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-96">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!staffMember) {

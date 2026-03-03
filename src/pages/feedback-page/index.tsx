@@ -20,8 +20,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { PaginationControls } from "@/components/common/PaginationControls";
+import { PageLoader } from "@/components/common/PageLoader";
 import {
   FeedbackCard,
   FeedbackFilters,
@@ -113,17 +113,7 @@ export function FeedbackList() {
 
   // Loading state
   if (storeLoading || (dashboardLoading && !dashboardData)) {
-    return (
-      <div className="container mx-auto py-6 space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <div className="grid gap-4 md:grid-cols-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-32" />
-          ))}
-        </div>
-        <Skeleton className="h-96" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   // Error state

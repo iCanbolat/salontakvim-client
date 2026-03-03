@@ -20,6 +20,7 @@ import {
 } from "./pages/auth";
 import { authService } from "./services";
 import { CurrentStoreBootstrap } from "./hooks";
+import { PageLoader } from "./components/common/PageLoader";
 
 const DashboardPage = lazy(() =>
   import("./pages/dashboard").then((module) => ({
@@ -109,17 +110,7 @@ const CancelAppointmentPage = lazy(
 );
 
 function RouteSuspense({ children }: { children: ReactNode }) {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-        </div>
-      }
-    >
-      {children}
-    </Suspense>
-  );
+  return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
 }
 
 function App() {
@@ -361,11 +352,7 @@ function WelcomeRoute() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!isAuthenticated || !user) {

@@ -14,6 +14,7 @@ import type {
   WorkingHours,
   CreateWorkingHoursDto,
   UpdateWorkingHoursDto,
+  BulkUpsertWorkingHoursDto,
   StaffBreak,
   CreateStaffBreakDto,
   UpdateStaffBreakDto,
@@ -283,6 +284,21 @@ export class StaffService {
     await axiosInstance.delete(
       `/stores/${storeId}/staff/${staffId}/working-hours/${workingHoursId}`,
     );
+  }
+
+  /**
+   * Bulk upsert working hours - replaces entire weekly schedule at once
+   */
+  async bulkUpsertWorkingHours(
+    storeId: string,
+    staffId: string,
+    data: BulkUpsertWorkingHoursDto,
+  ): Promise<WorkingHours[]> {
+    const response = await axiosInstance.put<WorkingHours[]>(
+      `/stores/${storeId}/staff/${staffId}/working-hours/bulk`,
+      data,
+    );
+    return response.data;
   }
 
   // ============= Breaks & Time Off =============

@@ -45,6 +45,7 @@ import { useNotifications } from "../../../contexts/NotificationContext";
 import { activityService } from "../../../services";
 import { notificationService } from "../../../services/notification.service";
 import { RecentActivityList } from "../../../components/common/RecentActivityList";
+import { PageLoader } from "@/components/common/PageLoader";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Button } from "../../../components/ui/button";
 import { cn } from "../../../lib/utils";
@@ -206,11 +207,7 @@ export function NotificationSettings() {
   };
 
   if (isAdmin && (settingsLoading || !settings)) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
+    return <PageLoader className="min-h-[400px] h-auto" />;
   }
 
   return (
