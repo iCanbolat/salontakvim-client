@@ -20,6 +20,11 @@ import {
   type CustomerFile,
 } from "@/services/customer-file.service";
 import { invalidateCustomerFileDomain } from "./query-utils";
+import {
+  hasStoreEntityScopedRoot,
+  qk,
+  storeScopedRoots,
+} from "@/lib/query-keys";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -209,7 +214,7 @@ export function FileUploadDialog({
     },
     onMutate: async (values) => {
       await queryClient.cancelQueries({
-        queryKey: ["customer-files", storeId, customerId],
+        queryKey: qk.customerFiles(storeId, customerId),
       });
 
       const tempFiles = values.files.map((file, index) => ({
@@ -232,17 +237,28 @@ export function FileUploadDialog({
 
       const previousData = queryClient.getQueriesData({
         predicate: (query) =>
-          query.queryKey[0] === "customer-files" &&
-          query.queryKey[1] === storeId &&
-          query.queryKey[2] === customerId,
+          hasStoreEntityScopedRoot(
+            query.queryKey,
+            storeScopedRoots.customerFiles,
+            storeId,
+            customerId,
+          ),
       });
 
       queryClient.setQueriesData(
         {
           predicate: (query) => {
             const key = query.queryKey;
-            if (key[0] !== "customer-files") return false;
-            if (key[1] !== storeId || key[2] !== customerId) return false;
+            if (
+              !hasStoreEntityScopedRoot(
+                key,
+                storeScopedRoots.customerFiles,
+                storeId,
+                customerId,
+              )
+            ) {
+              return false;
+            }
 
             if (appointmentId && key[3] && key[3] !== appointmentId) {
               return false;
@@ -283,9 +299,12 @@ export function FileUploadDialog({
       queryClient.setQueriesData(
         {
           predicate: (query) =>
-            query.queryKey[0] === "customer-files" &&
-            query.queryKey[1] === storeId &&
-            query.queryKey[2] === customerId,
+            hasStoreEntityScopedRoot(
+              query.queryKey,
+              storeScopedRoots.customerFiles,
+              storeId,
+              customerId,
+            ),
         },
         (old: any) => {
           if (!old) return old;
@@ -317,10 +336,10 @@ export function FileUploadDialog({
       );
 
       queryClient.invalidateQueries({
-        queryKey: ["admin-activities", storeId],
+        queryKey: qk.adminActivities(storeId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["activities", storeId],
+        queryKey: qk.activities(storeId),
       });
 
       invalidateCustomerFileDomain(queryClient, {

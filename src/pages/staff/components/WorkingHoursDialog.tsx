@@ -30,6 +30,7 @@ import type {
   WorkingHourEntry,
   WorkingHours,
 } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 interface WorkingHoursDialogProps {
   storeId: string;
@@ -90,7 +91,7 @@ export function WorkingHoursDialog({
       staffService.bulkUpsertWorkingHours(storeId, staff.id, { schedule }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staff.id],
+        queryKey: qk.staffDetails(storeId, staff.id),
       });
       toast.success("Schedule updated successfully");
     },

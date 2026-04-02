@@ -32,6 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { qk } from "@/lib/query-keys";
 
 const categorySchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -114,7 +115,7 @@ export function CategoryFormDialog({
       return categoryService.createCategory(storeId, data as any);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.categories(storeId) });
       onClose();
       reset();
     },

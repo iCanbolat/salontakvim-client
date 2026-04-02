@@ -4,19 +4,11 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Edit, Trash2, Eye, EyeOff, Phone, Mail } from "lucide-react";
+import { Phone, Mail } from "lucide-react";
 import { locationService } from "@/services";
 import type { Location } from "@/types";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { qk } from "@/lib/query-keys";
+import { EntityCard } from "@/components/common/EntityCard";
 
 interface LocationCardProps {
   location: Location;
@@ -31,7 +23,7 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
   const deleteMutation = useMutation({
     mutationFn: () => locationService.deleteLocation(storeId, location.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(storeId) });
     },
   });
 
@@ -42,14 +34,14 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
         isVisible: !location.isVisible,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(storeId) });
     },
   });
 
   const handleDelete = () => {
     if (
       confirm(
-        "Are you sure you want to delete this location? This action cannot be undone."
+        "Are you sure you want to delete this location? This action cannot be undone.",
       )
     ) {
       deleteMutation.mutate();
@@ -68,29 +60,19 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
     .join(", ");
 
   return (
-    <Card
-      className={`flex flex-col ${!location.isVisible ? "opacity-60" : ""}`}
+    <EntityCard
+      title={location.name}
+      description={fullAddress}
+      isVisible={location.isVisible}
+      onEdit={() => onEdit(location)}
+      onToggleVisibility={() => toggleVisibilityMutation.mutate()}
+      onDelete={handleDelete}
+      isToggling={toggleVisibilityMutation.isPending}
+      isDeleting={deleteMutation.isPending}
+      toggleTitle={location.isVisible ? "Hide Location" : "Show Location"}
+      deleteTitle="Delete Location"
     >
-      <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-lg">{location.name}</CardTitle>
-              {!location.isVisible && (
-                <Badge variant="secondary" className="text-xs">
-                  Hidden
-                </Badge>
-              )}
-            </div>
-            {fullAddress && (
-              <CardDescription className="line-clamp-2">
-                {fullAddress}
-              </CardDescription>
-            )}
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-3 flex-1">
+      <div className="flex-1 space-y-3">
         {/* Phone */}
         {location.phone && (
           <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -113,41 +95,7 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
             Coordinates: {location.latitude}, {location.longitude}
           </div>
         )}
-      </CardContent>
-
-      {/* Action Buttons */}
-      <CardFooter className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onEdit(location)}
-          className="flex-1"
-        >
-          <Edit className="h-3.5 w-3.5 mr-1.5" />
-          Edit
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => toggleVisibilityMutation.mutate()}
-          disabled={toggleVisibilityMutation.isPending}
-        >
-          {location.isVisible ? (
-            <EyeOff className="h-3.5 w-3.5" />
-          ) : (
-            <Eye className="h-3.5 w-3.5" />
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={handleDelete}
-          disabled={deleteMutation.isPending}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </EntityCard>
   );
 }

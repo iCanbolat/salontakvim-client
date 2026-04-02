@@ -16,10 +16,8 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { Separator } from "../../../components/ui/separator";
-import { Alert, AlertDescription } from "../../../components/ui/alert";
 import {
   Bell,
-  CheckCircle2,
   Loader2,
   Mail,
   Activity,
@@ -52,6 +50,7 @@ import { cn } from "../../../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { tr } from "date-fns/locale";
 import { useAuth } from "../../../contexts";
+import { qk } from "@/lib/query-keys";
 
 export function NotificationSettings() {
   const { user } = useAuth();
@@ -69,7 +68,7 @@ export function NotificationSettings() {
   const { handleUpdate } = actions;
 
   const [searchParams, setSearchParams] = useSearchParams();
-  // Default tab: admin/owner to settings, others to notifications
+
   const defaultTab = isAdmin ? "settings" : "notifications";
   const activeTab = searchParams.get("tab") || defaultTab;
 
@@ -97,16 +96,16 @@ export function NotificationSettings() {
     if (!latestNotification) return;
 
     // Invalidate notifications list when a new one arrives
-    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: qk.notifications() });
   }, [latestNotification, queryClient]);
 
   // Real-time activity updates
   useEffect(() => {
     if (!latestActivity) return;
 
-    if (activeTab === "activities") {
+    if (activeTab === "activities" && store?.id) {
       queryClient.invalidateQueries({
-        queryKey: ["activities", store?.id],
+        queryKey: qk.activities(store.id),
       });
     }
   }, [latestActivity, queryClient, activeTab, store?.id]);
@@ -126,7 +125,7 @@ export function NotificationSettings() {
     isLoading: notificationsLoading,
     refetch: refetchNotifications,
   } = useQuery({
-    queryKey: ["notifications", notificationPage, notificationStatus],
+    queryKey: qk.notifications(notificationPage, notificationStatus),
     queryFn: () =>
       notificationService.getUserNotificationsPaginated({
         page: notificationPage,
@@ -137,7 +136,7 @@ export function NotificationSettings() {
   });
 
   const { data: activitiesPage, isLoading: activitiesLoading } = useQuery({
-    queryKey: ["activities", store?.id, activityPage, activityType],
+    queryKey: qk.activities(store?.id, activityPage, activityType),
     queryFn: () =>
       activityService.getActivitiesPaginated({
         storeId: store!.id,
@@ -697,14 +696,6 @@ export function NotificationSettings() {
           </TabsContent>
         )}
       </Tabs>
-
-      <Alert>
-        <CheckCircle2 className="h-4 w-4" />
-        <AlertDescription>
-          Tüm değişiklikler otomatik olarak kaydedilir. Bildirimler bu ayarlara
-          göre gönderilecektir.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 }

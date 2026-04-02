@@ -7,6 +7,7 @@ import {
   staffService,
   appointmentService,
 } from "@/services";
+import { qk } from "@/lib/query-keys";
 
 export function useDashboardData() {
   const { user } = useAuth();
@@ -19,7 +20,7 @@ export function useDashboardData() {
 
   // 2. Fetch staff member record (works for both staff and admin-who-is-also-staff)
   const { data: staffMember, isLoading: staffLoading } = useQuery({
-    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryKey: qk.myStaffMember(store?.id, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(store!.id);
       return staffMembers.find((s) => s.userId === user?.id) || null;
@@ -33,7 +34,7 @@ export function useDashboardData() {
     isLoading: adminAnalyticsLoading,
     error: adminError,
   } = useQuery({
-    queryKey: ["admin-dashboard", store?.id, managerLocationId],
+    queryKey: qk.adminDashboard(store?.id, managerLocationId),
     queryFn: () =>
       analyticsService.getDashboard(
         store!.id,
@@ -44,7 +45,7 @@ export function useDashboardData() {
 
   const { data: adminActivities = [], isLoading: adminActivitiesLoading } =
     useQuery({
-      queryKey: ["admin-activities", store?.id, managerLocationId],
+      queryKey: qk.adminActivities(store?.id, managerLocationId),
       queryFn: () =>
         activityService.getRecentActivities(store!.id, {
           locationId: managerLocationId,
@@ -55,7 +56,7 @@ export function useDashboardData() {
   // 4. Staff specific data
   const { data: staffAppointmentsData, isLoading: staffAppointmentsLoading } =
     useQuery({
-      queryKey: ["staff-appointments", store?.id, staffMember?.id],
+      queryKey: qk.staffAppointments(store?.id, staffMember?.id),
       queryFn: () =>
         appointmentService.getAppointments(store!.id, {
           staffId: staffMember!.id,

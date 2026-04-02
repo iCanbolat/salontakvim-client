@@ -40,6 +40,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { qk } from "@/lib/query-keys";
 
 const serviceSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -85,7 +86,7 @@ export function ServiceFormDialog({
 
   // Fetch categories
   const { data: categories } = useQuery({
-    queryKey: ["categories", storeId],
+    queryKey: qk.categories(storeId),
     queryFn: () => categoryService.getCategories(storeId),
     enabled: open && !!storeId,
   });
@@ -150,7 +151,7 @@ export function ServiceFormDialog({
     mutationFn: (data: CreateServiceDto) =>
       serviceService.createService(storeId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.services(storeId) });
       onClose();
     },
   });
@@ -160,7 +161,7 @@ export function ServiceFormDialog({
     mutationFn: (data: CreateServiceDto) =>
       serviceService.updateService(storeId, service!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.services(storeId) });
       onClose();
     },
   });

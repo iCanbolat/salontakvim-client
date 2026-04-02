@@ -28,6 +28,7 @@ interface SearchableSelectProps {
   value?: string;
   onValueChange: (value: string) => void;
   onSearchChange?: (search: string) => void;
+  onOpenChange?: (open: boolean) => void;
   onLoadMore?: () => void;
   hasNextPage?: boolean;
   isLoading?: boolean;
@@ -46,6 +47,7 @@ export function SearchableSelect({
   value,
   onValueChange,
   onSearchChange,
+  onOpenChange,
   onLoadMore,
   hasNextPage = false,
   isLoading = false,
@@ -157,8 +159,13 @@ export function SearchableSelect({
     [options, value],
   );
 
+  const handleOpenChange = (nextOpen: boolean) => {
+    setOpen(nextOpen);
+    onOpenChange?.(nextOpen);
+  };
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"

@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { staffService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 import { useCurrentStore } from "@/hooks";
+import { qk } from "@/lib/query-keys";
 
 export function useStaffDetails() {
   const { staffId } = useParams<{ staffId: string }>();
@@ -18,7 +19,7 @@ export function useStaffDetails() {
   const { store, isLoading: storeLoading } = useCurrentStore();
 
   const staffDetailsQuery = useQuery({
-    queryKey: ["staff-details", store?.id, staffId],
+    queryKey: qk.staffDetails(store?.id, staffId),
     queryFn: () => staffService.getStaffMember(store!.id, staffId!),
     enabled: Boolean(store?.id && isValidStaffId),
   });

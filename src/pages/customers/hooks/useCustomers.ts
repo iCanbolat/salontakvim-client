@@ -11,6 +11,7 @@ import { useDebouncedSearch, usePagination, useCurrentStore } from "@/hooks";
 import { useAuth } from "@/contexts";
 import type { CustomerWithStats } from "@/types";
 import { toast } from "sonner";
+import { qk } from "@/lib/query-keys";
 
 export type CustomerView = "grid" | "list";
 
@@ -47,15 +48,14 @@ export function useCustomers() {
     isPending: customersPending,
     error,
   } = useQuery({
-    queryKey: [
-      "customers",
+    queryKey: qk.customers(
       store?.id,
       debouncedSearch,
       currentPage,
       user?.role,
       user?.id,
       user?.locationId,
-    ],
+    ),
     queryFn: () =>
       customerService.getCustomers(store!.id, {
         search: debouncedSearch || undefined,

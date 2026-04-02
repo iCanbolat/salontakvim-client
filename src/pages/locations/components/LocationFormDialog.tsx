@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { qk } from "@/lib/query-keys";
 
 const locationSchema = z.object({
   name: z.string().min(1, "Name is required").max(255),
@@ -135,7 +136,7 @@ export function LocationFormDialog({
     mutationFn: (data: CreateLocationDto) =>
       locationService.createLocation(storeId, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(storeId) });
       onClose();
     },
   });
@@ -145,7 +146,7 @@ export function LocationFormDialog({
     mutationFn: (data: CreateLocationDto) =>
       locationService.updateLocation(storeId, location!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(storeId) });
       onClose();
     },
   });

@@ -31,6 +31,7 @@ import type {
 } from "@/types";
 import { useDebouncedSearch } from "@/hooks";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
+import { qk } from "@/lib/query-keys";
 
 const appointmentBaseSchema = z.object({
   serviceId: z.string().min(1, "Service is required"),
@@ -83,6 +84,8 @@ export function useAppointmentForm({
   const queryClient = useQueryClient();
   const isEditing = !!appointment;
   const [isDatePopoverOpen, setIsDatePopoverOpen] = useState(false);
+  const [deferredQueriesReady, setDeferredQueriesReady] = useState(false);
+  const [isCustomerSelectOpen, setIsCustomerSelectOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const debouncedCustomerSearch = useDebouncedSearch(customerSearch, {
     delay: 400,
@@ -129,7 +132,7 @@ export function useAppointmentForm({
 
   // Fetch staff member record if user is staff
   const { data: currentStaffMember } = useQuery({
-    queryKey: ["my-staff-member", storeId, user?.id],
+    queryKey: qk.myStaffMember(storeId, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(storeId);
       return staffMembers.find((s) => s.userId === user?.id);
@@ -139,7 +142,7 @@ export function useAppointmentForm({
 
   // Fetch services
   const { data: services } = useQuery({
-    queryKey: ["services", storeId],
+    queryKey: qk.services(storeId),
     queryFn: () => serviceService.getServices(storeId),
     enabled: true,
     staleTime: Number.POSITIVE_INFINITY,
@@ -150,7 +153,7 @@ export function useAppointmentForm({
 
   // Fetch locations
   const { data: locations } = useQuery({
-    queryKey: ["locations", storeId],
+    queryKey: qk.locations(storeId),
     queryFn: () => locationService.getLocations(storeId),
     enabled: true,
     staleTime: Number.POSITIVE_INFINITY,
@@ -158,53 +161,6 @@ export function useAppointmentForm({
     refetchOnWindowFocus: false,
     refetchOnMount: false,
   });
-
-  // Fetch customers for existing-customer selection
-  const {
-    data: customersResponse,
-    isPending: isCustomersPending,
-    isFetching: isCustomersFetching,
-  } = useQuery<PaginatedResponse<CustomerWithStats>>({
-    queryKey: ["appointment-form-customers", storeId, debouncedCustomerSearch],
-    queryFn: () =>
-      customerService.getCustomers(storeId, {
-        page: 1,
-        limit: 50, // Increased limit for better selection without infinite scroll for now
-        search: debouncedCustomerSearch || undefined,
-      }),
-    enabled: open,
-    placeholderData: keepPreviousData,
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-  });
-
-  const isCustomerSearchDebouncing =
-    normalizedCustomerSearch.length >= 2 &&
-    debouncedCustomerSearch !== normalizedCustomerSearch;
-
-  const isCustomersInitialLoading = isCustomersPending && !customersResponse;
-  const isCustomersSearching =
-    isCustomerSearchDebouncing ||
-    (isCustomersFetching && !isCustomersInitialLoading);
-
-  const customers = useMemo<CustomerWithStats[]>(
-    () => customersResponse?.data ?? [],
-    [customersResponse],
-  );
-
-  const onCustomerSearchChange = useCallback((value: string) => {
-    setCustomerSearch(value);
-  }, []);
-
-  // Set initial customer for editing
-  useEffect(() => {
-    if (open && isEditing && appointment?.customerId) {
-      // In case the initial customer isn't in the first page of the infinite scroll,
-      // we don't need to do anything special here as the SearchableSelect
-      //'s selectedOption useMemo will find it if it's there.
-      // In production, we might want a getCustomerById call to ensure it's loaded.
-    }
-  }, [open, isEditing, appointment?.customerId]);
 
   // Form setup
   const form = useForm<AppointmentFormData>({
@@ -224,9 +180,93 @@ export function useAppointmentForm({
   const watchIsNewCustomer = useWatch({ control, name: "isNewCustomer" });
   const watchCustomerId = useWatch({ control, name: "customerId" });
 
+  // Defer non-critical queries to keep dialog open transition smooth.
+  useEffect(() => {
+    if (!open) {
+      setDeferredQueriesReady(false);
+      setIsCustomerSelectOpen(false);
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setDeferredQueriesReady(true);
+    }, 120);
+
+    return () => window.clearTimeout(timeout);
+  }, [open, appointment?.id]);
+
+  useEffect(() => {
+    if (watchIsNewCustomer && isCustomerSelectOpen) {
+      setIsCustomerSelectOpen(false);
+    }
+  }, [watchIsNewCustomer, isCustomerSelectOpen]);
+
+  // Fetch customers for existing-customer selection (lazy + deferred)
+  const {
+    data: customersResponse,
+    isPending: isCustomersPending,
+    isFetching: isCustomersFetching,
+  } = useQuery<PaginatedResponse<CustomerWithStats>>({
+    queryKey: qk.appointmentFormCustomers(storeId, debouncedCustomerSearch),
+    queryFn: () =>
+      customerService.getCustomers(storeId, {
+        page: 1,
+        limit: 50,
+        search: debouncedCustomerSearch || undefined,
+      }),
+    enabled:
+      open &&
+      deferredQueriesReady &&
+      !watchIsNewCustomer &&
+      (isCustomerSelectOpen || normalizedCustomerSearch.length >= 2),
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  });
+
+  const isCustomerSearchDebouncing =
+    normalizedCustomerSearch.length >= 2 &&
+    debouncedCustomerSearch !== normalizedCustomerSearch;
+
+  const isCustomersInitialLoading =
+    isCustomerSelectOpen && isCustomersPending && !customersResponse;
+  const isCustomersSearching =
+    isCustomerSearchDebouncing ||
+    (isCustomersFetching && !isCustomersInitialLoading);
+
+  const customers = useMemo<CustomerWithStats[]>(
+    () => customersResponse?.data ?? [],
+    [customersResponse],
+  );
+
+  const customerOptions = useMemo(
+    () =>
+      customers.map((customer) => ({
+        value: customer.id,
+        label:
+          `${customer.firstName || ""} ${customer.lastName || ""}`.trim() ||
+          customer.email ||
+          "Customer",
+        description: customer.phone || customer.email || undefined,
+      })),
+    [customers],
+  );
+
+  const onCustomerSearchChange = useCallback((value: string) => {
+    setCustomerSearch(value);
+  }, []);
+
+  const onCustomerSelectOpenChange = useCallback((nextOpen: boolean) => {
+    setIsCustomerSelectOpen(nextOpen);
+
+    if (!nextOpen) {
+      setCustomerSearch("");
+    }
+  }, []);
+
   // Fetch staff by selected service, then filter client-side by selected location
   const { data: staffByService } = useQuery({
-    queryKey: ["staff-by-service", storeId, watchServiceId],
+    queryKey: qk.staffByService(storeId, watchServiceId),
     queryFn: () =>
       staffService.getStaffMembers(storeId, {
         includeHidden: false,
@@ -278,14 +318,13 @@ export function useAppointmentForm({
     isFetching: isAvailabilityLoading,
     isError: isAvailabilityError,
   } = useQuery<AvailabilityResponse>({
-    queryKey: [
-      "availability",
+    queryKey: qk.availability(
       storeId,
       watchServiceId,
       watchStaffId,
       watchDate,
       appointment?.id ?? null,
-    ],
+    ),
     queryFn: () =>
       appointmentService.getAvailability({
         storeId,
@@ -296,6 +335,7 @@ export function useAppointmentForm({
       }),
     enabled:
       open &&
+      deferredQueriesReady &&
       Boolean(watchDate) &&
       Boolean(watchServiceId) &&
       Boolean(watchStaffId),
@@ -306,11 +346,13 @@ export function useAppointmentForm({
   });
 
   useEffect(() => {
-    if (open) {
-      // Formu sıfırla
-      reset(defaultFormValues);
+    if (!open) {
+      return;
     }
-  }, [open, reset, defaultFormValues]);
+
+    // Reset only when dialog opens or a different appointment is loaded.
+    reset(defaultFormValues);
+  }, [open, appointment?.id, reset]);
 
   useEffect(() => {
     if (!open || watchIsNewCustomer || !watchCustomerId) {
@@ -493,14 +535,23 @@ export function useAppointmentForm({
       availableSlots,
       availableTimes,
       customers,
+      customerOptions,
       isCustomersInitialLoading,
       isCustomersSearching,
       user,
+    },
+    watched: {
+      serviceId: watchServiceId,
+      staffId: watchStaffId,
+      locationId: watchLocationId,
+      date: watchDate,
+      isNewCustomer: watchIsNewCustomer,
     },
     actions: {
       onSubmit: form.handleSubmit(onSubmit),
       setValue,
       onCustomerSearchChange,
+      onCustomerSelectOpenChange,
     },
   };
 }

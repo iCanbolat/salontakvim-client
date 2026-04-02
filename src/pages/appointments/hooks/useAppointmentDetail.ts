@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useCurrentStore } from "@/hooks";
 import { appointmentService } from "@/services";
 import type { Appointment } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 export function useAppointmentDetail() {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -18,7 +19,7 @@ export function useAppointmentDetail() {
     isLoading: appointmentLoading,
     error: appointmentError,
   } = useQuery<Appointment>({
-    queryKey: ["appointment", store?.id, appointmentId],
+    queryKey: qk.appointment(store?.id, appointmentId),
     queryFn: () => appointmentService.getAppointment(store!.id, appointmentId!),
     enabled: !!store?.id && !!appointmentId,
   });

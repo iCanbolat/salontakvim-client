@@ -40,6 +40,7 @@ import type { Location } from "@/types/location.types";
 import type { WidgetPublicConfig } from "@/types/widget.types";
 import { format } from "date-fns";
 import { tr } from "date-fns/locale";
+import { qk } from "@/lib/query-keys";
 
 export default function HostedWidgetPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -61,7 +62,7 @@ export default function HostedWidgetPage() {
     isLoading: bootstrapLoading,
     isError: bootstrapError,
   } = useQuery({
-    queryKey: ["widgetEmbedBootstrap", slug],
+    queryKey: qk.widgetEmbedBootstrap(slug),
     queryFn: () => widgetPublicService.getEmbedBootstrap(slug!),
     enabled: Boolean(slug),
     retry: 1,
@@ -76,7 +77,7 @@ export default function HostedWidgetPage() {
     isLoading,
     isError,
   } = useQuery<WidgetPublicConfig>({
-    queryKey: ["publicWidgetConfig", slug, bootstrap?.token],
+    queryKey: qk.publicWidgetConfig(slug, bootstrap?.token),
     queryFn: () =>
       widgetPublicService.getWidgetConfigBySlug(slug!, bootstrap?.token),
     enabled: Boolean(slug && bootstrap?.token),
@@ -89,7 +90,7 @@ export default function HostedWidgetPage() {
 
   const { data: locations, isLoading: locationsLoading } = useQuery<Location[]>(
     {
-      queryKey: ["publicLocations", slug, bootstrap?.token],
+      queryKey: qk.publicLocations(slug, bootstrap?.token),
       queryFn: () =>
         widgetPublicService.getPublicLocations(slug!, bootstrap?.token),
       enabled: Boolean(slug && bootstrap?.token),
@@ -104,7 +105,7 @@ export default function HostedWidgetPage() {
   const { data: feedbacks, isLoading: feedbackLoading } = useQuery<
     FeedbackWithDetails[]
   >({
-    queryKey: ["publicFeedback", config?.store.id],
+    queryKey: qk.publicFeedback(config?.store.id),
     queryFn: () =>
       feedbackService.getPublicFeedback(config!.store.id, {
         limit: 6,
@@ -402,7 +403,10 @@ export default function HostedWidgetPage() {
                     >
                       <CarouselContent className="-ml-2">
                         {config.store.storeImages.map((imageUrl, index) => (
-                          <CarouselItem key={index} className="pl-2 basis-1/2 md:basis-1/3">
+                          <CarouselItem
+                            key={index}
+                            className="pl-2 basis-1/2 md:basis-1/3"
+                          >
                             <button
                               onClick={() => setSelectedImageIndex(index)}
                               className="relative aspect-square w-full overflow-hidden rounded-lg bg-slate-100 hover:opacity-95 transition-opacity focus:outline-none"

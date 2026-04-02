@@ -35,6 +35,7 @@ import {
   getTimeSlots,
 } from "@/utils/calendar.utils";
 import { cn } from "@/lib/utils";
+import { qk } from "@/lib/query-keys";
 
 interface AppointmentsCalendarProps {
   storeId: string;
@@ -54,7 +55,7 @@ export const AppointmentsCalendar = memo(function AppointmentsCalendar({
 
   // Fetch staff member record if user is staff
   const { data: staffMember } = useQuery({
-    queryKey: ["my-staff-member", storeId, user?.id],
+    queryKey: qk.myStaffMember(storeId, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(storeId);
       return staffMembers.find((s) => s.userId === user?.id);
@@ -76,13 +77,12 @@ export const AppointmentsCalendar = memo(function AppointmentsCalendar({
 
   // Fetch appointments for the current view
   const { data: appointmentsData, isLoading } = useQuery({
-    queryKey: [
-      "appointments",
+    queryKey: qk.appointments(
       storeId,
       format(dateRange.start, "yyyy-MM-dd"),
       format(dateRange.end, "yyyy-MM-dd"),
       staffMember?.id,
-    ],
+    ),
     queryFn: () =>
       appointmentService.getAppointments(storeId, {
         startDate: format(dateRange.start, "yyyy-MM-dd"),

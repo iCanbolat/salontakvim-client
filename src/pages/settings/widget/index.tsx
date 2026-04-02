@@ -135,41 +135,77 @@ export function WidgetSettings() {
     }
   };
 
-  const parseDomainsInput = () => {
-    const parsed = domainsInput
-      .split(/[\n,]/)
-      .map((domain) => domain.trim())
-      .filter(Boolean);
+  const getConfiguredDomain = (domains: string[] = []) => {
+    return (
+      domains
+        .map((domain) => domain.trim().toLowerCase())
+        .find(
+          (domain) =>
+            domain && domain !== "localhost" && domain !== "127.0.0.1",
+        ) || ""
+    );
+  };
 
-    const unique = Array.from(new Set(parsed));
+  const parseSingleDomainInput = () => {
+    const raw = domainsInput.trim().toLowerCase();
 
-    const invalid = unique.filter((domain) => {
-      const cleaned = domain.startsWith("*.") ? domain.slice(2) : domain;
-      if (!cleaned || cleaned.includes(" ")) return true;
-      try {
-        const url = new URL(`http://${cleaned}`);
-        return !url.hostname;
-      } catch {
-        return true;
+    if (!raw) {
+      return { domain: "" as string, error: null as string | null };
+    }
+
+    const cleaned = raw.startsWith("*.") ? raw.slice(2) : raw;
+    if (
+      !cleaned ||
+      cleaned.includes(" ") ||
+      cleaned.includes("/") ||
+      cleaned.includes(":")
+    ) {
+      return {
+        domain: "",
+        error: "Domain must be a hostname only (example.com)",
+      };
+    }
+
+    try {
+      const url = new URL(`http://${cleaned}`);
+      const normalized = url.hostname.toLowerCase();
+      if (!normalized || normalized !== cleaned) {
+        return {
+          domain: "",
+          error: "Invalid domain format",
+        };
       }
-    });
 
-    return { unique, invalid };
+      return {
+        domain: raw.startsWith("*.") ? `*.${normalized}` : normalized,
+        error: null,
+      };
+    } catch {
+      return {
+        domain: "",
+        error: "Invalid domain format",
+      };
+    }
   };
 
   const onSaveAllowedDomains = () => {
-    const { unique, invalid } = parseDomainsInput();
+    const { domain, error } = parseSingleDomainInput();
 
-    if (invalid.length > 0) {
-      toast.error(`Invalid domain(s): ${invalid.join(", ")}`);
+    if (error) {
+      toast.error(error);
       return;
     }
 
-    handleUpdateDomains(unique);
+    if (domain === "localhost" || domain === "127.0.0.1") {
+      handleUpdateDomains([]);
+      return;
+    }
+
+    handleUpdateDomains(domain ? [domain] : []);
   };
 
   const onResetAllowedDomains = () => {
-    setDomainsInput((settings?.allowedDomains || []).join("\n"));
+    setDomainsInput(getConfiguredDomain(settings?.allowedDomains || []));
   };
 
   if (isLoading) {
@@ -597,24 +633,24 @@ export function WidgetSettings() {
                 <CardHeader>
                   <CardTitle>Allowed Domains</CardTitle>
                   <CardDescription>
-                    Restrict which hostnames can load the public widget
+                    Restrict public widget access to a single domain
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="space-y-2">
                     <Label className="flex items-center gap-2">
-                      <Globe2 className="h-4 w-4" /> Domain allowlist
+                      <Globe2 className="h-4 w-4" /> Allowed domain
                     </Label>
-                    <Textarea
+                    <Input
                       value={domainsInput}
                       onChange={(e) => setDomainsInput(e.target.value)}
-                      placeholder="example.com\nsub.example.com\n*.example.org"
-                      rows={4}
-                      className="font-mono text-sm"
+                      placeholder="example.com"
+                      className="font-mono"
                     />
                     <p className="text-sm text-muted-foreground">
-                      Enter one domain per line. Wildcards are supported with a
-                      leading *. Do not include protocol or paths.
+                      Enter only one domain (for example: example.com). You can
+                      still use wildcard format like *.example.com. localhost is
+                      always allowed automatically.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -623,7 +659,7 @@ export function WidgetSettings() {
                       disabled={!hasDomainChanges}
                     >
                       <Save className="h-4 w-4 mr-2" />
-                      Save Allowlist
+                      Save Domain
                     </Button>
                     <Button
                       variant="ghost"

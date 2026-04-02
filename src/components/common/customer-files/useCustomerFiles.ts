@@ -14,6 +14,11 @@ import {
 } from "@/services/customer-file.service";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import { invalidateCustomerFileDomain } from "./query-utils";
+import {
+  hasStoreEntityScopedRoot,
+  qk,
+  storeScopedRoots,
+} from "@/lib/query-keys";
 
 interface UseCustomerFilesProps {
   storeId: string;
@@ -70,14 +75,13 @@ export function useCustomerFiles({
     error,
     refetch: refreshFiles,
   } = useQuery({
-    queryKey: [
-      "customer-files",
+    queryKey: qk.customerFiles(
       storeId,
       customerId,
       appointmentId,
       debouncedSearch,
       fileTypeFilter,
-    ],
+    ),
     queryFn: () =>
       customerFileService.getFiles(storeId, customerId, {
         search: debouncedSearch || undefined,
@@ -112,8 +116,16 @@ export function useCustomerFiles({
         {
           predicate: (query) => {
             const key = query.queryKey;
-            if (key[0] !== "customer-files") return false;
-            if (key[1] !== storeId || key[2] !== customerId) return false;
+            if (
+              !hasStoreEntityScopedRoot(
+                key,
+                storeScopedRoots.customerFiles,
+                storeId,
+                customerId,
+              )
+            ) {
+              return false;
+            }
 
             const scope = options?.appointmentScope;
             if (scope && key[3] && key[3] !== scope) {
@@ -157,14 +169,17 @@ export function useCustomerFiles({
       customerFileService.deleteFile(storeId, customerId, fileId),
     onMutate: async (fileId) => {
       await queryClient.cancelQueries({
-        queryKey: ["customer-files", storeId, customerId],
+        queryKey: qk.customerFiles(storeId, customerId),
       });
 
       const previousData = queryClient.getQueriesData({
         predicate: (query) =>
-          query.queryKey[0] === "customer-files" &&
-          query.queryKey[1] === storeId &&
-          query.queryKey[2] === customerId,
+          hasStoreEntityScopedRoot(
+            query.queryKey,
+            storeScopedRoots.customerFiles,
+            storeId,
+            customerId,
+          ),
       });
 
       updateCachedFiles((files) => files.filter((file) => file.id !== fileId), {

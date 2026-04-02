@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts";
 import { storeService, authService } from "@/services";
 import { useCurrentStoreState } from "@/stores/currentStore.store";
+import { qk } from "@/lib/query-keys";
 
 export function useCurrentStore() {
   const store = useCurrentStoreState((state) => state.store);
@@ -28,7 +29,7 @@ export function useCurrentStoreBootstrap() {
     !authLoading && !!user && isAuthenticated && !authService.needsOnboarding();
 
   const query = useQuery({
-    queryKey: ["my-store"],
+    queryKey: qk.currentStore,
     queryFn: () => storeService.getMyStore(),
     enabled: shouldFetchStore,
   });

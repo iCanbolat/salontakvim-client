@@ -25,6 +25,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { TimeOffDialog } from "./TimeOffDialog";
 import { useAuth } from "@/contexts";
+import { qk } from "@/lib/query-keys";
 
 interface TimeOffListProps {
   storeId: string;
@@ -46,7 +47,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["staff-breaks", storeId, staffId],
+    queryKey: qk.staffBreaks(storeId, staffId),
     queryFn: () => breakService.getStaffBreaks(storeId, staffId),
   });
 
@@ -56,16 +57,16 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
       breakService.deleteStaffBreak(storeId, staffId, breakId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-breaks", storeId, staffId],
+        queryKey: qk.staffBreaks(storeId, staffId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staffId],
+        queryKey: qk.staffDetails(storeId, staffId),
       });
       if (user?.role === "manager") {
         queryClient.invalidateQueries({
-          queryKey: ["admin-activities", storeId, managerLocationId],
+          queryKey: qk.adminActivities(storeId, managerLocationId),
         });
-        queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        queryClient.invalidateQueries({ queryKey: qk.notifications() });
       }
       toast.success("İzin silindi");
     },

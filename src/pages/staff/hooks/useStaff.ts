@@ -12,6 +12,7 @@ import { usePagination, useCurrentStore } from "@/hooks";
 import { useDebouncedSearch } from "@/hooks/useDebouncedSearch";
 import type { StaffBreakStatus } from "@/types";
 import { useAuth, useNotifications } from "@/contexts";
+import { hasStoreScopedRoot, qk, storeScopedRoots } from "@/lib/query-keys";
 
 type TimeOffStatusFilter = "all" | StaffBreakStatus;
 
@@ -70,7 +71,7 @@ export function useStaff() {
     isPending: staffPending,
     error: staffError,
   } = useQuery({
-    queryKey: ["staff", store?.id, debouncedSearchTerm],
+    queryKey: qk.staff(store?.id, debouncedSearchTerm),
     queryFn: () =>
       staffService.getStaffMembers(store!.id, {
         includeHidden: true,
@@ -92,7 +93,7 @@ export function useStaff() {
     isLoading: invitationsLoading,
     error: invitationsError,
   } = useQuery({
-    queryKey: ["staff-invitations", store?.id],
+    queryKey: qk.staffInvitations(store?.id),
     queryFn: () => staffService.getInvitations(store!.id),
     enabled: !!store?.id,
     staleTime: 0,
@@ -105,13 +106,12 @@ export function useStaff() {
     isLoading: timeOffsLoading,
     error: timeOffsError,
   } = useQuery({
-    queryKey: [
-      "store-breaks",
+    queryKey: qk.storeBreaks(
       store?.id,
       timeOffStatus,
       timeOffPage,
       timeOffPageSize,
-    ],
+    ),
     queryFn: () =>
       breakService.getStoreBreaks(
         store!.id,
@@ -135,8 +135,11 @@ export function useStaff() {
     if (isSameStore && isTimeOff) {
       queryClient.invalidateQueries({
         predicate: (query) => {
-          const key = query.queryKey;
-          return key[0] === "store-breaks" && key[1] === store.id;
+          return hasStoreScopedRoot(
+            query.queryKey,
+            storeScopedRoots.storeBreaks,
+            store.id,
+          );
         },
       });
     }
@@ -162,8 +165,15 @@ export function useStaff() {
     onSuccess: () => {
       queryClient.invalidateQueries({
         predicate: (query) => {
-          const key = query.queryKey;
-          return key[0] === "store-breaks" && key[1] === store?.id;
+          if (!store?.id) {
+            return false;
+          }
+
+          return hasStoreScopedRoot(
+            query.queryKey,
+            storeScopedRoots.storeBreaks,
+            store.id,
+          );
         },
       });
       toast.success("Time off updated");
@@ -182,7 +192,7 @@ export function useStaff() {
       isVisible: boolean;
     }) => staffService.updateStaffProfile(store!.id, staffId, { isVisible }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(store?.id) });
       toast.success("Staff visibility updated");
     },
     onError: (error: Error) => {
@@ -194,7 +204,7 @@ export function useStaff() {
     mutationFn: (staffId: string) =>
       staffService.deleteStaffMember(store!.id, staffId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(store?.id) });
       toast.success("Staff member removed");
     },
     onError: (error: Error) => {

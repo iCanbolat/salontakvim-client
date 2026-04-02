@@ -2,11 +2,24 @@ import { useState, useEffect, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { widgetService } from "@/services/widget.service";
+import { qk } from "@/lib/query-keys";
 import type {
   UpdateWidgetSettingsDto,
   WidgetSettings as WidgetSettingsType,
 } from "@/types/widget.types";
 import { toast } from "sonner";
+
+const LOCALHOST_DOMAINS = new Set(["localhost", "127.0.0.1"]);
+
+const getConfiguredDomain = (domains?: string[]) => {
+  if (!domains?.length) return "";
+
+  return (
+    domains
+      .map((domain) => domain.trim().toLowerCase())
+      .find((domain) => domain && !LOCALHOST_DOMAINS.has(domain)) || ""
+  );
+};
 
 export function useWidgetSettings() {
   const [activeTab, setActiveTab] = useState("layout");
@@ -22,7 +35,7 @@ export function useWidgetSettings() {
 
   // Get current store
   const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["store"],
+    queryKey: qk.currentStore,
     queryFn: storeService.getMyStore,
   });
 
@@ -32,29 +45,28 @@ export function useWidgetSettings() {
     isLoading: settingsLoading,
     error,
   } = useQuery({
-    queryKey: ["widgetSettings", store?.id],
+    queryKey: qk.widgetSettings(store?.id),
     queryFn: () => widgetService.getWidgetSettings(store!.id),
     enabled: !!store?.id,
   });
 
   // Get embed code
   const { data: embedCode } = useQuery({
-    queryKey: ["widgetEmbedCode", store?.id],
+    queryKey: qk.widgetEmbedCode(store?.id),
     queryFn: () => widgetService.getEmbedCode(store!.id),
     enabled: !!store?.id,
   });
 
   // Get widget security status
   const { data: securityStatus } = useQuery({
-    queryKey: ["widgetSecurityStatus", store?.id],
+    queryKey: qk.widgetSecurityStatus(store?.id),
     queryFn: () => widgetService.getWidgetSecurityStatus(store!.id),
     enabled: !!store?.id,
   });
 
   useEffect(() => {
-    if (settings?.allowedDomains) {
-      setDomainsInput(settings.allowedDomains.join("\n"));
-    }
+    if (!settings) return;
+    setDomainsInput(getConfiguredDomain(settings.allowedDomains));
   }, [settings?.allowedDomains]);
 
   // Update settings mutation
@@ -63,7 +75,7 @@ export function useWidgetSettings() {
       widgetService.updateWidgetSettings(store!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["widgetSettings", store?.id],
+        queryKey: qk.widgetSettings(store?.id),
       });
       setPendingChanges({});
       toast.success("Widget settings saved successfully");
@@ -78,10 +90,10 @@ export function useWidgetSettings() {
     mutationFn: () => widgetService.regenerateWidgetKey(store!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["widgetSettings", store?.id],
+        queryKey: qk.widgetSettings(store?.id),
       });
       queryClient.invalidateQueries({
-        queryKey: ["widgetEmbedCode", store?.id],
+        queryKey: qk.widgetEmbedCode(store?.id),
       });
       toast.success("Widget key regenerated successfully");
     },
@@ -94,9 +106,9 @@ export function useWidgetSettings() {
     mutationFn: (domains: string[]) =>
       widgetService.updateAllowedDomains(store!.id, domains),
     onSuccess: (data) => {
-      setDomainsInput(data.allowedDomains.join("\n"));
+      setDomainsInput(getConfiguredDomain(data.allowedDomains));
       queryClient.invalidateQueries({
-        queryKey: ["widgetSettings", store?.id],
+        queryKey: qk.widgetSettings(store?.id),
       });
       toast.success("Allowed domains updated");
     },
@@ -109,7 +121,7 @@ export function useWidgetSettings() {
     mutationFn: () => widgetService.unblockWidgetAccess(store!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["widgetSecurityStatus", store?.id],
+        queryKey: qk.widgetSecurityStatus(store?.id),
       });
       toast.success("Widget access unblocked");
     },
@@ -144,13 +156,14 @@ export function useWidgetSettings() {
 
   const hasDomainChanges = useMemo(() => {
     if (!settings) return false;
-    const current = settings.allowedDomains || [];
-    const next = domainsInput
-      .split(/[\n,]/)
-      .map((domain) => domain.trim())
-      .filter(Boolean);
-    if (current.length !== next.length) return true;
-    return current.some((domain, index) => domain !== next[index]);
+    const current = getConfiguredDomain(settings.allowedDomains);
+    const next = domainsInput.trim().toLowerCase();
+
+    if (LOCALHOST_DOMAINS.has(next)) {
+      return current !== "";
+    }
+
+    return current !== next;
   }, [domainsInput, settings]);
 
   const previewSettings = useMemo((): WidgetSettingsType | null => {

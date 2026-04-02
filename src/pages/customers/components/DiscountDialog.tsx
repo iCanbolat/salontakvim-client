@@ -35,6 +35,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { couponService } from "@/services";
 import type { CustomerWithStats, CreateCouponDto } from "@/types";
 import { toast } from "sonner";
+import { qk } from "@/lib/query-keys";
 
 interface DiscountDialogProps {
   isOpen: boolean;
@@ -105,7 +106,7 @@ export function DiscountDialog({
 
   // Fetch existing coupons
   const { data: existingCoupons, isLoading: couponsLoading } = useQuery({
-    queryKey: ["coupons", storeId],
+    queryKey: qk.coupons(storeId),
     queryFn: () => couponService.getCoupons(storeId, { isActive: true }),
     enabled: isOpen && !!storeId,
   });
@@ -118,7 +119,9 @@ export function DiscountDialog({
 
       const couponData: CreateCouponDto = {
         code: form.code.toUpperCase(),
-        name: form.name || `${form.value}${form.type === "percentage" ? "%" : "₺"} İndirim`,
+        name:
+          form.name ||
+          `${form.value}${form.type === "percentage" ? "%" : "₺"} İndirim`,
         description: form.description || undefined,
         type: form.type,
         value: parseFloat(form.value),
@@ -146,15 +149,15 @@ export function DiscountDialog({
       return newCoupon;
     },
     onSuccess: (coupon) => {
-      queryClient.invalidateQueries({ queryKey: ["coupons", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.coupons(storeId) });
       toast.success(
-        `"${coupon.code}" kuponu oluşturuldu ve ${selectedCustomers.length} müşteriye tanımlandı`
+        `"${coupon.code}" kuponu oluşturuldu ve ${selectedCustomers.length} müşteriye tanımlandı`,
       );
       onClose();
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Kupon oluşturulurken bir hata oluştu"
+        error.response?.data?.message || "Kupon oluşturulurken bir hata oluştu",
       );
     },
   });
@@ -171,15 +174,15 @@ export function DiscountDialog({
     },
     onSuccess: () => {
       const coupon = existingCoupons?.find((c) => c.id === selectedCouponId);
-      queryClient.invalidateQueries({ queryKey: ["coupons", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.coupons(storeId) });
       toast.success(
-        `"${coupon?.code}" kuponu ${selectedCustomers.length} müşteriye tanımlandı`
+        `"${coupon?.code}" kuponu ${selectedCustomers.length} müşteriye tanımlandı`,
       );
       onClose();
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Kupon tanımlanırken bir hata oluştu"
+        error.response?.data?.message || "Kupon tanımlanırken bir hata oluştu",
       );
     },
   });
@@ -329,7 +332,9 @@ export function DiscountDialog({
                     min="0"
                     max={form.type === "percentage" ? "100" : undefined}
                     value={form.value}
-                    onChange={(e) => setForm({ ...form, value: e.target.value })}
+                    onChange={(e) =>
+                      setForm({ ...form, value: e.target.value })
+                    }
                     placeholder={form.type === "percentage" ? "10" : "50"}
                   />
                 </div>
@@ -386,7 +391,7 @@ export function DiscountDialog({
                     Bitiş:{" "}
                     {format(
                       addDays(new Date(), parseInt(form.validDays) || 30),
-                      "d MMM yyyy"
+                      "d MMM yyyy",
                     )}
                   </p>
                 </div>
@@ -399,7 +404,10 @@ export function DiscountDialog({
                     min="1"
                     value={form.usageLimitPerCustomer}
                     onChange={(e) =>
-                      setForm({ ...form, usageLimitPerCustomer: e.target.value })
+                      setForm({
+                        ...form,
+                        usageLimitPerCustomer: e.target.value,
+                      })
                     }
                     placeholder="1"
                   />
@@ -480,7 +488,7 @@ export function DiscountDialog({
                     <div className="bg-gray-50 rounded-lg p-3 text-sm">
                       {(() => {
                         const coupon = existingCoupons.find(
-                          (c) => c.id === selectedCouponId
+                          (c) => c.id === selectedCouponId,
                         );
                         if (!coupon) return null;
                         return (
@@ -496,7 +504,10 @@ export function DiscountDialog({
                             <div className="flex justify-between">
                               <span className="text-gray-500">Geçerlilik:</span>
                               <span>
-                                {format(new Date(coupon.validUntil), "d MMM yyyy")}
+                                {format(
+                                  new Date(coupon.validUntil),
+                                  "d MMM yyyy",
+                                )}
                               </span>
                             </div>
                             <div className="flex justify-between">

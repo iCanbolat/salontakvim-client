@@ -36,6 +36,7 @@ import {
 import { useStoreSettings } from "./hooks/useStoreSettings";
 import { storeService } from "@/services/store.service";
 import { billingService } from "@/services/billing.service";
+import { qk } from "@/lib/query-keys";
 
 export function StoreSettings() {
   const { state, actions, data, form } = useStoreSettings();
@@ -73,7 +74,7 @@ export function StoreSettings() {
   }, [paymentStatus]);
 
   const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
-    queryKey: ["billing-connect-status", storeId],
+    queryKey: qk.billingConnectStatus(storeId),
     queryFn: () => billingService.getConnectStatus(storeId!),
     enabled: !!storeId && isStripeAllowed,
     staleTime: 60_000,
@@ -82,7 +83,7 @@ export function StoreSettings() {
   const uploadImageMutation = useMutation({
     mutationFn: (file: File) => storeService.uploadStoreImage(store!.id, file),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-store"] });
+      queryClient.invalidateQueries({ queryKey: qk.currentStore });
     },
   });
 
@@ -90,7 +91,7 @@ export function StoreSettings() {
     mutationFn: (imageUrl: string) =>
       storeService.deleteStoreImage(store!.id, imageUrl),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-store"] });
+      queryClient.invalidateQueries({ queryKey: qk.currentStore });
     },
   });
 

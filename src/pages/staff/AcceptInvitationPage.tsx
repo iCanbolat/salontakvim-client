@@ -31,6 +31,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { qk } from "@/lib/query-keys";
 
 export function AcceptInvitationPage() {
   const [searchParams] = useSearchParams();
@@ -55,7 +56,7 @@ export function AcceptInvitationPage() {
     isLoading: invitationLoading,
     isError: invitationError,
   } = useQuery({
-    queryKey: ["staff-invitation", token],
+    queryKey: qk.staffInvitation(token),
     queryFn: () => staffService.getInvitationByToken(token),
     enabled: Boolean(token),
     retry: false,

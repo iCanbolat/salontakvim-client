@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import { RecentActivityList } from "../../components/common/RecentActivityList";
 import { formatAppointmentNumber } from "@/utils/appointment.utils";
 import { CustomerFiles } from "@/components/common/customer-files";
+import { qk } from "@/lib/query-keys";
 
 export function AppointmentDetailPage() {
   const {
@@ -70,21 +71,20 @@ export function AppointmentDetailPage() {
   }, [appointment, store]);
 
   useQuery({
-    queryKey: [
-      "availability",
+    queryKey: qk.availability(
       availabilityParams?.storeId,
       availabilityParams?.serviceId,
       availabilityParams?.staffId,
       availabilityParams?.date,
       availabilityParams?.excludeAppointmentId,
-    ],
+    ),
     queryFn: () => appointmentService.getAvailability(availabilityParams!),
     enabled: !!availabilityParams,
     staleTime: 5 * 60 * 1000,
   });
 
   useQuery({
-    queryKey: ["staff-by-service", store?.id, appointment?.serviceId],
+    queryKey: qk.staffByService(store?.id, appointment?.serviceId),
     queryFn: () =>
       staffService.getStaffMembers(store!.id, {
         includeHidden: false,
@@ -95,14 +95,14 @@ export function AppointmentDetailPage() {
   });
 
   useQuery({
-    queryKey: ["services", store?.id],
+    queryKey: qk.services(store?.id),
     queryFn: () => serviceService.getServices(store!.id),
     enabled: !!store?.id,
     staleTime: 5 * 60 * 1000,
   });
 
   useQuery({
-    queryKey: ["locations", store?.id],
+    queryKey: qk.locations(store?.id),
     queryFn: () => locationService.getLocations(store!.id),
     enabled: !!store?.id,
     staleTime: 5 * 60 * 1000,

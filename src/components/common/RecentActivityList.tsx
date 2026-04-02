@@ -36,6 +36,14 @@ interface RecentActivityListProps {
 export function getActivityIcon(activity: RecentActivity) {
   const message = activity.message.toLowerCase();
   const type = activity.type;
+  const action =
+    typeof activity.metadata?.action === "string"
+      ? activity.metadata.action.toLowerCase()
+      : "";
+
+  if (action === "bulk_file_deleted") {
+    return { icon: FileX, color: "bg-rose-100 text-rose-600" };
+  }
 
   if (message.includes("dosya sildi") || message.includes("file deleted"))
     return { icon: FileX, color: "bg-rose-100 text-rose-600" };

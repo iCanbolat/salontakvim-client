@@ -30,6 +30,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { breakService } from "@/services";
 import type { StaffBreak, CreateStaffBreakDto } from "@/types";
 import { Calendar as CalendarIcon, Clock } from "lucide-react";
+import { qk } from "@/lib/query-keys";
 
 interface TimeOffDialogProps {
   storeId: string;
@@ -91,10 +92,10 @@ export function TimeOffDialog({
       breakService.createStaffBreak(storeId, staffId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-breaks", storeId, staffId],
+        queryKey: qk.staffBreaks(storeId, staffId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staffId],
+        queryKey: qk.staffDetails(storeId, staffId),
       });
       toast.success("İzin eklendi");
       onClose();
@@ -116,10 +117,10 @@ export function TimeOffDialog({
       breakService.updateStaffBreak(storeId, staffId, timeOff!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-breaks", storeId, staffId],
+        queryKey: qk.staffBreaks(storeId, staffId),
       });
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staffId],
+        queryKey: qk.staffDetails(storeId, staffId),
       });
       toast.success("İzin güncellendi");
       onClose();

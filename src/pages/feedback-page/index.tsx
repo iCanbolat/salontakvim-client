@@ -28,6 +28,7 @@ import {
   FeedbackHeader,
   FeedbackStats,
 } from "./components";
+import { qk } from "@/lib/query-keys";
 
 export function FeedbackList() {
   const queryClient = useQueryClient();
@@ -56,15 +57,14 @@ export function FeedbackList() {
     isLoading: dashboardLoading,
     error: dashboardError,
   } = useQuery({
-    queryKey: [
-      "feedback-dashboard",
+    queryKey: qk.feedbackDashboard(
       store?.id,
       staffFilter !== "all" ? staffFilter : undefined,
       serviceFilter !== "all" ? serviceFilter : undefined,
       debouncedSearch || undefined,
       page,
       limit,
-    ],
+    ),
     queryFn: () =>
       feedbackService.getDashboard(store!.id, {
         staffId: staffFilter !== "all" ? staffFilter : undefined,
@@ -88,7 +88,7 @@ export function FeedbackList() {
       feedbackService.deleteFeedback(store!.id, feedbackId),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["feedback-dashboard", store?.id],
+        queryKey: qk.feedbackDashboard(store?.id),
       });
       toast.success("Feedback deleted");
     },

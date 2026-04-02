@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { notificationService } from "@/services/notification.service";
+import { qk } from "@/lib/query-keys";
 import type { UpdateNotificationSettingsDto } from "@/types/notification.types";
 import { toast } from "sonner";
 
@@ -16,7 +17,7 @@ export function useNotificationSettings(
 
   // Get current store
   const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["store"],
+    queryKey: qk.currentStore,
     queryFn: storeService.getMyStore,
   });
 
@@ -26,7 +27,7 @@ export function useNotificationSettings(
     isLoading: settingsLoading,
     error,
   } = useQuery({
-    queryKey: ["notificationSettings", store?.id],
+    queryKey: qk.notificationSettings(store?.id),
     queryFn: () => notificationService.getNotificationSettings(store!.id),
     enabled: enableSettings && !!store?.id,
   });
@@ -37,7 +38,7 @@ export function useNotificationSettings(
       notificationService.updateNotificationSettings(store!.id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["notificationSettings", store?.id],
+        queryKey: qk.notificationSettings(store?.id),
       });
       toast.success("Notification settings updated successfully");
     },

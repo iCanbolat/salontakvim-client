@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { storeService } from "@/services";
 import { useCurrentStore } from "@/hooks";
+import { qk } from "@/lib/query-keys";
 import type { UpdateStoreDto } from "@/types";
 
 // Validation schema
@@ -58,7 +59,7 @@ export function useStoreSettings() {
     mutationFn: (data: UpdateStoreDto) =>
       storeService.updateStore(store!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["my-store"] });
+      queryClient.invalidateQueries({ queryKey: qk.currentStore });
       setIsEditing(false);
       setFormError(null);
     },

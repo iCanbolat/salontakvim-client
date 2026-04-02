@@ -1,4 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
 
 interface InvalidateCustomerFileDomainOptions {
   storeId: string;
@@ -13,12 +14,12 @@ export function invalidateCustomerFileDomain(
   const { storeId, customerId, appointmentId } = options;
 
   queryClient.invalidateQueries({
-    queryKey: ["customer-files", storeId, customerId],
+    queryKey: qk.customerFiles(storeId, customerId),
   });
 
   if (appointmentId) {
     queryClient.invalidateQueries({
-      queryKey: ["appointment", storeId, appointmentId],
+      queryKey: qk.appointment(storeId, appointmentId),
     });
   }
 }

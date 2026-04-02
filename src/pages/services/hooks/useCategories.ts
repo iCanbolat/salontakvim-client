@@ -9,6 +9,7 @@ import { categoryService } from "@/services";
 import { usePagination, useCurrentStore } from "@/hooks";
 import type { Category } from "@/types";
 import { toast } from "sonner";
+import { qk } from "@/lib/query-keys";
 
 export function useCategories() {
   const queryClient = useQueryClient();
@@ -24,7 +25,7 @@ export function useCategories() {
     isLoading: categoriesLoading,
     error,
   } = useQuery({
-    queryKey: ["categories", store?.id],
+    queryKey: qk.categories(store?.id),
     queryFn: () => categoryService.getCategories(store!.id),
     enabled: !!store?.id,
   });
@@ -34,7 +35,7 @@ export function useCategories() {
     mutationFn: (categoryId: string) =>
       categoryService.deleteCategory(store!.id, categoryId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.categories(store?.id) });
       toast.success("Category deleted");
     },
     onError: () => {
@@ -52,7 +53,7 @@ export function useCategories() {
       isVisible: boolean;
     }) => categoryService.updateCategory(store!.id, categoryId, { isVisible }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.categories(store?.id) });
       toast.success("Category visibility updated");
     },
     onError: () => {

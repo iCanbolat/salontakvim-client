@@ -39,6 +39,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type { InviteStaffDto, UserRole } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 const INVITABLE_ROLES: Extract<UserRole, "admin" | "manager" | "staff">[] = [
   "admin",
@@ -72,7 +73,7 @@ export function InviteStaffDialog({
   const managerLocationId = user?.locationId;
 
   const { data: locations, isLoading: locationsLoading } = useQuery({
-    queryKey: ["locations", storeId],
+    queryKey: qk.locations(storeId),
     queryFn: () => locationService.getLocations(storeId),
     enabled: !!storeId && storeId !== "0" && !isManager,
   });
@@ -103,7 +104,7 @@ export function InviteStaffDialog({
       staffService.inviteStaff(storeId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-invitations", storeId],
+        queryKey: qk.staffInvitations(storeId),
       });
       toast.success("Invitation sent successfully");
       handleClose();

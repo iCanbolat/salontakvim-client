@@ -231,6 +231,7 @@ export function ServicesList() {
                 key={service.id}
                 service={service}
                 storeId={store.id}
+                currency={store.currency}
                 onEdit={serviceActions.handleEdit}
               />
             )}

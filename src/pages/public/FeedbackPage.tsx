@@ -29,6 +29,7 @@ import {
   Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { qk } from "@/lib/query-keys";
 
 // Star rating component
 function StarRating({
@@ -97,7 +98,11 @@ export default function FeedbackPage() {
     isLoading: isChecking,
     error: checkError,
   } = useQuery({
-    queryKey: ["feedback-check", storeId, appointmentId, token],
+    queryKey: qk.feedbackCheck(
+      storeId ?? undefined,
+      appointmentId ?? undefined,
+      token ?? undefined,
+    ),
     queryFn: () =>
       feedbackService.checkFeedbackStatus(
         storeId!,

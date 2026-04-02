@@ -27,6 +27,7 @@ import { PageView } from "@/components/common/page-view";
 import { PageLoader } from "@/components/common/PageLoader";
 import { cn } from "@/lib/utils";
 import { customerService } from "@/services";
+import { qk } from "@/lib/query-keys";
 
 import {
   useAppointments,
@@ -117,7 +118,7 @@ export function AppointmentsList() {
     }
 
     void queryClient.prefetchQuery({
-      queryKey: ["appointment-form-customers", store.id, ""],
+      queryKey: qk.appointmentFormCustomers(store.id, ""),
       queryFn: () =>
         customerService.getCustomers(store.id, {
           page: 1,

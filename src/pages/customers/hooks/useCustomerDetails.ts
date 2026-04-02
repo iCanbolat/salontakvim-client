@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { customerService } from "@/services";
 import { useBreadcrumb } from "@/contexts/BreadcrumbContext";
 import { useCurrentStore } from "@/hooks";
+import { qk } from "@/lib/query-keys";
 
 // UUID v4 regex pattern
 const UUID_REGEX =
@@ -29,7 +30,7 @@ export function useCustomerDetails() {
     isLoading: profileLoading,
     error: profileError,
   } = useQuery({
-    queryKey: ["customer-profile", store?.id, customerId],
+    queryKey: qk.customerProfile(store?.id, customerId),
     queryFn: () => customerService.getCustomerProfile(store!.id, customerId!),
     enabled: !!store?.id && isValidCustomerId,
     retry: 1,

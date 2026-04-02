@@ -1,61 +1,19 @@
 import type { QueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/query-keys";
 
 export function invalidateAfterAppointmentChange(
   queryClient: QueryClient,
   storeId: string,
 ) {
-  // Appointments list for this store
-  queryClient.invalidateQueries({ queryKey: ["appointments", storeId] });
-
-  // Appointment detail for this store (any appointment id)
+  queryClient.invalidateQueries({ queryKey: qk.appointments(storeId) });
+  queryClient.invalidateQueries({ queryKey: qk.appointment(storeId) });
+  queryClient.invalidateQueries({ queryKey: qk.recentAppointments(storeId) });
+  queryClient.invalidateQueries({ queryKey: qk.customers(storeId) });
   queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "appointment" && key[1] === storeId;
-    },
+    queryKey: qk.appointmentAnalytics(storeId),
   });
-
-  // Appointment activity timeline for this store (any appointment id)
   queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "appointment-activities" && key[1] === storeId;
-    },
-  });
-
-  // Recent appointments for dashboard (any location scope)
-  queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "recent-appointments" && key[1] === storeId;
-    },
-  });
-
-  // Customers list for this store (any search/page)
-  queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "customers" && key[1] === storeId;
-    },
-  });
-
-  // Dashboard stats (store-agnostic key currently)
-  queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
-
-  // Appointment analytics for this store (any dateRange)
-  queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "appointmentAnalytics" && key[1] === storeId;
-    },
-  });
-
-  // Revenue analytics for this store (any dateRange)
-  queryClient.invalidateQueries({
-    predicate: (query) => {
-      const key = query.queryKey;
-      return key[0] === "revenueAnalytics" && key[1] === storeId;
-    },
+    queryKey: qk.revenueAnalytics(storeId),
   });
 }
 
@@ -64,21 +22,18 @@ export function invalidateAfterTimeOffChange(
   storeId: string,
   staffId?: string,
 ) {
-  // Invalidate breaks list
   if (staffId) {
     queryClient.invalidateQueries({
-      queryKey: ["staff-breaks", storeId, staffId],
+      queryKey: qk.staffBreaks(storeId, staffId),
     });
     queryClient.invalidateQueries({
-      queryKey: ["staff-details", storeId, staffId],
+      queryKey: qk.staffDetails(storeId, staffId),
     });
   }
 
-  // Invalidate activities (matches both global and location-scoped)
   queryClient.invalidateQueries({
-    queryKey: ["admin-activities", storeId],
+    queryKey: qk.adminActivities(storeId),
   });
 
-  // Invalidate notifications
-  queryClient.invalidateQueries({ queryKey: ["notifications"] });
+  queryClient.invalidateQueries({ queryKey: qk.notifications() });
 }

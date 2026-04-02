@@ -1,4 +1,5 @@
 import {
+  useCallback,
   createContext,
   useContext,
   useEffect,
@@ -25,6 +26,7 @@ import { notificationService } from "@/services/notification.service";
 import { authService } from "@/services";
 import type { RecentActivity } from "@/types";
 import { cn } from "@/lib/utils";
+import { hasStoreScopedRoot, storeScopedRoots } from "@/lib/query-keys";
 
 export interface Notification {
   id: string;
@@ -55,6 +57,8 @@ const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
 const NOTIFICATIONS_WS_URL = import.meta.env.VITE_NOTIFICATIONS_WS_URL;
 const CLIENT_URL = import.meta.env.VITE_CLIENT_URL || "http://localhost:3000";
+const MAX_IN_MEMORY_NOTIFICATIONS = 150;
+const ACTIVITY_INVALIDATION_THROTTLE_MS = 750;
 
 function resolveSocketBaseUrl() {
   if (NOTIFICATIONS_WS_URL) {
@@ -83,10 +87,80 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [socket, setSocket] = useState<Socket | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const refreshInFlightRef = useRef(false);
+  const activityInvalidationTimerRef = useRef<ReturnType<
+    typeof setTimeout
+  > | null>(null);
+  const pendingActivityStoreIdsRef = useRef<Set<string>>(new Set());
   const [latestNotification, setLatestNotification] =
     useState<Notification | null>(null);
   const [latestActivity, setLatestActivity] = useState<RecentActivity | null>(
     null,
+  );
+
+  const normalizeNotifications = useCallback((items: Notification[]) => {
+    const seen = new Set<string>();
+    const normalized: Notification[] = [];
+
+    for (const item of items) {
+      if (!item?.id || seen.has(item.id)) {
+        continue;
+      }
+
+      seen.add(item.id);
+      normalized.push(item);
+
+      if (normalized.length >= MAX_IN_MEMORY_NOTIFICATIONS) {
+        break;
+      }
+    }
+
+    return normalized;
+  }, []);
+
+  const flushActivityInvalidations = useCallback(() => {
+    const storeIds = Array.from(pendingActivityStoreIdsRef.current);
+    pendingActivityStoreIdsRef.current.clear();
+    activityInvalidationTimerRef.current = null;
+
+    for (const storeId of storeIds) {
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          hasStoreScopedRoot(
+            query.queryKey,
+            storeScopedRoots.activities,
+            storeId,
+          ),
+      });
+
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          hasStoreScopedRoot(
+            query.queryKey,
+            storeScopedRoots.adminActivities,
+            storeId,
+          ),
+      });
+    }
+  }, [queryClient]);
+
+  const scheduleActivityInvalidation = useCallback(
+    (activity: RecentActivity) => {
+      if (!activity?.storeId) {
+        return;
+      }
+
+      pendingActivityStoreIdsRef.current.add(activity.storeId);
+
+      if (activityInvalidationTimerRef.current) {
+        return;
+      }
+
+      activityInvalidationTimerRef.current = setTimeout(
+        flushActivityInvalidations,
+        ACTIVITY_INVALIDATION_THROTTLE_MS,
+      );
+    },
+    [flushActivityInvalidations],
   );
 
   const getNotificationConfig = (type: string) => {
@@ -285,7 +359,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .getUserNotifications()
       .then((data) => {
         if (isMounted && Array.isArray(data)) {
-          setNotifications(data);
+          setNotifications(normalizeNotifications(data));
         }
       })
       .catch((error) => {
@@ -344,7 +418,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         .getUserNotifications()
         .then((data) => {
           if (Array.isArray(data)) {
-            setNotifications(data);
+            setNotifications(normalizeNotifications(data));
           }
         })
         .catch((error) => {
@@ -353,27 +427,34 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     });
 
     newSocket.on("notification", (notification: Notification) => {
-      setNotifications((prev) => [notification, ...prev]);
+      setNotifications((prev) =>
+        normalizeNotifications([notification, ...prev]),
+      );
       setLatestNotification(notification);
       showNotificationToast(notification);
     });
 
     newSocket.on("activity", (activity: RecentActivity) => {
       setLatestActivity(activity);
-      // Invalidate all activity-related queries so they refetch
-      queryClient.invalidateQueries({ queryKey: ["activities"] });
-      queryClient.invalidateQueries({ queryKey: ["admin-activities"] });
+      scheduleActivityInvalidation(activity);
     });
 
     setSocket(newSocket);
 
     return () => {
       isMounted = false;
+
+      if (activityInvalidationTimerRef.current) {
+        clearTimeout(activityInvalidationTimerRef.current);
+        activityInvalidationTimerRef.current = null;
+      }
+      pendingActivityStoreIdsRef.current.clear();
+
       newSocket.removeAllListeners();
       newSocket.disconnect();
       socketRef.current = null;
     };
-  }, [user, queryClient]);
+  }, [user, normalizeNotifications, scheduleActivityInvalidation]);
 
   useEffect(() => {
     const handleTokenRefreshed = (event: Event) => {

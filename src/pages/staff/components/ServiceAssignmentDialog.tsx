@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import type { StaffMember, Service, Category } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 interface ServiceAssignmentDialogProps {
   storeId: string;
@@ -48,14 +49,14 @@ export function ServiceAssignmentDialog({
 
   // Fetch all services
   const { data: allServices, isLoading: servicesLoading } = useQuery({
-    queryKey: ["services", storeId],
+    queryKey: qk.services(storeId),
     queryFn: () => serviceService.getServices(storeId),
     enabled: open,
   });
 
   // Fetch categories
   const { data: categories } = useQuery({
-    queryKey: ["categories", storeId],
+    queryKey: qk.categories(storeId),
     queryFn: () => categoryService.getCategories(storeId),
     enabled: open,
   });
@@ -71,7 +72,7 @@ export function ServiceAssignmentDialog({
     isLoading: staffServicesLoading,
     refetch: refetchStaffServices,
   } = useQuery({
-    queryKey: ["staff-services", storeId, staff.id],
+    queryKey: qk.staffServices(storeId, staff.id),
     queryFn: () => staffService.getStaffServices(storeId, staff.id),
     enabled: open,
   });
@@ -89,12 +90,12 @@ export function ServiceAssignmentDialog({
       staffService.assignServices(storeId, staff.id, { serviceIds }),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-services", storeId, staff.id],
+        queryKey: qk.staffServices(storeId, staff.id),
       });
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staff.id],
+        queryKey: qk.staffDetails(storeId, staff.id),
       });
-      queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(storeId) });
       refetchStaffServices();
       toast.success("Services assigned successfully!", {
         description: `${selectedServiceIds.length} service(s) assigned to ${staff.firstName} ${staff.lastName}`,

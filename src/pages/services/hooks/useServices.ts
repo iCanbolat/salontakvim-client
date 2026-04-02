@@ -9,6 +9,7 @@ import { serviceService } from "@/services";
 import { usePagination, useCurrentStore } from "@/hooks";
 import type { Service } from "@/types";
 import { toast } from "sonner";
+import { qk } from "@/lib/query-keys";
 
 export function useServices() {
   const queryClient = useQueryClient();
@@ -24,7 +25,7 @@ export function useServices() {
     isLoading: servicesLoading,
     error,
   } = useQuery({
-    queryKey: ["services", store?.id],
+    queryKey: qk.services(store?.id),
     queryFn: () => serviceService.getServices(store!.id),
     enabled: !!store?.id,
   });
@@ -39,7 +40,7 @@ export function useServices() {
       isVisible: boolean;
     }) => serviceService.updateService(store!.id, serviceId, { isVisible }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.services(store?.id) });
       toast.success("Service visibility updated");
     },
     onError: () => {
@@ -52,7 +53,7 @@ export function useServices() {
     mutationFn: (serviceId: string) =>
       serviceService.deleteService(store!.id, serviceId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["services", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.services(store?.id) });
       toast.success("Service deleted");
     },
     onError: () => {
@@ -78,7 +79,7 @@ export function useServices() {
   // Pagination
   const pagination = usePagination({
     items: filteredServices,
-    itemsPerPage: 12,  
+    itemsPerPage: 12,
   });
 
   // Reset to first page on search

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { storeService } from "@/services/store.service";
 import { analyticsService } from "@/services/analytics.service";
 import { DateRangePreset, type AnalyticsQuery } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 export function useAnalytics() {
   const [dateRange, setDateRange] = useState<string>(
@@ -13,7 +14,7 @@ export function useAnalytics() {
 
   // Get current store
   const { data: store, isLoading: storeLoading } = useQuery({
-    queryKey: ["store"],
+    queryKey: qk.currentStore,
     queryFn: storeService.getMyStore,
   });
 
@@ -30,7 +31,7 @@ export function useAnalytics() {
     isLoading: appointmentLoading,
     error: appointmentError,
   } = useQuery({
-    queryKey: ["appointmentAnalytics", store?.id, dateRange],
+    queryKey: qk.appointmentAnalytics(store?.id, dateRange),
     queryFn: () =>
       analyticsService.getAppointmentAnalytics(store!.id, analyticsQuery),
     enabled: !!store?.id,
@@ -42,7 +43,7 @@ export function useAnalytics() {
     isLoading: revenueLoading,
     error: revenueError,
   } = useQuery({
-    queryKey: ["revenueAnalytics", store?.id, dateRange],
+    queryKey: qk.revenueAnalytics(store?.id, dateRange),
     queryFn: () =>
       analyticsService.getRevenueAnalytics(store!.id, analyticsQuery),
     enabled: !!store?.id,

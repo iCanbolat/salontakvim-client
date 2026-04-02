@@ -12,6 +12,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { TimeOffDialog } from "./components/TimeOffDialog";
 import { useCurrentStore } from "@/hooks";
 import { PageLoader } from "@/components/common/PageLoader";
+import { qk } from "@/lib/query-keys";
 
 type SummaryCard = {
   title: string;
@@ -30,7 +31,7 @@ export function StaffSchedule() {
     isLoading: staffLoading,
     error: staffError,
   } = useQuery({
-    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryKey: qk.myStaffMember(store?.id, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(store!.id);
       return staffMembers.find((s) => s.userId === user?.id) ?? null;
@@ -43,7 +44,7 @@ export function StaffSchedule() {
     isLoading: breaksLoading,
     error: breaksError,
   } = useQuery({
-    queryKey: ["staff-breaks", store?.id, staffMember?.id],
+    queryKey: qk.staffBreaks(store?.id, staffMember?.id),
     queryFn: () => breakService.getStaffBreaks(store!.id, staffMember!.id),
     enabled: !!store?.id && !!staffMember?.id,
   });

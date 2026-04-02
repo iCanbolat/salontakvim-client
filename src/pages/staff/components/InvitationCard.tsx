@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import type { StaffInvitation } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 interface InvitationCardProps {
   invitation: StaffInvitation;
@@ -37,7 +38,7 @@ export function InvitationCard({ invitation, storeId }: InvitationCardProps) {
       staffService.deleteInvitation(storeId, invitation.id),
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: ["staff-invitations", storeId],
+        queryKey: qk.staffInvitations(storeId),
       });
     },
   });

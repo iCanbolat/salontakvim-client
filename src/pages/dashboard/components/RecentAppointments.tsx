@@ -13,6 +13,7 @@ import { useAuth, useNotifications } from "@/contexts";
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCurrentStore } from "@/hooks";
+import { qk } from "@/lib/query-keys";
 
 export function RecentAppointments() {
   const { user } = useAuth();
@@ -33,7 +34,7 @@ export function RecentAppointments() {
 
     if (appointmentTypes.includes(latestNotification.type)) {
       queryClient.invalidateQueries({
-        queryKey: ["recent-appointments", latestNotification.storeId],
+        queryKey: qk.recentAppointments(latestNotification.storeId),
       });
     }
   }, [latestNotification, queryClient]);
@@ -42,7 +43,7 @@ export function RecentAppointments() {
 
   // Fetch recent appointments
   const { data: appointmentsData, isLoading } = useQuery({
-    queryKey: ["recent-appointments", store?.id, managerLocationId],
+    queryKey: qk.recentAppointments(store?.id, managerLocationId),
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
         limit: 5,

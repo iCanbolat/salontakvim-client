@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCurrentStore } from "@/hooks";
 import { PageLoader } from "@/components/common/PageLoader";
+import { qk } from "@/lib/query-keys";
 
 const profileSchema = z.object({
   bio: z.string().max(500, "Bio too long").optional(),
@@ -45,7 +46,7 @@ export function StaffProfile() {
     isLoading: staffLoading,
     error: staffError,
   } = useQuery({
-    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryKey: qk.myStaffMember(store?.id, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(store!.id);
       return staffMembers.find((s) => s.userId === user?.id) ?? null;
@@ -81,9 +82,9 @@ export function StaffProfile() {
     mutationFn: async (data: UpdateStaffProfileDto) =>
       staffService.updateStaffProfile(store!.id, staffMember!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(store?.id) });
       queryClient.invalidateQueries({
-        queryKey: ["my-staff-member", store?.id, user?.id],
+        queryKey: qk.myStaffMember(store?.id, user?.id),
       });
       toast.success("Profile updated", {
         description: "Your profile changes have been saved.",
@@ -95,9 +96,9 @@ export function StaffProfile() {
     mutationFn: async (data: UpdateStaffProfileDto) =>
       staffService.createSelfStaffProfile(store!.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(store?.id) });
       queryClient.invalidateQueries({
-        queryKey: ["my-staff-member", store?.id, user?.id],
+        queryKey: qk.myStaffMember(store?.id, user?.id),
       });
       toast.success("Profile created", {
         description: "Your staff profile has been created.",
@@ -109,24 +110,24 @@ export function StaffProfile() {
     mutationFn: async (file: File) =>
       staffService.uploadStaffAvatar(store!.id, staffMember!.id, file),
     onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["staff", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(store?.id) });
       queryClient.invalidateQueries({
-        queryKey: ["my-staff-member", store?.id, user?.id],
+        queryKey: qk.myStaffMember(store?.id, user?.id),
       });
 
       if (data?.avatarUrl && staffMember) {
         queryClient.setQueryData(
-          ["my-staff-member", store?.id, user?.id],
+          qk.myStaffMember(store?.id, user?.id),
           (previous: typeof staffMember | null | undefined) =>
             previous ? { ...previous, avatar: data.avatarUrl } : previous,
         );
         queryClient.setQueryData(
-          ["staff-member", store?.id, staffMember.id],
+          qk.staffMember(store?.id, staffMember.id),
           (previous: typeof staffMember | null | undefined) =>
             previous ? { ...previous, avatar: data.avatarUrl } : previous,
         );
         queryClient.setQueryData(
-          ["staff", store?.id],
+          qk.staff(store?.id),
           (previous: (typeof staffMember)[] | undefined) =>
             Array.isArray(previous)
               ? previous.map((member) =>

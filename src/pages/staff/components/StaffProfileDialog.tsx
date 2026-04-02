@@ -42,6 +42,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import type { StaffMember, UpdateStaffProfileDto } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 const profileSchema = z.object({
   bio: z.string().max(500, "Bio too long").optional(),
@@ -91,7 +92,7 @@ export function StaffProfileDialog({
   });
 
   const { data: locations, isLoading: locationsLoading } = useQuery({
-    queryKey: ["locations", storeId],
+    queryKey: qk.locations(storeId),
     queryFn: () => locationService.getLocations(storeId),
     enabled: open && !isManager,
     staleTime: 1000 * 60 * 5,
@@ -102,12 +103,12 @@ export function StaffProfileDialog({
     mutationFn: async (data: UpdateStaffProfileDto) =>
       staffService.updateStaffProfile(storeId, staff.id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["staff", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.staff(storeId) });
       queryClient.invalidateQueries({
-        queryKey: ["staff-member", storeId, staff.id],
+        queryKey: qk.staffMember(storeId, staff.id),
       });
       queryClient.invalidateQueries({
-        queryKey: ["staff-details", storeId, staff.id],
+        queryKey: qk.staffDetails(storeId, staff.id),
       });
       toast.success("Profile updated", {
         description: "Staff member profile has been updated successfully.",

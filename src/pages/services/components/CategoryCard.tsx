@@ -4,18 +4,10 @@
  */
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Edit, Trash2, Eye, EyeOff } from "lucide-react";
 import { categoryService } from "@/services";
 import type { Category } from "@/types";
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { qk } from "@/lib/query-keys";
+import { EntityCard } from "@/components/common/EntityCard";
 
 interface CategoryCardProps {
   category: Category;
@@ -30,7 +22,7 @@ export function CategoryCard({ category, storeId, onEdit }: CategoryCardProps) {
   const deleteMutation = useMutation({
     mutationFn: () => categoryService.deleteCategory(storeId, category.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.categories(storeId) });
     },
   });
 
@@ -41,7 +33,7 @@ export function CategoryCard({ category, storeId, onEdit }: CategoryCardProps) {
         isVisible: !category.isVisible,
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["categories", storeId] });
+      queryClient.invalidateQueries({ queryKey: qk.categories(storeId) });
     },
   });
 
@@ -52,71 +44,18 @@ export function CategoryCard({ category, storeId, onEdit }: CategoryCardProps) {
   };
 
   return (
-    <Card
-      className={`flex flex-col ${!category.isVisible ? "opacity-60" : ""}`}
-    >
-      <CardHeader className="flex-1">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <CardTitle className="text-lg">{category.name}</CardTitle>
-              {!category.isVisible && (
-                <Badge variant="secondary" className="text-xs">
-                  Hidden
-                </Badge>
-              )}
-            </div>
-            {category.description && (
-              <CardDescription className="line-clamp-2">
-                {category.description}
-              </CardDescription>
-            )}
-          </div>
-          {category.color && (
-            <div
-              className="w-4 h-4 rounded-full ml-2 shrink-0 border"
-              style={{ backgroundColor: category.color }}
-              title={category.color}
-            />
-          )}
-        </div>
-      </CardHeader>
-
-      {/* Action Buttons */}
-      <CardFooter className="flex items-center gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => onEdit(category)}
-          className="flex-1"
-        >
-          <Edit className="h-3.5 w-3.5 mr-1.5" />
-          Edit
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          onClick={() => toggleVisibilityMutation.mutate()}
-          disabled={toggleVisibilityMutation.isPending}
-          title={category.isVisible ? "Hide Category" : "Show Category"}
-        >
-          {category.isVisible ? (
-            <EyeOff className="h-3.5 w-3.5" />
-          ) : (
-            <Eye className="h-3.5 w-3.5" />
-          )}
-        </Button>
-        <Button
-          size="sm"
-          variant="outline"
-          className="text-red-600 hover:text-red-600 hover:bg-red-50"
-          onClick={handleDelete}
-          disabled={deleteMutation.isPending}
-          title="Delete Category"
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
-      </CardFooter>
-    </Card>
+    <EntityCard
+      title={category.name}
+      description={category.description}
+      color={category.color}
+      isVisible={category.isVisible}
+      onEdit={() => onEdit(category)}
+      onToggleVisibility={() => toggleVisibilityMutation.mutate()}
+      onDelete={handleDelete}
+      isToggling={toggleVisibilityMutation.isPending}
+      isDeleting={deleteMutation.isPending}
+      toggleTitle={category.isVisible ? "Hide Category" : "Show Category"}
+      deleteTitle="Delete Category"
+    />
   );
 }

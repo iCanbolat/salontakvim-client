@@ -13,6 +13,7 @@ import { appointmentService, staffService } from "@/services";
 import { useNotifications, useAuth } from "@/contexts";
 import { toast } from "sonner";
 import { invalidateAfterAppointmentChange } from "@/lib/invalidate";
+import { qk } from "@/lib/query-keys";
 import type {
   Appointment,
   AppointmentStatus,
@@ -82,7 +83,7 @@ export function useAppointments() {
 
   // Fetch staff member record if user is staff
   const { data: staffMember, isLoading: staffLoading } = useQuery({
-    queryKey: ["my-staff-member", store?.id, user?.id],
+    queryKey: qk.myStaffMember(store?.id, user?.id),
     queryFn: async () => {
       const staffMembers = await staffService.getStaffMembers(store!.id);
       return staffMembers.find((s) => s.userId === user?.id);
@@ -92,7 +93,11 @@ export function useAppointments() {
 
   // Fetch staff options for admin/manager filter
   const { data: staffOptions = [], isLoading: staffOptionsLoading } = useQuery({
-    queryKey: ["staff-members", store?.id, user?.role, user?.locationId],
+    queryKey: qk.staffMembers(
+      store?.id,
+      user?.role,
+      user?.locationId ?? undefined,
+    ),
     queryFn: () =>
       staffService.getStaffMembers(store!.id, {
         includeHidden: true,
@@ -210,8 +215,7 @@ export function useAppointments() {
     isPending,
     error,
   } = useQuery<PaginatedAppointmentsResponse>({
-    queryKey: [
-      "appointments",
+    queryKey: qk.appointments(
       store?.id,
       page,
       statusFilter,
@@ -220,7 +224,7 @@ export function useAppointments() {
       dateRange?.to,
       selectedStaffIds,
       staffMember?.id,
-    ],
+    ),
     queryFn: () =>
       appointmentService.getAppointments(store!.id, {
         page,
@@ -271,7 +275,7 @@ export function useAppointments() {
       ].includes(latestNotification.type);
 
     if (shouldRefresh) {
-      queryClient.invalidateQueries({ queryKey: ["appointments"] });
+      queryClient.invalidateQueries({ queryKey: qk.appointments(store.id) });
     }
   }, [
     latestNotification?.id,

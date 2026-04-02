@@ -4,6 +4,7 @@ import { toast } from "sonner";
 import { locationService } from "@/services";
 import { usePagination, useCurrentStore } from "@/hooks";
 import type { Location } from "@/types";
+import { qk } from "@/lib/query-keys";
 
 export function useLocations() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -18,7 +19,7 @@ export function useLocations() {
     isLoading: locationsLoading,
     error,
   } = useQuery({
-    queryKey: ["locations", store?.id],
+    queryKey: qk.locations(store?.id),
     queryFn: () => locationService.getLocations(store!.id),
     enabled: !!store?.id,
   });
@@ -32,7 +33,7 @@ export function useLocations() {
       isVisible: boolean;
     }) => locationService.updateLocation(store!.id, locationId, { isVisible }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(store?.id) });
       toast.success("Location visibility updated");
     },
     onError: (error: Error) => {
@@ -44,7 +45,7 @@ export function useLocations() {
     mutationFn: (locationId: string) =>
       locationService.deleteLocation(store!.id, locationId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["locations", store?.id] });
+      queryClient.invalidateQueries({ queryKey: qk.locations(store?.id) });
       toast.success("Location deleted successfully");
     },
     onError: (error: Error) => {
