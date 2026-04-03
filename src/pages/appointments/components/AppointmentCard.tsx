@@ -42,6 +42,7 @@ import {
   formatCurrency,
 } from "@/utils/appointment.utils";
 import { useCurrentStore } from "@/hooks/useCurrentStore";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 interface AppointmentCardProps {
   appointment: Appointment;
@@ -59,6 +60,7 @@ export function AppointmentCard({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { store } = useCurrentStore();
+  const { confirm } = useConfirmDialog();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -71,13 +73,18 @@ export function AppointmentCard({
 
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (
-      confirm(
+
+    void confirm({
+      title: "Delete appointment",
+      description:
         "Are you sure you want to delete this appointment? This action cannot be undone.",
-      )
-    ) {
-      deleteMutation.mutate();
-    }
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate();
+      }
+    });
   };
 
   const handleCardClick = () => {

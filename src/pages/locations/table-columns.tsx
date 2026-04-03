@@ -6,7 +6,7 @@ import type { Location } from "@/types";
 
 interface GetLocationColumnsProps {
   onToggleVisibility: (id: string, isVisible: boolean) => void;
-  onDelete: (id: string) => void;
+  onDelete: (location: Location) => void;
 }
 
 export const getLocationColumns = ({
@@ -74,11 +74,7 @@ export const getLocationColumns = ({
           className="text-red-500 hover:text-red-600 hover:bg-red-50"
           onClick={(e) => {
             e.stopPropagation();
-            if (
-              window.confirm("Are you sure you want to delete this location?")
-            ) {
-              onDelete(location.id);
-            }
+            onDelete(location);
           }}
           title="Delete location"
         >

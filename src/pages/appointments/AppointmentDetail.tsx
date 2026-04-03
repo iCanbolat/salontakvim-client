@@ -29,6 +29,7 @@ import { RecentActivityList } from "../../components/common/RecentActivityList";
 import { formatAppointmentNumber } from "@/utils/appointment.utils";
 import { CustomerFiles } from "@/components/common/customer-files";
 import { qk } from "@/lib/query-keys";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function AppointmentDetailPage() {
   const {
@@ -46,6 +47,7 @@ export function AppointmentDetailPage() {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
 
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
@@ -158,13 +160,17 @@ export function AppointmentDetailPage() {
   const appointmentActivities = appointment?.activities || [];
 
   const handleDelete = () => {
-    if (
-      confirm(
+    void confirm({
+      title: "Delete appointment",
+      description:
         "Are you sure you want to delete this appointment? This action cannot be undone.",
-      )
-    ) {
-      deleteMutation.mutate();
-    }
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate();
+      }
+    });
   };
 
   if (isLoading) {

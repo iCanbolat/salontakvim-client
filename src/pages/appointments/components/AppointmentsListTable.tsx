@@ -22,6 +22,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 interface AppointmentsListTableProps {
   appointments: Appointment[];
@@ -39,6 +40,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
   onRowClick,
 }: AppointmentsListTableProps) {
   const { store } = useCurrentStore();
+  const { confirm } = useConfirmDialog();
   const columns: TableColumn<Appointment>[] = useMemo(
     () => [
       {
@@ -155,13 +157,18 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
                 className="text-red-600 focus:text-red-600 focus:bg-red-50"
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (
-                    confirm(
+
+                  void confirm({
+                    title: "Delete appointment",
+                    description:
                       "Are you sure you want to delete this appointment? This action cannot be undone.",
-                    )
-                  ) {
-                    onDelete(appointment.id);
-                  }
+                    confirmText: "Delete",
+                    variant: "destructive",
+                  }).then((isConfirmed) => {
+                    if (isConfirmed) {
+                      onDelete(appointment.id);
+                    }
+                  });
                 }}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
@@ -173,7 +180,7 @@ export const AppointmentsListTable = memo(function AppointmentsListTable({
         cellClassName: "text-right",
       },
     ],
-    [onEdit, onDelete, onChangeStatus, store?.country],
+    [confirm, onEdit, onDelete, onChangeStatus, store?.country],
   );
 
   return (

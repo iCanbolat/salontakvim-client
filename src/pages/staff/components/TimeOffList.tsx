@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 import { TimeOffDialog } from "./TimeOffDialog";
 import { useAuth } from "@/contexts";
 import { qk } from "@/lib/query-keys";
@@ -36,6 +37,7 @@ interface TimeOffListProps {
 export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { confirm } = useConfirmDialog();
   const managerLocationId =
     user?.role === "manager" ? (user.locationId ?? undefined) : undefined;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -82,9 +84,17 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
   };
 
   const handleDelete = (breakId: string) => {
-    if (confirm("Bu izni silmek istediğinizden emin misiniz?")) {
-      deleteMutation.mutate(breakId);
-    }
+    void confirm({
+      title: "Izni sil",
+      description: "Bu izni silmek istediginizden emin misiniz?",
+      confirmText: "Sil",
+      cancelText: "Iptal",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate(breakId);
+      }
+    });
   };
 
   const handleCloseDialog = () => {

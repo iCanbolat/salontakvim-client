@@ -10,9 +10,11 @@ import { usePagination, useCurrentStore } from "@/hooks";
 import type { Category } from "@/types";
 import { toast } from "sonner";
 import { qk } from "@/lib/query-keys";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function useCategories() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -104,13 +106,16 @@ export function useCategories() {
   };
 
   const handleDelete = (category: Category) => {
-    if (
-      window.confirm(
-        `Are you sure you want to delete "${category.name}"? This will also remove categories from its services.`,
-      )
-    ) {
-      deleteMutation.mutate(category.id);
-    }
+    void confirm({
+      title: "Delete category",
+      description: `Are you sure you want to delete "${category.name}"? This will also remove categories from its services.`,
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate(category.id);
+      }
+    });
   };
 
   return {

@@ -21,6 +21,7 @@ import {
 import { authService } from "./services";
 import { CurrentStoreBootstrap } from "./hooks";
 import { PageLoader } from "./components/common/PageLoader";
+import { ConfirmDialogProvider } from "./contexts/ConfirmDialogProvider";
 
 const DashboardPage = lazy(() =>
   import("./pages/dashboard").then((module) => ({
@@ -119,227 +120,232 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <NotificationProvider>
-            <CurrentStoreBootstrap />
+            <ConfirmDialogProvider>
+              <CurrentStoreBootstrap />
 
-            {/* Toast notifications */}
-            <Toaster position="top-right" richColors />
+              {/* Toast notifications */}
+              <Toaster position="top-right" richColors />
 
-            <Routes>
-              {/* Public routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/register" element={<RegisterPage />} />
-              <Route path="/auth/callback" element={<AuthCallbackPage />} />
-              <Route
-                path="/invitations/accept"
-                element={
-                  <RouteSuspense>
-                    <AcceptInvitationPage />
-                  </RouteSuspense>
-                }
-              />
-              <Route
-                path="/book/:slug"
-                element={
-                  <RouteSuspense>
-                    <HostedWidgetPage />
-                  </RouteSuspense>
-                }
-              />
-              <Route
-                path="/appointments/feedback"
-                element={
-                  <RouteSuspense>
-                    <FeedbackPage />
-                  </RouteSuspense>
-                }
-              />
-              <Route
-                path="/appointments/cancel"
-                element={
-                  <RouteSuspense>
-                    <CancelAppointmentPage />
-                  </RouteSuspense>
-                }
-              />
-
-              {/* Welcome/Onboarding route (protected but no store required) */}
-              <Route path="/welcome" element={<WelcomeRoute />} />
-
-              {/* Protected routes with layout */}
-              <Route element={<MainLayout />}>
+              <Routes>
+                {/* Public routes */}
+                <Route path="/login" element={<LoginPage />} />
                 <Route
+                  path="/forgot-password"
+                  element={<ForgotPasswordPage />}
+                />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/register" element={<RegisterPage />} />
+                <Route path="/auth/callback" element={<AuthCallbackPage />} />
+                <Route
+                  path="/invitations/accept"
                   element={
-                    <ProtectedRoute
-                      allowedRoles={["admin", "manager", "staff"]}
+                    <RouteSuspense>
+                      <AcceptInvitationPage />
+                    </RouteSuspense>
+                  }
+                />
+                <Route
+                  path="/book/:slug"
+                  element={
+                    <RouteSuspense>
+                      <HostedWidgetPage />
+                    </RouteSuspense>
+                  }
+                />
+                <Route
+                  path="/appointments/feedback"
+                  element={
+                    <RouteSuspense>
+                      <FeedbackPage />
+                    </RouteSuspense>
+                  }
+                />
+                <Route
+                  path="/appointments/cancel"
+                  element={
+                    <RouteSuspense>
+                      <CancelAppointmentPage />
+                    </RouteSuspense>
+                  }
+                />
+
+                {/* Welcome/Onboarding route (protected but no store required) */}
+                <Route path="/welcome" element={<WelcomeRoute />} />
+
+                {/* Protected routes with layout */}
+                <Route element={<MainLayout />}>
+                  <Route
+                    element={
+                      <ProtectedRoute
+                        allowedRoles={["admin", "manager", "staff"]}
+                      />
+                    }
+                  >
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <RouteSuspense>
+                          <DashboardPage />
+                        </RouteSuspense>
+                      }
                     />
-                  }
-                >
+                    <Route
+                      path="/appointments"
+                      element={
+                        <RouteSuspense>
+                          <AppointmentsList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/appointments/:appointmentId"
+                      element={
+                        <RouteSuspense>
+                          <AppointmentDetailPage />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/customers"
+                      element={
+                        <RouteSuspense>
+                          <CustomersList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/customers/:customerId"
+                      element={
+                        <RouteSuspense>
+                          <CustomerDetails />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/feedback"
+                      element={
+                        <RouteSuspense>
+                          <FeedbackList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/notifications"
+                      element={
+                        <RouteSuspense>
+                          <NotificationSettings />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <RouteSuspense>
+                          <StaffProfile />
+                        </RouteSuspense>
+                      }
+                    />
+                  </Route>
+
                   <Route
-                    path="/dashboard"
                     element={
-                      <RouteSuspense>
-                        <DashboardPage />
-                      </RouteSuspense>
+                      <ProtectedRoute allowedRoles={["admin", "manager"]} />
                     }
-                  />
-                  <Route
-                    path="/appointments"
-                    element={
-                      <RouteSuspense>
-                        <AppointmentsList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/appointments/:appointmentId"
-                    element={
-                      <RouteSuspense>
-                        <AppointmentDetailPage />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/customers"
-                    element={
-                      <RouteSuspense>
-                        <CustomersList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/customers/:customerId"
-                    element={
-                      <RouteSuspense>
-                        <CustomerDetails />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/feedback"
-                    element={
-                      <RouteSuspense>
-                        <FeedbackList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/notifications"
-                    element={
-                      <RouteSuspense>
-                        <NotificationSettings />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <RouteSuspense>
-                        <StaffProfile />
-                      </RouteSuspense>
-                    }
-                  />
+                  >
+                    <Route
+                      path="/services"
+                      element={
+                        <RouteSuspense>
+                          <ServicesList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/staff"
+                      element={
+                        <RouteSuspense>
+                          <StaffList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/staff/:staffId"
+                      element={
+                        <RouteSuspense>
+                          <StaffDetails />
+                        </RouteSuspense>
+                      }
+                    />
+                  </Route>
+
+                  <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                    <Route
+                      path="/locations"
+                      element={
+                        <RouteSuspense>
+                          <LocationsList />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/widget"
+                      element={
+                        <RouteSuspense>
+                          <WidgetSettings />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/analytics"
+                      element={
+                        <RouteSuspense>
+                          <Analytics />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/settings"
+                      element={
+                        <RouteSuspense>
+                          <StoreSettings />
+                        </RouteSuspense>
+                      }
+                    />
+                  </Route>
+
+                  <Route element={<ProtectedRoute allowedRoles={["staff"]} />}>
+                    <Route
+                      path="/schedule"
+                      element={
+                        <RouteSuspense>
+                          <StaffSchedule />
+                        </RouteSuspense>
+                      }
+                    />
+                    <Route
+                      path="/time-off"
+                      element={<Navigate to="/schedule" replace />}
+                    />
+                  </Route>
                 </Route>
 
+                {/* Root redirect based on auth */}
+                <Route path="/" element={<RootRedirect />} />
+
+                {/* 404 */}
                 <Route
+                  path="*"
                   element={
-                    <ProtectedRoute allowedRoles={["admin", "manager"]} />
-                  }
-                >
-                  <Route
-                    path="/services"
-                    element={
-                      <RouteSuspense>
-                        <ServicesList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/staff"
-                    element={
-                      <RouteSuspense>
-                        <StaffList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/staff/:staffId"
-                    element={
-                      <RouteSuspense>
-                        <StaffDetails />
-                      </RouteSuspense>
-                    }
-                  />
-                </Route>
-
-                <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
-                  <Route
-                    path="/locations"
-                    element={
-                      <RouteSuspense>
-                        <LocationsList />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/widget"
-                    element={
-                      <RouteSuspense>
-                        <WidgetSettings />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/analytics"
-                    element={
-                      <RouteSuspense>
-                        <Analytics />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/settings"
-                    element={
-                      <RouteSuspense>
-                        <StoreSettings />
-                      </RouteSuspense>
-                    }
-                  />
-                </Route>
-
-                <Route element={<ProtectedRoute allowedRoles={["staff"]} />}>
-                  <Route
-                    path="/schedule"
-                    element={
-                      <RouteSuspense>
-                        <StaffSchedule />
-                      </RouteSuspense>
-                    }
-                  />
-                  <Route
-                    path="/time-off"
-                    element={<Navigate to="/schedule" replace />}
-                  />
-                </Route>
-              </Route>
-
-              {/* Root redirect based on auth */}
-              <Route path="/" element={<RootRedirect />} />
-
-              {/* 404 */}
-              <Route
-                path="*"
-                element={
-                  <div className="min-h-screen flex items-center justify-center">
-                    <div className="text-center">
-                      <h1 className="text-4xl font-bold mb-4">404</h1>
-                      <p className="text-gray-600">Page not found</p>
+                    <div className="min-h-screen flex items-center justify-center">
+                      <div className="text-center">
+                        <h1 className="text-4xl font-bold mb-4">404</h1>
+                        <p className="text-gray-600">Page not found</p>
+                      </div>
                     </div>
-                  </div>
-                }
-              />
-            </Routes>
+                  }
+                />
+              </Routes>
+            </ConfirmDialogProvider>
           </NotificationProvider>
         </AuthProvider>
       </BrowserRouter>

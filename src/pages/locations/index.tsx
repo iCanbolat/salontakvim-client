@@ -8,9 +8,11 @@ import { LocationCard, LocationFormDialog } from "./components";
 import type { Location } from "../../types";
 import { useLocations } from "./hooks/useLocations";
 import { getLocationColumns } from "./table-columns";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function LocationsList() {
   const { state, actions, data, pagination } = useLocations();
+  const { confirm } = useConfirmDialog();
   const { searchTerm, isCreateDialogOpen, editingLocation, isLoading, error } =
     state;
   const { store, filteredLocations } = data;
@@ -20,9 +22,20 @@ export function LocationsList() {
       getLocationColumns({
         onToggleVisibility: (id, isVisible) =>
           actions.toggleVisibility({ locationId: id, isVisible }),
-        onDelete: (id) => actions.deleteLocation(id),
+        onDelete: (location) => {
+          void confirm({
+            title: "Delete location",
+            description: `Are you sure you want to delete ${location.name}?`,
+            confirmText: "Delete",
+            variant: "destructive",
+          }).then((isConfirmed) => {
+            if (isConfirmed) {
+              actions.deleteLocation(location.id);
+            }
+          });
+        },
       }),
-    [actions],
+    [actions, confirm],
   );
 
   if (isLoading && !filteredLocations.length) {

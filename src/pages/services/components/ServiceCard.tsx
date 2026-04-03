@@ -10,6 +10,7 @@ import type { Service } from "@/types";
 import { qk } from "@/lib/query-keys";
 import { formatCurrency } from "@/utils";
 import { EntityCard } from "@/components/common/EntityCard";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 interface ServiceCardProps {
   service: Service;
@@ -25,6 +26,7 @@ export function ServiceCard({
   onEdit,
 }: ServiceCardProps) {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -46,9 +48,16 @@ export function ServiceCard({
   });
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this service?")) {
-      deleteMutation.mutate();
-    }
+    void confirm({
+      title: "Delete service",
+      description: "Are you sure you want to delete this service?",
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate();
+      }
+    });
   };
 
   const formattedPrice = formatCurrency(service.price, currency);

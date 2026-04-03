@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { StaffMember } from "@/types";
 import { qk } from "@/lib/query-keys";
 import { EntityCard } from "@/components/common/EntityCard";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 import { StaffProfileDialog } from "./StaffProfileDialog";
 
 interface StaffCardProps {
@@ -23,6 +24,7 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const { confirm } = useConfirmDialog();
   const staffBasePath = "/staff";
 
   // Toggle visibility mutation
@@ -57,21 +59,31 @@ export function StaffCard({ staff, storeId }: StaffCardProps) {
   const headingText = staff.title || displayName;
 
   const handleDelete = () => {
-    if (
-      window.confirm(
-        `Remove ${displayName} from staff? This will revoke their access to the store.`,
-      )
-    ) {
-      deleteStaffMutation.mutate();
-    }
+    void confirm({
+      title: "Remove staff member",
+      description: `Remove ${displayName} from staff? This will revoke their access to the store.`,
+      confirmText: "Remove",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteStaffMutation.mutate();
+      }
+    });
   };
 
-  const handleToggleVisibility = () => {
+  const handleToggleVisibility = async () => {
     const message = staff.isVisible
       ? `Hide ${displayName} from the booking widget? Customers will not be able to book with this staff member.`
       : `Show ${displayName} in the booking widget so customers can book with them?`;
 
-    if (window.confirm(message)) {
+    const isConfirmed = await confirm({
+      title: staff.isVisible ? "Hide staff member" : "Show staff member",
+      description: message,
+      confirmText: staff.isVisible ? "Hide" : "Show",
+      variant: "destructive",
+    });
+
+    if (isConfirmed) {
       toggleVisibilityMutation.mutate();
     }
   };

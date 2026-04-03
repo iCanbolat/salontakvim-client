@@ -24,6 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 import type {
   StaffMember,
   DayOfWeek,
@@ -67,6 +68,7 @@ export function WorkingHoursDialog({
   onClose,
 }: WorkingHoursDialogProps) {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
   const [editingHours, setEditingHours] = useState<
     Partial<Record<DayOfWeek, WorkingHoursFormValue>>
   >({});
@@ -143,16 +145,24 @@ export function WorkingHoursDialog({
   const handleDeleteDay = (dayOfWeek: DayOfWeek) => {
     const dayLabel =
       DAYS_OF_WEEK.find((day) => day.value === dayOfWeek)?.label || dayOfWeek;
-    if (confirm(`Remove ${dayLabel} from schedule?`)) {
-      setEditingHours((prev) => {
-        const newState = { ...prev };
-        delete newState[dayOfWeek];
-        return newState;
-      });
-    }
+
+    void confirm({
+      title: "Remove day",
+      description: `Remove ${dayLabel} from schedule?`,
+      confirmText: "Remove",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        setEditingHours((prev) => {
+          const newState = { ...prev };
+          delete newState[dayOfWeek];
+          return newState;
+        });
+      }
+    });
   };
 
-  const handleCopyToAll = () => {
+  const handleCopyToAll = async () => {
     if (Object.keys(editingHours).length === 0) return;
 
     const firstDay = Object.values(editingHours).find(
@@ -160,7 +170,13 @@ export function WorkingHoursDialog({
     );
     if (!firstDay) return;
 
-    if (confirm("Copy this schedule to all days of the week?")) {
+    const isConfirmed = await confirm({
+      title: "Copy schedule",
+      description: "Copy this schedule to all days of the week?",
+      confirmText: "Copy",
+    });
+
+    if (isConfirmed) {
       const newHours: Partial<Record<DayOfWeek, WorkingHoursFormValue>> = {};
       DAYS_OF_WEEK.forEach((day) => {
         newHours[day.value] = {

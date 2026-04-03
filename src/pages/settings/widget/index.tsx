@@ -39,10 +39,12 @@ import { toast } from "sonner";
 import { WidgetPreview } from "./components/WidgetPreview";
 import { useWidgetSettings } from "./hooks/useWidgetSettings";
 import { PageLoader } from "@/components/common/PageLoader";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 import type { WidgetSettings as WidgetSettingsType } from "@/types/widget.types";
 
 export function WidgetSettings() {
   const { state, actions, data } = useWidgetSettings();
+  const { confirm } = useConfirmDialog();
   const {
     activeTab,
     showPreview,
@@ -115,22 +117,29 @@ export function WidgetSettings() {
     }
   };
 
-  const onRegenerateKey = () => {
-    if (
-      confirm(
-        "Are you sure? This will invalidate your current widget key and all existing widget installations will stop working.",
-      )
-    ) {
+  const onRegenerateKey = async () => {
+    const isConfirmed = await confirm({
+      title: "Regenerate widget key",
+      description:
+        "This will invalidate your current widget key and all existing widget installations will stop working.",
+      confirmText: "Regenerate",
+      variant: "destructive",
+    });
+
+    if (isConfirmed) {
       handleRegenerateKey();
     }
   };
 
-  const onUnblockWidget = () => {
-    if (
-      confirm(
+  const onUnblockWidget = async () => {
+    const isConfirmed = await confirm({
+      title: "Unblock widget",
+      description:
         "Unblock widget access? This will re-enable public access immediately.",
-      )
-    ) {
+      confirmText: "Unblock",
+    });
+
+    if (isConfirmed) {
       handleUnblockWidget();
     }
   };

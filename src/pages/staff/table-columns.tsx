@@ -6,7 +6,7 @@ import type { StaffMember } from "@/types";
 
 export const getStaffTableColumns = (actions: {
   onToggleVisibility: (id: string, isVisible: boolean) => void;
-  onDelete: (id: string) => void;
+  onDelete: (staff: StaffMember) => void;
 }): TableColumn<StaffMember>[] => [
   {
     key: "name",
@@ -80,13 +80,7 @@ export const getStaffTableColumns = (actions: {
           className="text-red-500 hover:text-red-600 hover:bg-red-50"
           onClick={(e) => {
             e.stopPropagation();
-            if (
-              window.confirm(
-                "Are you sure you want to remove this staff member?",
-              )
-            ) {
-              actions.onDelete(staff.id);
-            }
+            actions.onDelete(staff);
           }}
           title="Remove staff"
         >

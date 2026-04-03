@@ -37,6 +37,7 @@ import { useStoreSettings } from "./hooks/useStoreSettings";
 import { storeService } from "@/services/store.service";
 import { billingService } from "@/services/billing.service";
 import { qk } from "@/lib/query-keys";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function StoreSettings() {
   const { state, actions, data, form } = useStoreSettings();
@@ -58,6 +59,7 @@ export function StoreSettings() {
   }, [errors.slug, setFocus]);
 
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
   const [isUploading, setIsUploading] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
   const [selectedPlan, setSelectedPlan] = useState<"pro" | "business">("pro");
@@ -204,7 +206,15 @@ export function StoreSettings() {
   };
 
   const handleDeleteImage = async (imageUrl: string) => {
-    if (!confirm("Bu resmi silmek istediğinizden emin misiniz?")) return;
+    const isConfirmed = await confirm({
+      title: "Resmi sil",
+      description: "Bu resmi silmek istediginizden emin misiniz?",
+      confirmText: "Sil",
+      cancelText: "Iptal",
+      variant: "destructive",
+    });
+
+    if (!isConfirmed) return;
 
     try {
       await deleteImageMutation.mutateAsync(imageUrl);

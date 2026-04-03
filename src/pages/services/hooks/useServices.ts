@@ -10,9 +10,11 @@ import { usePagination, useCurrentStore } from "@/hooks";
 import type { Service } from "@/types";
 import { toast } from "sonner";
 import { qk } from "@/lib/query-keys";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function useServices() {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
@@ -104,9 +106,16 @@ export function useServices() {
   };
 
   const handleDelete = (service: Service) => {
-    if (window.confirm(`Are you sure you want to delete "${service.name}"?`)) {
-      deleteMutation.mutate(service.id);
-    }
+    void confirm({
+      title: "Delete service",
+      description: `Are you sure you want to delete "${service.name}"?`,
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate(service.id);
+      }
+    });
   };
 
   return {

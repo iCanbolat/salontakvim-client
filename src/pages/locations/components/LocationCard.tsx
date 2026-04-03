@@ -9,6 +9,7 @@ import { locationService } from "@/services";
 import type { Location } from "@/types";
 import { qk } from "@/lib/query-keys";
 import { EntityCard } from "@/components/common/EntityCard";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 interface LocationCardProps {
   location: Location;
@@ -18,6 +19,7 @@ interface LocationCardProps {
 
 export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -39,13 +41,17 @@ export function LocationCard({ location, storeId, onEdit }: LocationCardProps) {
   });
 
   const handleDelete = () => {
-    if (
-      confirm(
+    void confirm({
+      title: "Delete location",
+      description:
         "Are you sure you want to delete this location? This action cannot be undone.",
-      )
-    ) {
-      deleteMutation.mutate();
-    }
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate();
+      }
+    });
   };
 
   // Build full address string

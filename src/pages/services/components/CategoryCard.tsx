@@ -8,6 +8,7 @@ import { categoryService } from "@/services";
 import type { Category } from "@/types";
 import { qk } from "@/lib/query-keys";
 import { EntityCard } from "@/components/common/EntityCard";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 interface CategoryCardProps {
   category: Category;
@@ -17,6 +18,7 @@ interface CategoryCardProps {
 
 export function CategoryCard({ category, storeId, onEdit }: CategoryCardProps) {
   const queryClient = useQueryClient();
+  const { confirm } = useConfirmDialog();
 
   // Delete mutation
   const deleteMutation = useMutation({
@@ -38,9 +40,16 @@ export function CategoryCard({ category, storeId, onEdit }: CategoryCardProps) {
   });
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this category?")) {
-      deleteMutation.mutate();
-    }
+    void confirm({
+      title: "Delete category",
+      description: "Are you sure you want to delete this category?",
+      confirmText: "Delete",
+      variant: "destructive",
+    }).then((isConfirmed) => {
+      if (isConfirmed) {
+        deleteMutation.mutate();
+      }
+    });
   };
 
   return (

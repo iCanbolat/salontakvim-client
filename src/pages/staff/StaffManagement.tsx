@@ -34,10 +34,12 @@ import type {
 } from "@/types";
 import { useStaff } from "./hooks/useStaff";
 import { getStaffTableColumns } from "./table-columns";
+import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
 
 export function StaffManagement() {
   const { state, actions, data, pagination } = useStaff();
   const navigate = useNavigate();
+  const { confirm } = useConfirmDialog();
   const {
     activeTab,
     searchTerm,
@@ -60,9 +62,26 @@ export function StaffManagement() {
       getStaffTableColumns({
         onToggleVisibility: (id, isVisible) =>
           actions.toggleVisibility({ staffId: id, isVisible }),
-        onDelete: (id) => actions.deleteStaff(id),
+        onDelete: (staff) => {
+          const displayName =
+            staff.fullName?.trim() ||
+            `${staff.firstName ?? ""} ${staff.lastName ?? ""}`.trim() ||
+            staff.email ||
+            "this staff member";
+
+          void confirm({
+            title: "Remove staff member",
+            description: `Remove ${displayName} from staff? This action cannot be undone.`,
+            confirmText: "Remove",
+            variant: "destructive",
+          }).then((isConfirmed) => {
+            if (isConfirmed) {
+              actions.deleteStaff(staff.id);
+            }
+          });
+        },
       }),
-    [actions],
+    [actions, confirm],
   );
 
   const statusFilters: { value: "all" | StaffBreakStatus; label: string }[] = [
