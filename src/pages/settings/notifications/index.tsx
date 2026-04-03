@@ -212,9 +212,11 @@ export function NotificationSettings() {
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-2">
-        <h2 className="text-3xl font-bold tracking-tight">Bildirim Merkezi</h2>
+        <h2 className="text-3xl font-bold tracking-tight">
+          Notification Center
+        </h2>
         <p className="text-muted-foreground">
-          Bildirimlerinizi yönetin ve son aktiviteleri takip edin.
+          Manage your notifications and track recent activities.
         </p>
       </div>
 
@@ -227,12 +229,12 @@ export function NotificationSettings() {
           {isAdmin && (
             <TabsTrigger value="settings" className="gap-2">
               <Settings className="h-4 w-4" />
-              <span>Ayarlar</span>
+              <span>Settings</span>
             </TabsTrigger>
           )}
           <TabsTrigger value="notifications" className="gap-2">
             <Bell className="h-4 w-4" />
-            <span>Bildirimler</span>
+            <span>Notifications</span>
             {unreadCount > 0 && (
               <span className="bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full min-w-[18px] text-center">
                 {unreadCount}
@@ -242,7 +244,7 @@ export function NotificationSettings() {
           {!isStaff && (
             <TabsTrigger value="activities" className="gap-2">
               <Activity className="h-4 w-4" />
-              <span>Aktiviteler</span>
+              <span>Activities</span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -253,23 +255,23 @@ export function NotificationSettings() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Mail className="h-5 w-5 text-blue-600" />
-                  <CardTitle>E-posta Ayarları</CardTitle>
+                  <CardTitle>Email Settings</CardTitle>
                 </div>
                 <CardDescription>
-                  E-posta bildirimleri için temel yapılandırma
+                  Basic configuration for email notifications
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Gönderen Adı</Label>
+                  <Label>Sender Name</Label>
                   <input
                     className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="İşletme Adınız"
+                    placeholder="Your Business Name"
                     value={settings?.senderName}
                     onChange={(e) => handleUpdate("senderName", e.target.value)}
                   />
                   <p className="text-sm text-muted-foreground">
-                    Bu isim, e-postaların "Gönderen" alanında görünecektir
+                    This name will appear in the "From" field of emails
                   </p>
                 </div>
               </CardContent>
@@ -279,11 +281,10 @@ export function NotificationSettings() {
               <CardHeader>
                 <div className="flex items-center gap-2">
                   <Bell className="h-5 w-5 text-blue-600" />
-                  <CardTitle>Bildirim Türleri</CardTitle>
+                  <CardTitle>Notification Types</CardTitle>
                 </div>
                 <CardDescription>
-                  Bildirimleri etkinleştirin/devre dışı bırakın ve gönderim
-                  kanallarını seçin
+                  Enable/disable notifications and choose transmission channels
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -291,9 +292,11 @@ export function NotificationSettings() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Randevu Onayı</Label>
+                      <Label className="text-base">
+                        Appointment Confirmation
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        Yeni bir randevu oluşturulduğunda gönderilir
+                        Sent when a new appointment is created
                       </p>
                     </div>
                     <Switch
@@ -307,7 +310,7 @@ export function NotificationSettings() {
                   </div>
                   {settings?.appointmentConfirmationEnabled && (
                     <div className="ml-4 space-y-2">
-                      <Label>Gönderim Kanalı</Label>
+                      <Label>Transmission Channel</Label>
                       <Select
                         value={settings?.appointmentConfirmationChannel}
                         onValueChange={(value: any) =>
@@ -318,9 +321,9 @@ export function NotificationSettings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
                           <SelectItem value="sms">SMS</SelectItem>
-                          <SelectItem value="both">Her İkisi</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -333,11 +336,9 @@ export function NotificationSettings() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">
-                        Randevu Hatırlatıcıları
-                      </Label>
+                      <Label className="text-base">Appointment Reminders</Label>
                       <p className="text-sm text-muted-foreground">
-                        Randevulardan önce otomatik hatırlatıcılar
+                        Automatic reminders before appointments
                       </p>
                     </div>
                     <Switch
@@ -351,7 +352,7 @@ export function NotificationSettings() {
                     <div className="ml-4 space-y-4">
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-normal">
-                          24 saat kala hatırlat
+                          Remind 24 hours before
                         </Label>
                         <Switch
                           checked={settings?.reminder24hEnabled ?? false}
@@ -362,7 +363,7 @@ export function NotificationSettings() {
                       </div>
                       <div className="flex items-center justify-between">
                         <Label className="text-sm font-normal">
-                          1 saat kala hatırlat
+                          Remind 1 hour before
                         </Label>
                         <Switch
                           checked={settings?.reminder1hEnabled ?? false}
@@ -381,9 +382,11 @@ export function NotificationSettings() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Randevu İptali</Label>
+                      <Label className="text-base">
+                        Appointment Cancellation
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        Bir randevu iptal edildiğinde gönderilir
+                        Sent when an appointment is cancelled
                       </p>
                     </div>
                     <Switch
@@ -397,7 +400,7 @@ export function NotificationSettings() {
                   </div>
                   {settings?.appointmentCancellationEnabled && (
                     <div className="ml-4 space-y-2">
-                      <Label>Gönderim Kanalı</Label>
+                      <Label>Transmission Channel</Label>
                       <Select
                         value={settings?.appointmentCancellationChannel}
                         onValueChange={(value: any) =>
@@ -408,9 +411,9 @@ export function NotificationSettings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
                           <SelectItem value="sms">SMS</SelectItem>
-                          <SelectItem value="both">Her İkisi</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -424,10 +427,10 @@ export function NotificationSettings() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">
-                        Randevu Saati Değişikliği
+                        Appointment Rescheduled
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        Randevu saati değiştirildiğinde gönderilir
+                        Sent when appointment time is changed
                       </p>
                     </div>
                     <Switch
@@ -439,7 +442,7 @@ export function NotificationSettings() {
                   </div>
                   {settings?.appointmentRescheduledEnabled && (
                     <div className="ml-4 space-y-2">
-                      <Label>Gönderim Kanalı</Label>
+                      <Label>Transmission Channel</Label>
                       <Select
                         value={settings?.appointmentRescheduledChannel}
                         onValueChange={(value: any) =>
@@ -450,9 +453,9 @@ export function NotificationSettings() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="email">E-posta</SelectItem>
+                          <SelectItem value="email">Email</SelectItem>
                           <SelectItem value="sms">SMS</SelectItem>
-                          <SelectItem value="both">Her İkisi</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -466,11 +469,10 @@ export function NotificationSettings() {
                   <div className="flex items-center justify-between">
                     <div className="space-y-0.5">
                       <Label className="text-base">
-                        Müşteri Geri Bildirim Talebi
+                        Customer Feedback Request
                       </Label>
                       <p className="text-sm text-muted-foreground">
-                        E-posta her zaman gönderilir; SMS ile göndermek için de
-                        etkinleştirin
+                        Email is always sent; enable to also send via SMS
                       </p>
                     </div>
                     <Switch
@@ -490,8 +492,10 @@ export function NotificationSettings() {
           <Card>
             <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <CardTitle>Bildirimler</CardTitle>
-                <CardDescription>Size gelen tüm bildirimler</CardDescription>
+                <CardTitle>Notifications</CardTitle>
+                <CardDescription>
+                  All notifications addressed to you
+                </CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <Select
@@ -502,12 +506,12 @@ export function NotificationSettings() {
                   }}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Durum" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tümü</SelectItem>
-                    <SelectItem value="unread">Okunmadı</SelectItem>
-                    <SelectItem value="read">Okundu</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="unread">Unread</SelectItem>
+                    <SelectItem value="read">Read</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -521,7 +525,7 @@ export function NotificationSettings() {
                     }}
                   >
                     <CheckCheck className="h-4 w-4 mr-2" />
-                    Tümünü okundu işaretle
+                    Mark all as read
                   </Button>
                 )}
               </div>
@@ -536,7 +540,7 @@ export function NotificationSettings() {
                   <div className="rounded-full bg-gray-100 p-3 mb-4">
                     <Bell className="h-6 w-6 text-gray-400" />
                   </div>
-                  <p className="font-medium text-gray-900">Bildirim yok</p>
+                  <p className="font-medium text-gray-900">No notifications</p>
                 </div>
               ) : (
                 <div className="divide-y overflow-auto max-h-[600px]">
@@ -587,7 +591,7 @@ export function NotificationSettings() {
                                 await refetchNotifications();
                               }}
                             >
-                              Okundu işaretle
+                              Mark as read
                             </Button>
                           )}
                         </div>
@@ -599,7 +603,7 @@ export function NotificationSettings() {
             </CardContent>
             <div className="flex items-center justify-between px-6 py-4 border-t">
               <span className="text-xs text-muted-foreground">
-                Sayfa {notificationPage} / {notificationsTotalPages}
+                Page {notificationPage} / {notificationsTotalPages}
               </span>
               <div className="flex items-center gap-2">
                 <Button
@@ -633,7 +637,7 @@ export function NotificationSettings() {
           <TabsContent value="activities" className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Label className="text-sm text-muted-foreground">Durum</Label>
+                <Label className="text-sm text-muted-foreground">Status</Label>
                 <Select
                   value={activityType}
                   onValueChange={(value) => {
@@ -642,19 +646,19 @@ export function NotificationSettings() {
                   }}
                 >
                   <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Durum" />
+                    <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Tümü</SelectItem>
-                    <SelectItem value="appointment">Randevu</SelectItem>
-                    <SelectItem value="customer">Müşteri</SelectItem>
-                    <SelectItem value="staff">Personel</SelectItem>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="appointment">Appointment</SelectItem>
+                    <SelectItem value="customer">Customer</SelectItem>
+                    <SelectItem value="staff">Staff</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs text-muted-foreground">
-                  Sayfa {activityPage} / {activitiesTotalPages}
+                  Page {activityPage} / {activitiesTotalPages}
                 </span>
                 <Button
                   variant="outline"
@@ -699,3 +703,8 @@ export function NotificationSettings() {
     </div>
   );
 }
+
+//       </Tabs>
+//     </div>
+//   );
+// }

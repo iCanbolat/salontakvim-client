@@ -55,33 +55,50 @@ export function getActivityIcon(activity: RecentActivity) {
     return { icon: FileUp, color: "bg-blue-100 text-blue-600" };
 
   if (type === "appointment") {
-    if (message.includes("değerlendirme"))
+    if (message.includes("değerlendirme") || message.includes("feedback"))
       return { icon: Star, color: "bg-indigo-100 text-indigo-600" };
-    if (message.includes("iptal"))
+    if (message.includes("iptal") || message.includes("cancel"))
       return { icon: CalendarX, color: "bg-rose-100 text-rose-600" };
-    if (message.includes("oluştur") || message.includes("yeni"))
+    if (
+      message.includes("oluştur") ||
+      message.includes("yeni") ||
+      message.includes("create")
+    )
       return { icon: CalendarPlus, color: "bg-emerald-100 text-emerald-600" };
-    if (message.includes("onay"))
+    if (message.includes("onay") || message.includes("confirm"))
       return { icon: CalendarCheck, color: "bg-sky-100 text-sky-600" };
-    if (message.includes("güncellendi") || message.includes("durumu"))
+    if (
+      message.includes("güncellendi") ||
+      message.includes("durumu") ||
+      message.includes("update") ||
+      message.includes("status")
+    )
       return { icon: CalendarClock, color: "bg-amber-100 text-amber-600" };
     return { icon: Calendar, color: "bg-blue-100 text-blue-600" };
   }
 
   if (type === "customer") {
-    if (message.includes("oluştur") || message.includes("yeni"))
+    if (
+      message.includes("oluştur") ||
+      message.includes("yeni") ||
+      message.includes("create")
+    )
       return { icon: UserPlus, color: "bg-emerald-100 text-emerald-600" };
-    if (message.includes("güncel"))
+    if (message.includes("güncel") || message.includes("update"))
       return { icon: UserCog, color: "bg-amber-100 text-amber-600" };
     return { icon: Users, color: "bg-green-100 text-green-600" };
   }
 
   if (type === "staff") {
-    if (message.includes("davet"))
+    if (message.includes("davet") || message.includes("invite"))
       return { icon: Mail, color: "bg-violet-100 text-violet-600" };
-    if (message.includes("oluştur") || message.includes("yeni"))
+    if (
+      message.includes("oluştur") ||
+      message.includes("yeni") ||
+      message.includes("create")
+    )
       return { icon: UserPlus, color: "bg-emerald-100 text-emerald-600" };
-    if (message.includes("güncel"))
+    if (message.includes("güncel") || message.includes("update"))
       return { icon: UserCog, color: "bg-amber-100 text-amber-600" };
     return { icon: Users, color: "bg-purple-100 text-purple-600" };
   }
@@ -92,9 +109,9 @@ export function getActivityIcon(activity: RecentActivity) {
 export function RecentActivityList({
   activities,
   showViewAll = true,
-  title = "Son Aktiviteler",
+  title = "Recent Activities",
   showCard = true,
-  emptyMessage = "Henüz bir aktivite bulunmuyor",
+  emptyMessage = "No activities found yet",
   maxHeight = "400px",
 }: RecentActivityListProps) {
   const content = (
@@ -155,11 +172,11 @@ export function RecentActivityList({
               to="/notifications?tab=activities"
               className="text-xs text-blue-600 hover:text-blue-700 font-medium transition-colors"
             >
-              Tümünü gör
+              View all
             </Link>
           ) : (
             <span className="text-xs bg-gray-100 px-2.5 py-1 rounded-full text-gray-500 font-medium">
-              Canlı
+              Live
             </span>
           )}
         </div>
