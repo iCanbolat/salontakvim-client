@@ -9,18 +9,14 @@ interface AssignedServicesListProps {
   services?: Service[];
   isLoading?: boolean;
   onManageAssignments?: () => void;
+  currency?: string;
 }
-
-const currencyFormatter = new Intl.NumberFormat("tr-TR", {
-  style: "currency",
-  currency: "TRY",
-  minimumFractionDigits: 0,
-});
 
 export function AssignedServicesList({
   services,
   isLoading,
   onManageAssignments,
+  currency,
 }: AssignedServicesListProps) {
   const groupedServices = useMemo(() => {
     if (!services?.length) {
@@ -52,8 +48,8 @@ export function AssignedServicesList({
           title:
             service.categoryName ||
             (categoryId === "uncategorized"
-              ? "Kategorisiz"
-              : `Kategori #${categoryId}`),
+              ? "Uncategorized"
+              : `Category #${categoryId}`),
           color: service.categoryColor,
           position: Number.MAX_SAFE_INTEGER,
           services: [],
@@ -72,6 +68,24 @@ export function AssignedServicesList({
       }))
       .sort((a, b) => a.position - b.position);
   }, [services]);
+
+  const currencyFormatter = useMemo(() => {
+    const normalizedCurrency = (currency || "TRY").toUpperCase();
+
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: normalizedCurrency,
+        minimumFractionDigits: 0,
+      });
+    } catch {
+      return new Intl.NumberFormat(undefined, {
+        style: "currency",
+        currency: "TRY",
+        minimumFractionDigits: 0,
+      });
+    }
+  }, [currency]);
 
   const formatPrice = (price: string) => {
     const numericPrice = Number(price);
@@ -97,16 +111,16 @@ export function AssignedServicesList({
         </div>
         <div>
           <p className="text-lg font-semibold text-gray-900">
-            Henüz atanan servis yok
+            No assigned services yet
           </p>
           <p className="text-sm text-gray-600">
-            Çalışanın sağlayabileceği servisleri belirlemek için aşağıdaki
-            butonu kullanın.
+            Use the button below to assign the services this staff member can
+            provide.
           </p>
         </div>
         {onManageAssignments && (
           <Button size="sm" onClick={onManageAssignments}>
-            Servis Ata
+            Assign Services
           </Button>
         )}
       </div>
@@ -175,12 +189,12 @@ export function AssignedServicesList({
                   </div>
 
                   <div className="flex flex-wrap gap-2 text-xs text-gray-600">
-                    <Badge variant="outline">{service.duration} dk</Badge>
+                    <Badge variant="outline">{service.duration} min</Badge>
                     <Badge variant="outline">
-                      Kapasite: {service.capacity}
+                      Capacity: {service.capacity}
                     </Badge>
                     {service.allowRecurring && (
-                      <Badge variant="outline">Tekrarlı</Badge>
+                      <Badge variant="outline">Recurring</Badge>
                     )}
                   </div>
                 </CardContent>

@@ -2,8 +2,8 @@
  * Login Page
  */
 
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -35,6 +35,15 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get("reason") === "trial-expired") {
+      toast.error(
+        "Your 14-day trial has ended. Please sign in and choose a subscription plan.",
+      );
+    }
+  }, [searchParams]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -57,6 +66,11 @@ export function LoginPage() {
       // if (rememberMe) { set longer expiry }
 
       toast.success("Login successful!");
+
+      if (authService.requiresSubscription()) {
+        navigate("/subscription");
+        return;
+      }
 
       // Check if user needs onboarding (no store yet)
       if (authService.needsOnboarding()) {

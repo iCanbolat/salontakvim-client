@@ -48,33 +48,33 @@ const STATUS_OPTIONS: {
 }[] = [
   {
     value: "pending",
-    label: "Beklemede",
+    label: "Pending",
     icon: Clock,
-    description: "Randevu onay bekliyor",
+    description: "Appointment awaiting approval",
     colorClass: "bg-yellow-100 text-yellow-800 border-yellow-300",
     iconClass: "text-yellow-600",
   },
   {
     value: "confirmed",
-    label: "Onaylandı",
+    label: "Confirmed",
     icon: CheckCircle2,
-    description: "Randevu onaylandı",
+    description: "Appointment confirmed",
     colorClass: "bg-blue-100 text-blue-800 border-blue-300",
     iconClass: "text-blue-600",
   },
   {
     value: "cancelled",
-    label: "İptal Edildi",
+    label: "Cancelled",
     icon: XCircle,
-    description: "Randevu iptal edildi",
+    description: "Appointment cancelled",
     colorClass: "bg-red-100 text-red-800 border-red-300",
     iconClass: "text-red-600",
   },
   {
     value: "no_show",
-    label: "Gelmedi",
+    label: "No Show",
     icon: UserX,
-    description: "Müşteri randevuya gelmedi",
+    description: "Customer did not show up",
     colorClass: "bg-gray-100 text-gray-800 border-gray-300",
     iconClass: "text-gray-600",
   },
@@ -109,11 +109,11 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
     },
     onSuccess: () => {
       invalidateAfterAppointmentChange(queryClient, appointment.storeId);
-      // toast.success("Randevu durumu güncellendi");
+      // toast.success("Appointment status updated");
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error("Durum güncellenemedi: " + error.message);
+      toast.error("Could not update status: " + error.message);
     },
   });
 
@@ -157,10 +157,10 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Randevu Durumunu Güncelle</DialogTitle>
+          <DialogTitle>Update Appointment Status</DialogTitle>
           <DialogDescription>
-            {formatAppointmentNumber(appointment.publicNumber, store?.country)}{" "}
-            için yeni durum seçin
+            Select new status for{" "}
+            {formatAppointmentNumber(appointment.publicNumber, store?.country)}
           </DialogDescription>
         </DialogHeader>
 
@@ -179,7 +179,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                   />
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider opacity-70">
-                      Mevcut Durum
+                      Current Status
                     </p>
                     <p className="text-lg font-bold">
                       {currentStatusOption.label}
@@ -192,7 +192,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
             {/* Status Selection */}
             <div className="space-y-2">
               <Label htmlFor="status" className="font-semibold">
-                Yeni Durum
+                New Status
               </Label>
               <Select
                 value={selectedStatus}
@@ -202,7 +202,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                 disabled={isCompleted}
               >
                 <SelectTrigger className="w-full h-14! font-medium" id="status">
-                  <SelectValue placeholder="Durum seçin" />
+                  <SelectValue placeholder="Select status" />
                 </SelectTrigger>
                 <SelectContent>
                   {STATUS_OPTIONS.map((option) => (
@@ -239,18 +239,18 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                 >
                   <AlertCircle className="h-4 w-4" />
                   {selectedStatus === "cancelled"
-                    ? "İptal Nedeni"
-                    : "Gelmeme Nedeni"}
+                    ? "Cancellation Reason"
+                    : "No-show Reason"}
                   <span className="text-xs text-muted-foreground">
-                    (Opsiyonel)
+                    (Optional)
                   </span>
                 </Label>
                 <Textarea
                   id="cancellation-reason"
                   placeholder={
                     selectedStatus === "cancelled"
-                      ? "İptal nedenini belirtin..."
-                      : "Gelmeme nedenini belirtin..."
+                      ? "Enter cancellation reason..."
+                      : "Enter no-show reason..."
                   }
                   value={cancellationReason}
                   onChange={(e) => setCancellationReason(e.target.value)}
@@ -266,14 +266,14 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
             {/* Internal Notes */}
             <div className="space-y-2">
               <Label htmlFor="internal-notes">
-                Dahili Notlar
+                Internal Notes
                 <span className="text-xs text-muted-foreground ml-2">
-                  (Opsiyonel)
+                  (Optional)
                 </span>
               </Label>
               <Textarea
                 id="internal-notes"
-                placeholder="Randevu hakkında notlar ekleyin (sadece personel görebilir)..."
+                placeholder="Add notes about the appointment (staff only)..."
                 value={internalNotes}
                 onChange={(e) => setInternalNotes(e.target.value)}
                 rows={3}
@@ -295,7 +295,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
                     className={`h-5 w-5 mt-0.5 ${selectedStatusOption.iconClass}`}
                   />
                   <div className="text-sm">
-                    <p className="font-bold">Durum değiştirilecek</p>
+                    <p className="font-bold">Status will be changed</p>
                     <div className="flex items-center gap-2 mt-2">
                       <span className="px-2 py-0.5 bg-white/50 rounded text-xs font-semibold">
                         {currentStatusOption?.label}
@@ -314,7 +314,8 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
 
             {isCompleted && (
               <p className="text-xs text-muted-foreground">
-                Tamamlanan randevularda durum manuel olarak değiştirilemez.
+                Manual status changes are not allowed for completed
+                appointments.
               </p>
             )}
           </div>
@@ -327,7 +328,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
             onClick={() => onOpenChange(false)}
             disabled={updateStatusMutation.isPending}
           >
-            İptal
+            Cancel
           </Button>
           <Button
             type="button"
@@ -338,7 +339,7 @@ export const AppointmentStatusDialog = memo(function AppointmentStatusDialog({
               selectedStatus === appointment.status
             }
           >
-            {updateStatusMutation.isPending ? "Güncelleniyor..." : "Güncelle"}
+            {updateStatusMutation.isPending ? "Updating..." : "Update"}
           </Button>
         </DialogFooter>
       </DialogContent>

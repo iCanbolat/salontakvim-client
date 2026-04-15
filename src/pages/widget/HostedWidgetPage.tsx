@@ -39,7 +39,6 @@ import type { FeedbackWithDetails } from "@/types/feedback.types";
 import type { Location } from "@/types/location.types";
 import type { WidgetPublicConfig } from "@/types/widget.types";
 import { format } from "date-fns";
-import { tr } from "date-fns/locale";
 import { qk } from "@/lib/query-keys";
 
 export default function HostedWidgetPage() {
@@ -262,8 +261,8 @@ export default function HostedWidgetPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <Alert className="max-w-xl w-full" variant="destructive">
           <AlertDescription>
-            Bu randevu bağlantısında mağaza bilgisi eksik. Lütfen bağlantıyı
-            kontrol edin.
+            Store information is missing in this booking link. Please check the
+            link.
           </AlertDescription>
         </Alert>
       </div>
@@ -275,8 +274,8 @@ export default function HostedWidgetPage() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <Alert className="max-w-xl w-full" variant="destructive">
           <AlertDescription>
-            Randevu sayfası başlatılamadı. Lütfen yönetici panelinden güncel
-            bağlantıyı aldığınızdan emin olun.
+            The booking page could not be initialized. Please make sure you have
+            the latest link from the admin panel.
           </AlertDescription>
         </Alert>
       </div>
@@ -287,7 +286,9 @@ export default function HostedWidgetPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 px-4">
         <Alert className="max-w-xl w-full">
-          <AlertDescription>Randevu deneyimi hazırlanıyor...</AlertDescription>
+          <AlertDescription>
+            Preparing your booking experience...
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -303,14 +304,14 @@ export default function HostedWidgetPage() {
             </div>
             <div className="space-y-1">
               <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                Online Randevu
+                Online Booking
               </p>
               <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                {config?.store.name || "SalonTakvim Randevu"}
+                {config?.store.name || "SalonTakvim Booking"}
               </h1>
               <p className="text-sm text-slate-600 max-w-xl">
                 {config?.store.description ||
-                  "Size uygun hizmeti seçin, saati belirleyin ve randevunuzu hızlıca oluşturun."}
+                  "Choose your service, pick a time, and book your appointment quickly."}
               </p>
             </div>
           </div>
@@ -318,7 +319,7 @@ export default function HostedWidgetPage() {
             <ShieldCheck className="h-4 w-4 text-blue-600" />
             <div>
               <p className="text-xs uppercase tracking-wide text-blue-600 font-semibold">
-                Güvenli Randevu
+                Secure Booking
               </p>
             </div>
           </div>
@@ -334,7 +335,7 @@ export default function HostedWidgetPage() {
             }}
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:border-slate-300 hover:text-slate-900 transition"
           >
-            Randevu Al
+            Book Now
           </button>
           <button
             onClick={() => {
@@ -345,24 +346,24 @@ export default function HostedWidgetPage() {
             }}
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-slate-700 hover:border-slate-300 hover:text-slate-900 transition"
           >
-            Müşteri Yorumları
+            Customer Reviews
           </button>
         </nav>
 
         {isError && (
           <Alert variant="destructive" className="mt-6">
             <AlertDescription>
-              Randevu sayfası yüklenemedi. Bağlantı geçersiz veya süresi dolmuş
-              olabilir.
+              The booking page could not be loaded. The link may be invalid or
+              expired.
             </AlertDescription>
           </Alert>
         )}
 
         <Card className="shadow-lg border-slate-200/80 bg-white/95 backdrop-blur">
           <CardHeader>
-            <CardTitle>İşletme Hakkında</CardTitle>
+            <CardTitle>About Business</CardTitle>
             <p className="text-sm text-muted-foreground">
-              Randevunuzu oluşturmadan önce kısa bilgiler.
+              Brief information before you book.
             </p>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -375,7 +376,7 @@ export default function HostedWidgetPage() {
             ) : (
               <p className="text-sm leading-relaxed text-slate-700">
                 {config?.store.description ||
-                  "Bu sayfa üzerinden hizmetlerimizi inceleyebilir ve anında randevu oluşturabilirsiniz."}
+                  "You can review our services and book an appointment instantly on this page."}
               </p>
             )}
 
@@ -388,10 +389,10 @@ export default function HostedWidgetPage() {
                     <div className="flex items-center justify-between text-sm font-medium text-slate-700">
                       <div className="flex items-center gap-2">
                         <ImageIcon className="h-4 w-4" />
-                        <span>Fotoğraflar</span>
+                        <span>Photos</span>
                       </div>
                       <span className="text-xs text-slate-400">
-                        {config.store.storeImages.length} Fotoğraf
+                        {config.store.storeImages.length} Photos
                       </span>
                     </div>
                     <Carousel
@@ -413,7 +414,7 @@ export default function HostedWidgetPage() {
                             >
                               <img
                                 src={imageUrl}
-                                alt={`${config.store.name} - Fotoğraf ${index + 1}`}
+                                alt={`${config.store.name} - Photo ${index + 1}`}
                                 className="w-full h-full object-cover"
                               />
                             </button>
@@ -436,7 +437,7 @@ export default function HostedWidgetPage() {
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                 <Contact className="h-4 w-4" />
-                <span>İletişim</span>
+                <span>Contact</span>
               </div>
               {contactItems.length ? (
                 contactItems.map(({ label, value, icon: Icon }) => (
@@ -448,9 +449,9 @@ export default function HostedWidgetPage() {
                     <div>
                       <p className="text-xs uppercase tracking-wide text-slate-500">
                         {label === "Email"
-                          ? "E-posta"
+                          ? "Email"
                           : label === "Phone"
-                            ? "Telefon"
+                            ? "Phone"
                             : label}
                       </p>
                       <p className="text-sm text-slate-800">{value}</p>
@@ -461,7 +462,7 @@ export default function HostedWidgetPage() {
                 <div className="flex items-center gap-3 rounded-xl border border-slate-200/80 bg-slate-50 px-3 py-2.5">
                   <CalendarClock className="h-4 w-4 text-slate-500" />
                   <p className="text-sm text-slate-700">
-                    Randevu detaylarını bir sonraki adımda onaylayacağız.
+                    We will confirm the appointment details in the next step.
                   </p>
                 </div>
               )}
@@ -471,7 +472,7 @@ export default function HostedWidgetPage() {
               <div className="space-y-3">
                 <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
                   <MapPin className="h-4 w-4" />
-                  <span>Konumlar</span>
+                  <span>Locations</span>
                 </div>
                 {locationsLoading ? (
                   <div className="space-y-2">
@@ -499,7 +500,7 @@ export default function HostedWidgetPage() {
                   </div>
                 ) : (
                   <p className="text-xs text-slate-400 italic">
-                    Henüz konum bilgisi eklenmemiş.
+                    No location information added yet.
                   </p>
                 )}
               </div>
@@ -510,10 +511,10 @@ export default function HostedWidgetPage() {
         <section id="booking">
           <Card className="shadow-xl border-slate-200/80 overflow-hidden pb-0">
             <CardHeader className="bg-white/80 backdrop-blur">
-              <CardTitle>Randevunuzu Planlayın</CardTitle>
+              <CardTitle>Schedule Your Appointment</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Aşağıdaki panelden hizmet ve saati seçerek randevunuzu
-                tamamlayın.
+                Select your service and time from the panel below to complete
+                your booking.
               </p>
             </CardHeader>
 
@@ -529,7 +530,7 @@ export default function HostedWidgetPage() {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="flex flex-col items-center gap-3 text-slate-600">
                       <Loader2 className="h-5 w-5 animate-spin" />
-                      <p className="text-sm">Randevu paneli yükleniyor…</p>
+                      <p className="text-sm">Loading booking panel...</p>
                     </div>
                   </div>
                 )}
@@ -549,9 +550,9 @@ export default function HostedWidgetPage() {
         <section id="feedback">
           <Card className="shadow-lg border-slate-200/80">
             <CardHeader>
-              <CardTitle>Müşteri Yorumları</CardTitle>
+              <CardTitle>Customer Reviews</CardTitle>
               <p className="text-sm text-muted-foreground">
-                Gerçek müşterilerden gelen değerlendirmeler.
+                Assessments from real customers.
               </p>
             </CardHeader>
             <CardContent>
@@ -571,7 +572,7 @@ export default function HostedWidgetPage() {
                         <div className="flex items-center justify-between gap-3">
                           <div>
                             <p className="text-sm font-semibold text-slate-900">
-                              {feedback.customer?.firstName || "Misafir"}{" "}
+                              {feedback.customer?.firstName || "Guest"}{" "}
                               {feedback.customer?.lastName || ""}
                             </p>
                             {feedback.service?.name && (
@@ -590,9 +591,7 @@ export default function HostedWidgetPage() {
                           </p>
                         )}
                         <p className="mt-3 text-xs text-slate-400">
-                          {format(new Date(feedback.createdAt), "d MMMM yyyy", {
-                            locale: tr,
-                          })}
+                          {format(new Date(feedback.createdAt), "d MMMM yyyy")}
                         </p>
                       </div>
                     ))}
@@ -611,7 +610,7 @@ export default function HostedWidgetPage() {
                 </div>
               ) : (
                 <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
-                  Henüz paylaşılmış bir yorum bulunmuyor.
+                  No reviews shared yet.
                 </div>
               )}
             </CardContent>
@@ -628,7 +627,7 @@ export default function HostedWidgetPage() {
           <button
             onClick={() => setSelectedImageIndex(null)}
             className="absolute top-4 right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
-            aria-label="Kapat"
+            aria-label="Close"
           >
             <X className="h-6 w-6" />
           </button>
@@ -645,7 +644,7 @@ export default function HostedWidgetPage() {
                   );
                 }}
                 className="absolute left-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Önceki"
+                aria-label="Previous"
               >
                 <ChevronLeft className="h-8 w-8" />
               </button>
@@ -660,7 +659,7 @@ export default function HostedWidgetPage() {
                   );
                 }}
                 className="absolute right-4 p-2 text-white hover:bg-white/20 rounded-full transition-colors"
-                aria-label="Sonraki"
+                aria-label="Next"
               >
                 <ChevronRight className="h-8 w-8" />
               </button>
@@ -669,7 +668,7 @@ export default function HostedWidgetPage() {
 
           <img
             src={config.store.storeImages[selectedImageIndex]}
-            alt={`${config.store.name} - Fotoğraf ${selectedImageIndex + 1}`}
+            alt={`${config.store.name} - Photo ${selectedImageIndex + 1}`}
             className="max-w-[90vw] max-h-[90vh] object-contain"
             onClick={(e) => e.stopPropagation()}
           />

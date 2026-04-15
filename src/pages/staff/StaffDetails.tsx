@@ -163,7 +163,10 @@ export function StaffDetails() {
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  <AssignedServicesList services={staffServices || []} />
+                  <AssignedServicesList
+                    services={staffServices || []}
+                    currency={store.currency}
+                  />
                 </CardContent>
               </Card>
             </TabsContent>

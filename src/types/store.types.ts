@@ -3,7 +3,8 @@
  * Matches backend store schema
  */
 
-export type PaymentStatus = "freemium" | "pro" | "business";
+export type PaymentStatus = "trial" | "starter" | "pro" | "enterprise";
+export type PaymentGateway = "creem" | "stripe" | "stripe_legacy";
 
 export interface Store {
   id: string;
@@ -17,6 +18,13 @@ export interface Store {
   country: string;
   currency: string;
   paymentStatus: PaymentStatus;
+  trialStartedAt: string;
+  trialEndsAt: string;
+  paymentGateway: PaymentGateway;
+  creemCustomerId?: string;
+  creemSubscriptionId?: string;
+  creemSubscriptionStatus?: string;
+  stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   stripeSubscriptionStatus?: string;
   storeImages?: string[];

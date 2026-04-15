@@ -130,6 +130,21 @@ export const qk = {
 
   billingConnectStatus: (storeId?: string) =>
     ["billing-connect-status", storeId] as const,
+  billingPayouts: (
+    storeId?: string,
+    options?: {
+      status?: "all" | "pending" | "paid";
+      page?: number;
+      limit?: number;
+    },
+  ) =>
+    [
+      "billing-payouts",
+      storeId,
+      options?.status || "all",
+      options?.page || 1,
+      options?.limit || 10,
+    ] as const,
 
   appointmentAnalytics: (storeId?: string, dateRange?: string) =>
     dateRange

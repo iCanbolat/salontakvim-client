@@ -12,6 +12,7 @@ import type { Appointment } from "./appointment.types";
 export interface Customer extends User {
   role: "customer";
   publicNumber?: string;
+  generalNote?: string | null;
 }
 
 /**
@@ -91,6 +92,7 @@ export interface UpdateCustomerDto {
   phone?: string;
   email?: string;
   isActive?: boolean;
+  generalNote?: string;
 }
 
 /**

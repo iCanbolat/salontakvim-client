@@ -4,13 +4,17 @@ export interface CreateSubscriptionCheckoutDto {
   storeId: string;
   successUrl: string;
   cancelUrl: string;
-  plan?: "pro" | "business";
+  plan?: "starter" | "pro" | "enterprise";
+  billingCycle?: "monthly" | "annual";
 }
 
 export interface SubscriptionCheckoutResponse {
   checkoutUrl: string | null;
   sessionId: string;
+  gateway?: "creem" | "stripe" | "stripe_legacy";
 }
+
+export type ConnectStatusSource = "creem_api" | "creem_dashboard_manual";
 
 export interface CreateConnectOnboardingDto {
   storeId: string;
@@ -22,6 +26,9 @@ export interface ConnectOnboardingResponse {
   accountId: string;
   onboardingUrl: string;
   expiresAt: number;
+  provider?: "creem";
+  statusSource?: ConnectStatusSource;
+  onboardingComplete?: boolean;
 }
 
 export interface ConnectStatusResponse {
@@ -30,6 +37,54 @@ export interface ConnectStatusResponse {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   accountId?: string;
+  provider?: "creem";
+  statusSource?: ConnectStatusSource;
+}
+
+export interface UpdateConnectStatusDto {
+  onboardingComplete: boolean;
+  accountId?: string;
+}
+
+export interface StorePayout {
+  id: string;
+  transactionId: string;
+  grossAmount: number;
+  platformFee: number;
+  netAmount: number;
+  currency: string;
+  status: string;
+  paidAt: string | null;
+  createdAt: string;
+}
+
+export type StorePayoutStatusFilter = "all" | "pending" | "paid";
+
+export interface GetStorePayoutsParams {
+  status?: StorePayoutStatusFilter;
+  page?: number;
+  limit?: number;
+}
+
+export interface StorePayoutsResponse {
+  payouts: StorePayout[];
+  summary: {
+    pendingCount: number;
+    paidCount: number;
+    pendingNetAmount: number;
+    paidNetAmount: number;
+    currency: string | null;
+  };
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  statusFilter: StorePayoutStatusFilter;
+}
+
+export interface MarkStorePayoutPaidResponse {
+  payout: StorePayout;
+  wasAlreadyPaid: boolean;
 }
 
 export class BillingService {
@@ -57,6 +112,55 @@ export class BillingService {
     const response = await axiosInstance.get<ConnectStatusResponse>(
       `/billing/connect/status/${storeId}`,
     );
+    return response.data;
+  }
+
+  async updateConnectStatus(
+    storeId: string,
+    data: UpdateConnectStatusDto,
+  ): Promise<ConnectStatusResponse> {
+    const response = await axiosInstance.patch<ConnectStatusResponse>(
+      `/billing/connect/status/${storeId}`,
+      data,
+    );
+    return response.data;
+  }
+
+  async getStorePayouts(
+    storeId: string,
+    params?: GetStorePayoutsParams,
+  ): Promise<StorePayoutsResponse> {
+    const queryParams: Record<string, string | number> = {};
+
+    if (params?.status && params.status !== "all") {
+      queryParams.status = params.status;
+    }
+
+    if (typeof params?.page === "number") {
+      queryParams.page = params.page;
+    }
+
+    if (typeof params?.limit === "number") {
+      queryParams.limit = params.limit;
+    }
+
+    const response = await axiosInstance.get<StorePayoutsResponse>(
+      `/billing/stores/${storeId}/payouts`,
+      {
+        params: queryParams,
+      },
+    );
+    return response.data;
+  }
+
+  async markStorePayoutPaid(
+    storeId: string,
+    payoutId: string,
+  ): Promise<MarkStorePayoutPaidResponse> {
+    const response = await axiosInstance.patch<MarkStorePayoutPaidResponse>(
+      `/billing/stores/${storeId}/payouts/${payoutId}/mark-paid`,
+    );
+
     return response.data;
   }
 }

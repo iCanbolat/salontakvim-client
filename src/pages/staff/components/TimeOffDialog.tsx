@@ -97,17 +97,17 @@ export function TimeOffDialog({
       queryClient.invalidateQueries({
         queryKey: qk.staffDetails(storeId, staffId),
       });
-      toast.success("İzin eklendi");
+      // toast.success("Time off added");
       onClose();
     },
     onError: (error: any) => {
       const message =
         error.response?.data?.message ===
         "This break overlaps with an existing break or time off"
-          ? "Bu izin, mevcut bir izin veya mola ile çakışıyor."
+          ? "This time off overlaps with an existing entry."
           : error.response?.data?.message || error.message;
 
-      toast.error("İzin eklenemedi: " + message);
+      toast.error("Could not add time off: " + message);
     },
   });
 
@@ -122,17 +122,17 @@ export function TimeOffDialog({
       queryClient.invalidateQueries({
         queryKey: qk.staffDetails(storeId, staffId),
       });
-      toast.success("İzin güncellendi");
+      toast.success("Time off updated");
       onClose();
     },
     onError: (error: any) => {
       const message =
         error.response?.data?.message ===
         "This break overlaps with an existing break or time off"
-          ? "Bu izin, mevcut bir izin veya mola ile çakışıyor."
+          ? "This time off overlaps with an existing entry."
           : error.response?.data?.message || error.message;
 
-      toast.error("İzin güncellenemedi: " + message);
+      toast.error("Could not update time off: " + message);
     },
   });
 
@@ -141,17 +141,17 @@ export function TimeOffDialog({
 
     // Validation
     if (!startDate || !endDate) {
-      toast.error("Başlangıç ve bitiş tarihi gerekli");
+      toast.error("Start and end dates are required");
       return;
     }
 
     if (new Date(endDate) < new Date(startDate)) {
-      toast.error("Bitiş tarihi başlangıç tarihinden önce olamaz");
+      toast.error("End date cannot be before start date");
       return;
     }
 
     if (isPartialDay && (!startTime || !endTime)) {
-      toast.error("Kısmi gün izni için saat bilgisi gerekli");
+      toast.error("Time information is required for partial day time off");
       return;
     }
 
@@ -182,10 +182,10 @@ export function TimeOffDialog({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? "İzni Düzenle" : "Yeni İzin Ekle"}
+            {isEditing ? "Edit Time Off" : "Add New Time Off"}
           </DialogTitle>
           <DialogDescription>
-            {staffName} için izin/mola oluşturun
+            Create break/time off for {staffName}
           </DialogDescription>
         </DialogHeader>
 
@@ -196,7 +196,7 @@ export function TimeOffDialog({
               <div className="space-y-2">
                 <Label htmlFor="start-date" className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  Başlangıç Tarihi
+                  Start Date
                 </Label>
                 <Popover
                   open={isStartDatePopoverOpen}
@@ -210,7 +210,7 @@ export function TimeOffDialog({
                       {startDate ? (
                         format(new Date(startDate), "MMM dd, yyyy")
                       ) : (
-                        <span>Tarih seçin</span>
+                        <span>Select date</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -237,7 +237,7 @@ export function TimeOffDialog({
               <div className="space-y-2">
                 <Label htmlFor="end-date" className="flex items-center gap-2">
                   <CalendarIcon className="h-4 w-4" />
-                  Bitiş Tarihi
+                  End Date
                 </Label>
                 <Popover
                   open={isEndDatePopoverOpen}
@@ -251,7 +251,7 @@ export function TimeOffDialog({
                       {endDate ? (
                         format(new Date(endDate), "MMM dd, yyyy")
                       ) : (
-                        <span>Tarih seçin</span>
+                        <span>Select date</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -279,10 +279,10 @@ export function TimeOffDialog({
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div className="space-y-0.5">
                 <Label htmlFor="partial-day" className="text-sm font-medium">
-                  Kısmi Gün İzni
+                  Partial Day Time Off
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Sadece belirli saatler için izin
+                  Time off for specific hours only
                 </p>
               </div>
               <Switch
@@ -301,7 +301,7 @@ export function TimeOffDialog({
                     className="flex items-center gap-2"
                   >
                     <Clock className="h-4 w-4" />
-                    Başlangıç Saati
+                    Start Time
                   </Label>
                   <Input
                     id="start-time"
@@ -315,7 +315,7 @@ export function TimeOffDialog({
                 <div className="space-y-2">
                   <Label htmlFor="end-time" className="flex items-center gap-2">
                     <Clock className="h-4 w-4" />
-                    Bitiş Saati
+                    End Time
                   </Label>
                   <Input
                     id="end-time"
@@ -331,14 +331,14 @@ export function TimeOffDialog({
             {/* Reason */}
             <div className="space-y-2">
               <Label htmlFor="reason">
-                Neden{" "}
+                Reason{" "}
                 <span className="text-xs text-muted-foreground">
-                  (Opsiyonel)
+                  (Optional)
                 </span>
               </Label>
               <Textarea
                 id="reason"
-                placeholder="İzin nedeni belirtin..."
+                placeholder="Enter reason for time off..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
                 rows={3}
@@ -353,10 +353,10 @@ export function TimeOffDialog({
             <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
               <div className="space-y-0.5">
                 <Label htmlFor="recurring" className="text-sm font-medium">
-                  Tekrarlayan İzin
+                  Recurring Time Off
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  Bu izin her yıl tekrarlanacak
+                  This time off will repeat every year
                 </p>
               </div>
               <Switch
@@ -374,16 +374,16 @@ export function TimeOffDialog({
               onClick={onClose}
               disabled={isPending}
             >
-              İptal
+              Cancel
             </Button>
             <Button type="submit" disabled={isPending}>
               {isPending
                 ? isEditing
-                  ? "Güncelleniyor..."
-                  : "Ekleniyor..."
+                  ? "Updating..."
+                  : "Adding..."
                 : isEditing
-                  ? "Güncelle"
-                  : "Ekle"}
+                  ? "Update"
+                  : "Add"}
             </Button>
           </DialogFooter>
         </form>

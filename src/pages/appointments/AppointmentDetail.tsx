@@ -197,7 +197,7 @@ export function AppointmentDetailPage() {
   return (
     <div className="space-y-6">
       <AppointmentDetailHeader
-        title="Appointment Details"
+        title={appointment.customerName || "Unnamed Appointment"}
         subtitle={formatAppointmentNumber(
           appointment.publicNumber,
           store?.country,
@@ -219,13 +219,13 @@ export function AppointmentDetailPage() {
         isDeleting={deleteMutation.isPending}
       />
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
         <AppointmentSummaryCard appointment={appointment} feedback={feedback} />
 
         <RecentActivityList
           activities={appointmentActivities}
-          title="Randevu Geçmişi"
-          emptyMessage="Henüz bu randevu için bir aktivite bulunmuyor."
+          title="Appointment Activities"
+          emptyMessage="No activities found for this appointment."
           showViewAll={false}
           maxHeight="530px"
         />

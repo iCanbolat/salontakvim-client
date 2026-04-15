@@ -21,6 +21,9 @@ export function AuthCallbackPage() {
       const accessToken = searchParams.get("accessToken");
       const refreshToken = searchParams.get("refreshToken");
       const needsOnboarding = searchParams.get("needsOnboarding") === "true";
+      const requiresSubscription =
+        searchParams.get("requiresSubscription") === "true";
+      const trialEndsAt = searchParams.get("trialEndsAt");
       const errorParam = searchParams.get("error");
 
       if (errorParam) {
@@ -40,6 +43,18 @@ export function AuthCallbackPage() {
       localStorage.setItem("refreshToken", refreshToken);
       if (needsOnboarding) {
         localStorage.setItem("needsOnboarding", "true");
+      } else {
+        localStorage.removeItem("needsOnboarding");
+      }
+      if (requiresSubscription) {
+        localStorage.setItem("requiresSubscription", "true");
+      } else {
+        localStorage.removeItem("requiresSubscription");
+      }
+      if (trialEndsAt) {
+        localStorage.setItem("trialEndsAt", trialEndsAt);
+      } else {
+        localStorage.removeItem("trialEndsAt");
       }
 
       // Set tokens in API client
@@ -53,7 +68,9 @@ export function AuthCallbackPage() {
         await refetchUser();
 
         // Redirect based on onboarding status
-        if (needsOnboarding) {
+        if (requiresSubscription) {
+          navigate("/subscription");
+        } else if (needsOnboarding) {
           navigate("/welcome");
         } else {
           navigate("/dashboard");

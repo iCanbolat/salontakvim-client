@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/contexts";
 import { storeService, authService } from "@/services";
@@ -18,12 +18,13 @@ export function useCurrentStore() {
 }
 
 export function useCurrentStoreBootstrap() {
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const setStore = useCurrentStoreState((state) => state.setStore);
   const setLoading = useCurrentStoreState((state) => state.setLoading);
   const setHasInitialized = useCurrentStoreState(
     (state) => state.setHasInitialized,
   );
+  const trialExpiryTimerRef = useRef<number | null>(null);
 
   const shouldFetchStore =
     !authLoading && !!user && isAuthenticated && !authService.needsOnboarding();
@@ -33,6 +34,73 @@ export function useCurrentStoreBootstrap() {
     queryFn: () => storeService.getMyStore(),
     enabled: shouldFetchStore,
   });
+
+  useEffect(() => {
+    return () => {
+      if (
+        trialExpiryTimerRef.current !== null &&
+        typeof window !== "undefined"
+      ) {
+        window.clearTimeout(trialExpiryTimerRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (trialExpiryTimerRef.current !== null && typeof window !== "undefined") {
+      window.clearTimeout(trialExpiryTimerRef.current);
+      trialExpiryTimerRef.current = null;
+    }
+
+    if (!query.data || !isAuthenticated || !user) {
+      return;
+    }
+
+    if (user.role !== "admin") {
+      authService.clearSubscriptionState();
+      return;
+    }
+
+    const forceTrialLogout = async () => {
+      try {
+        await logout();
+      } finally {
+        if (typeof window !== "undefined") {
+          window.location.href = "/login?reason=trial-expired";
+        }
+      }
+    };
+
+    if (query.data.paymentStatus !== "trial" || !query.data.trialEndsAt) {
+      authService.clearSubscriptionState();
+      return;
+    }
+
+    const trialEndsAtMs = new Date(query.data.trialEndsAt).getTime();
+    if (!Number.isFinite(trialEndsAtMs)) {
+      return;
+    }
+
+    const isExpired = trialEndsAtMs <= Date.now();
+
+    if (isExpired) {
+      if (!authService.requiresSubscription()) {
+        void forceTrialLogout();
+      }
+      return;
+    }
+
+    authService.clearSubscriptionState();
+
+    if (typeof window !== "undefined") {
+      trialExpiryTimerRef.current = window.setTimeout(
+        () => {
+          void forceTrialLogout();
+        },
+        Math.max(0, trialEndsAtMs - Date.now()),
+      );
+    }
+  }, [query.data, isAuthenticated, user, logout]);
 
   useEffect(() => {
     if (!isAuthenticated || !user) {

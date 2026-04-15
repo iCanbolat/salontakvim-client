@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
-import { tr } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import {
   Plus,
   Loader2,
@@ -35,6 +35,7 @@ import type {
 import { useStaff } from "./hooks/useStaff";
 import { getStaffTableColumns } from "./table-columns";
 import { useConfirmDialog } from "@/contexts/ConfirmDialogProvider";
+import { cn } from "@/lib/utils";
 
 export function StaffManagement() {
   const { state, actions, data, pagination } = useStaff();
@@ -104,7 +105,7 @@ export function StaffManagement() {
   };
 
   const formatDate = (dateStr: string) =>
-    format(parseISO(dateStr), "d MMMM yyyy", { locale: tr });
+    format(parseISO(dateStr), "d MMMM yyyy", { locale: enUS });
 
   const formatDateRange = (timeOff: StaffBreakWithStaff) =>
     timeOff.startDate === timeOff.endDate
@@ -303,9 +304,13 @@ export function StaffManagement() {
                   <Button
                     key={filter.value}
                     size="sm"
-                    variant={
-                      timeOffStatus === filter.value ? "default" : "outline"
-                    }
+                    variant="ghost"
+                    className={cn(
+                      "min-w-[92px] rounded-2xl border px-3 justify-center transition-colors",
+                      timeOffStatus === filter.value
+                        ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-50 hover:text-blue-700"
+                        : "border-gray-200 bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900",
+                    )}
                     onClick={() => actions.setTimeOffStatus(filter.value)}
                     disabled={isLoading}
                   >
@@ -329,82 +334,90 @@ export function StaffManagement() {
                     {timeOffs.map((timeOff) => (
                       <div
                         key={timeOff.id}
-                        className="flex flex-col gap-3 rounded-lg border bg-white p-4 shadow-sm md:flex-row md:items-start md:justify-between"
+                        className="flex flex-col gap-3 rounded-lg border bg-white p-4 shadow-sm"
                       >
-                        <div className="space-y-2">
-                          <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
-                            <span className="font-semibold text-gray-900">
-                              {getStaffName(timeOff)}
-                            </span>
-                            {timeOff.staffTitle && (
-                              <span className="text-gray-500">
-                                • {timeOff.staffTitle}
+                        <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                          <div className="space-y-2 flex-1 w-full">
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-700">
+                              <span className="font-semibold text-gray-900">
+                                {getStaffName(timeOff)}
                               </span>
-                            )}
-                            <Badge
-                              variant="outline"
-                              className={statusBadgeClass[timeOff.status]}
-                            >
-                              {statusLabels[timeOff.status]}
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Calendar className="h-4 w-4" />
-                            <span>{formatDateRange(timeOff)}</span>
-                          </div>
-
-                          <div className="flex items-center gap-2 text-sm text-gray-600">
-                            <Clock className="h-4 w-4" />
-                            <span>{formatTimeRange(timeOff)}</span>
-                          </div>
-
-                          {timeOff.reason && (
-                            <div className="rounded bg-gray-50 p-2 text-sm text-gray-700">
-                              {timeOff.reason}
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="flex flex-col items-start gap-2 md:items-end">
-                          <p className="text-xs text-gray-500">
-                            Requested{" "}
-                            {format(parseISO(timeOff.createdAt), "d MMM yyyy", {
-                              locale: tr,
-                            })}
-                          </p>
-                          {timeOff.status === "pending" ? (
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                onClick={() =>
-                                  actions.updateBreakStatus({
-                                    breakId: timeOff.id,
-                                    staffId: timeOff.staffId,
-                                    status: "approved",
-                                  })
-                                }
-                              >
-                                <Check className="h-4 w-4 mr-1" />
-                                Approve
-                              </Button>
-                              <Button
-                                size="sm"
+                              {timeOff.staffTitle && (
+                                <span className="text-gray-500">
+                                  • {timeOff.staffTitle}
+                                </span>
+                              )}
+                              <Badge
                                 variant="outline"
-                                onClick={() =>
-                                  actions.updateBreakStatus({
-                                    breakId: timeOff.id,
-                                    staffId: timeOff.staffId,
-                                    status: "declined",
-                                  })
-                                }
+                                className={statusBadgeClass[timeOff.status]}
                               >
-                                <X className="h-4 w-4 mr-1" />
-                                Decline
-                              </Button>
+                                {statusLabels[timeOff.status]}
+                              </Badge>
                             </div>
-                          ) : null}
+
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Calendar className="h-4 w-4 shrink-0" />
+                              <span>{formatDateRange(timeOff)}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="h-4 w-4 shrink-0" />
+                              <span>{formatTimeRange(timeOff)}</span>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-start gap-2 md:items-end shrink-0">
+                            <p className="text-xs text-gray-500">
+                              Requested{" "}
+                              {format(
+                                parseISO(timeOff.createdAt),
+                                "d MMM yyyy",
+                                {
+                                  locale: enUS,
+                                },
+                              )}
+                            </p>
+                            {timeOff.status === "pending" ? (
+                              <div className="flex flex-wrap gap-2">
+                                <Button
+                                  size="sm"
+                                  onClick={() =>
+                                    actions.updateBreakStatus({
+                                      breakId: timeOff.id,
+                                      staffId: timeOff.staffId,
+                                      status: "approved",
+                                    })
+                                  }
+                                >
+                                  <Check className="h-4 w-4 mr-1" />
+                                  Approve
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    actions.updateBreakStatus({
+                                      breakId: timeOff.id,
+                                      staffId: timeOff.staffId,
+                                      status: "declined",
+                                    })
+                                  }
+                                >
+                                  <X className="h-4 w-4 mr-1" />
+                                  Decline
+                                </Button>
+                              </div>
+                            ) : null}
+                          </div>
                         </div>
+
+                        {timeOff.reason && (
+                          <div className="mt-1 rounded-md bg-gray-50 border border-gray-100 p-3 text-sm text-gray-700 w-full">
+                            <p className="whitespace-pre-wrap wrap-anywhere leading-relaxed">
+                              {timeOff.reason}
+                            </p>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

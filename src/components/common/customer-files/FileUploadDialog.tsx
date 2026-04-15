@@ -49,7 +49,7 @@ import {
 } from "@/components/ui/form";
 
 export const uploadSchema = z.object({
-  files: z.array(z.any()).min(1, "En az bir dosya seçmelisiniz"),
+  files: z.array(z.any()).min(1, "You must select at least one file"),
   description: z.string().optional(),
   tags: z.string().optional(),
 });
@@ -188,7 +188,7 @@ export function FileUploadDialog({
                 error:
                   error instanceof Error
                     ? error
-                    : new Error("Dosya yüklenemedi"),
+                    : new Error("File could not be uploaded"),
               };
             }
           }
@@ -204,13 +204,10 @@ export function FileUploadDialog({
 
       if (!successfulResults.length) {
         const firstError = outcomes.find((outcome) => outcome?.error)?.error;
-        throw firstError || new Error("Dosyalar yüklenemedi");
+        throw firstError || new Error("Files could not be uploaded");
       }
 
-      return {
-        results: successfulResults,
-        failedCount,
-      };
+      return { results: successfulResults, failedCount };
     },
     onMutate: async (values) => {
       await queryClient.cancelQueries({
@@ -295,7 +292,8 @@ export function FileUploadDialog({
 
       return { previousData, tempIds: tempFiles.map((file) => file.id) };
     },
-    onSuccess: ({ results, failedCount }) => {
+    onSuccess: (data) => {
+      const { results, failedCount } = data || { results: [], failedCount: 0 };
       queryClient.setQueriesData(
         {
           predicate: (query) =>
@@ -350,10 +348,10 @@ export function FileUploadDialog({
 
       if (failedCount > 0) {
         toast.warning(
-          `${results.length} dosya yüklendi, ${failedCount} dosya yüklenemedi`,
+          `${results.length} files uploaded, ${failedCount} files failed`,
         );
       } else {
-        toast.success(`${results.length} dosya başarıyla yüklendi`);
+        toast.success(`${results.length} files uploaded successfully`);
       }
       resetForm();
       onSuccess?.();
@@ -364,7 +362,7 @@ export function FileUploadDialog({
           queryClient.setQueryData(key, data);
         });
       }
-      toast.error(error.message || "Dosyalar yüklenemedi");
+      toast.error(error.message || "Files could not be uploaded");
     },
   });
 
@@ -382,7 +380,7 @@ export function FileUploadDialog({
     const files = Array.from(e.target.files || []);
     const validFiles = files.filter((file) => {
       if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} çok büyük (maks 10MB)`);
+        toast.error(`${file.name} is too large (max 10MB)`);
         return false;
       }
       return true;
@@ -427,10 +425,9 @@ export function FileUploadDialog({
             className="flex flex-col h-full overflow-hidden"
           >
             <DialogHeader className="p-6 border-b">
-              <DialogTitle>Dosya Yükle</DialogTitle>
+              <DialogTitle>Upload File</DialogTitle>
               <DialogDescription>
-                Birden fazla dosya seçebilir, açıklama ve etiket
-                ekleyebilirsiniz.
+                You can select multiple files, add descriptions and tags.
               </DialogDescription>
             </DialogHeader>
 
@@ -442,7 +439,7 @@ export function FileUploadDialog({
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <h4 className="text-sm font-semibold">
-                        Yüklenecek Dosyalar ({filesToUpload.length})
+                        Files to Upload ({filesToUpload.length})
                       </h4>
                       <Button
                         type="button"
@@ -452,7 +449,7 @@ export function FileUploadDialog({
                         onClick={() => fileInputRef.current?.click()}
                       >
                         <Plus className="h-3 w-3 mr-1" />
-                        Ekle
+                        Add
                       </Button>
                       <input
                         ref={fileInputRef}
@@ -467,9 +464,9 @@ export function FileUploadDialog({
                       {filesToUpload.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground border-2 border-dashed rounded-lg">
                           <Upload className="h-8 w-8 mx-auto mb-2 opacity-20" />
-                          <p className="text-sm">Henüz dosya seçilmedi</p>
+                          <p className="text-sm">No files selected yet</p>
                           <p className="text-xs mt-1">
-                            "Ekle" butonuna tıklayarak dosya seçin
+                            Click "Add" button to select files
                           </p>
                         </div>
                       ) : (
@@ -532,10 +529,10 @@ export function FileUploadDialog({
                       name="description"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Açıklama</FormLabel>
+                          <FormLabel>Description</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Dosya hakkında kısa bir not..."
+                              placeholder="Brief note about the file..."
                               className="resize-none h-24"
                               {...field}
                             />
@@ -550,16 +547,16 @@ export function FileUploadDialog({
                       name="tags"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Etiketler</FormLabel>
+                          <FormLabel>Tags</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="fatura, sözleşme, rapor..."
+                              placeholder="invoice, contract, report..."
                               {...field}
                             />
                           </FormControl>
                           <FormDescription>
-                            Virgül ile ayırarak birden fazla etiket
-                            ekleyebilirsiniz.
+                            You can add multiple tags by separating them with
+                            commas.
                           </FormDescription>
                           <FormMessage />
                         </FormItem>
@@ -650,7 +647,7 @@ export function FileUploadDialog({
                               {filesToUpload[selectedPreviewIndex].name}
                             </p>
                             <p className="text-sm text-muted-foreground mt-2">
-                              Bu dosya türü için önizleme desteklenmiyor.
+                              Preview not supported for this file type.
                             </p>
                           </div>
                         )}
@@ -659,7 +656,7 @@ export function FileUploadDialog({
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center text-muted-foreground p-12 text-center">
                       <Upload className="h-12 w-12 mb-4 opacity-10" />
-                      <p>Önizleme yapılacak dosya seçilmedi</p>
+                      <p>No file selected for preview</p>
                     </div>
                   )}
                 </div>
@@ -673,15 +670,17 @@ export function FileUploadDialog({
                 onClick={() => resetForm()}
                 disabled={uploadMutation.isPending}
               >
-                İptal
+                Cancel
               </Button>
               <Button type="submit" disabled={uploadMutation.isPending}>
                 {uploadMutation.isPending && (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 )}
                 {filesToUpload.length > 0
-                  ? `${filesToUpload.length} Dosyayı Yükle`
-                  : "Yükle"}
+                  ? `Upload ${filesToUpload.length} ${
+                      filesToUpload.length === 1 ? "File" : "Files"
+                    }`
+                  : "Upload"}
               </Button>
             </DialogFooter>
           </form>

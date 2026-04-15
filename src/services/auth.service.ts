@@ -111,6 +111,18 @@ export class AuthService {
       localStorage.removeItem("needsOnboarding");
     }
 
+    if (authData.requiresSubscription) {
+      localStorage.setItem("requiresSubscription", "true");
+    } else {
+      localStorage.removeItem("requiresSubscription");
+    }
+
+    if (authData.trialEndsAt) {
+      localStorage.setItem("trialEndsAt", authData.trialEndsAt);
+    } else {
+      localStorage.removeItem("trialEndsAt");
+    }
+
     // Convert AuthResponse.user (minimal) to full User object for storage
     const user: User = {
       id: authData.user.id,
@@ -139,6 +151,8 @@ export class AuthService {
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
     localStorage.removeItem("needsOnboarding");
+    localStorage.removeItem("requiresSubscription");
+    localStorage.removeItem("trialEndsAt");
     apiClient.logout();
   }
 
@@ -160,6 +174,19 @@ export class AuthService {
    */
   needsOnboarding(): boolean {
     return localStorage.getItem("needsOnboarding") === "true";
+  }
+
+  requiresSubscription(): boolean {
+    return localStorage.getItem("requiresSubscription") === "true";
+  }
+
+  getTrialEndsAt(): string | null {
+    return localStorage.getItem("trialEndsAt");
+  }
+
+  clearSubscriptionState(): void {
+    localStorage.removeItem("requiresSubscription");
+    localStorage.removeItem("trialEndsAt");
   }
 
   /**

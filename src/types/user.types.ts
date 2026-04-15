@@ -39,6 +39,8 @@ export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   needsOnboarding?: boolean;
+  requiresSubscription?: boolean;
+  trialEndsAt?: string;
 }
 
 export interface MeResponse {

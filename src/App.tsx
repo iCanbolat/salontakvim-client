@@ -109,6 +109,9 @@ const FeedbackPage = lazy(() => import("./pages/public/FeedbackPage"));
 const CancelAppointmentPage = lazy(
   () => import("./pages/public/CancelAppointmentPage"),
 );
+const SubscriptionRequiredPage = lazy(
+  () => import("./pages/subscription/SubscriptionRequiredPage"),
+);
 
 function RouteSuspense({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageLoader />}>{children}</Suspense>;
@@ -171,6 +174,18 @@ function App() {
 
                 {/* Welcome/Onboarding route (protected but no store required) */}
                 <Route path="/welcome" element={<WelcomeRoute />} />
+
+                {/* Subscription required route (outside app layout) */}
+                <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+                  <Route
+                    path="/subscription"
+                    element={
+                      <RouteSuspense>
+                        <SubscriptionRequiredPage />
+                      </RouteSuspense>
+                    }
+                  />
+                </Route>
 
                 {/* Protected routes with layout */}
                 <Route element={<MainLayout />}>
@@ -365,6 +380,10 @@ function WelcomeRoute() {
     return <Navigate to="/login" replace />;
   }
 
+  if (user.role === "admin" && authService.requiresSubscription()) {
+    return <Navigate to="/subscription" replace />;
+  }
+
   // If user already has a store (doesn't need onboarding), redirect to dashboard
   if (!authService.needsOnboarding()) {
     return <Navigate to="/dashboard" replace />;
@@ -379,6 +398,10 @@ function RootRedirect() {
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace />;
+  }
+
+  if (user.role === "admin" && authService.requiresSubscription()) {
+    return <Navigate to="/subscription" replace />;
   }
 
   // Check if user needs onboarding

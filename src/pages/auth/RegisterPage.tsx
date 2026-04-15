@@ -3,11 +3,12 @@
  */
 
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts";
+import { billingService, storeService } from "@/services";
 import {
   registerSchema,
   type RegisterFormData,
@@ -45,6 +46,17 @@ export function RegisterPage() {
   const [slugEdited, setSlugEdited] = useState(false);
   const { register: registerUser } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const selectedBillingCycle: "monthly" | "annual" =
+    searchParams.get("billing") === "annual" ? "annual" : "monthly";
+  const selectedPlanParam = searchParams.get("plan")?.toLowerCase();
+  const selectedPlanFromQuery: "starter" | "pro" | "enterprise" | null =
+    selectedPlanParam === "starter" ||
+    selectedPlanParam === "pro" ||
+    selectedPlanParam === "enterprise"
+      ? selectedPlanParam
+      : null;
 
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -112,22 +124,76 @@ export function RegisterPage() {
     try {
       const { confirmPassword, ...registerData } = data;
       await registerUser(registerData);
+
+      const shouldStartCheckout =
+        selectedPlanFromQuery === "starter" || selectedPlanFromQuery === "pro";
+
+      if (shouldStartCheckout) {
+        try {
+          const store = await storeService.getMyStore();
+          const returnUrl = `${window.location.origin}/settings?plan=${selectedPlanFromQuery}&billing=${selectedBillingCycle}`;
+          const checkout =
+            await billingService.createSubscriptionCheckoutSession({
+              storeId: store.id,
+              successUrl: returnUrl,
+              cancelUrl: returnUrl,
+              plan: selectedPlanFromQuery,
+              billingCycle: selectedBillingCycle,
+            });
+
+          if (checkout.checkoutUrl) {
+            window.location.href = checkout.checkoutUrl;
+            return;
+          }
+        } catch (checkoutError: any) {
+          toast.error(
+            checkoutError?.response?.data?.message ||
+              checkoutError?.message ||
+              "Registration succeeded but checkout could not be started.",
+          );
+        }
+      }
+
+      if (selectedPlanFromQuery === "enterprise") {
+        toast.info(
+          "Your Enterprise plan request is recorded. Our team will contact you.",
+        );
+      }
+
       toast.success("Registration successful! Welcome to SalonTakvim.");
       navigate("/dashboard");
     } catch (error: any) {
       console.error("Registration error:", error);
       const errorMessage = error?.response?.data?.message || "";
+      const errorStatus = error?.response?.status;
 
       if (errorMessage.includes("slug")) {
         form.setError("storeSlug", {
           type: "manual",
           message: "This URL is already taken. Please choose another one.",
         });
-        setStep(1); // Go back to step 1 where the slug field is
+        setStep(1);
         setTimeout(() => form.setFocus("storeSlug"), 0);
         toast.error("This URL is already taken.");
+      } else if (
+        errorMessage.toLowerCase().includes("email") ||
+        errorStatus === 409
+      ) {
+        form.setError("email", {
+          type: "manual",
+          message:
+            "This email is already registered. Please use another or sign in.",
+        });
+        setStep(2);
+        setTimeout(() => form.setFocus("email"), 0);
+        // toast.error("Account already exists with this email.");
       } else {
-        toast.error("Registration failed. Please try again.");
+        const readableError =
+          typeof errorMessage === "string" && errorMessage.length > 0
+            ? errorMessage
+            : "Registration failed. Please check your information and try again.";
+
+        toast.error(readableError);
       }
     } finally {
       setIsLoading(false);

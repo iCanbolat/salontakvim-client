@@ -10,7 +10,8 @@ import axios, {
 import type { ApiError } from "@/types";
 
 const API_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.DEV ? "/api" : "http://localhost:8080/api");
 
 class ApiClient {
   private client: AxiosInstance;
@@ -123,6 +124,9 @@ class ApiClient {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     localStorage.removeItem("user");
+    localStorage.removeItem("needsOnboarding");
+    localStorage.removeItem("requiresSubscription");
+    localStorage.removeItem("trialEndsAt");
   }
 
   public getClient(): AxiosInstance {

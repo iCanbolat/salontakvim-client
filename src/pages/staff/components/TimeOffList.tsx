@@ -6,7 +6,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
-import { tr } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -70,11 +70,11 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
         });
         queryClient.invalidateQueries({ queryKey: qk.notifications() });
       }
-      toast.success("İzin silindi");
+      toast.success("Time off deleted");
     },
     onError: (error: any) => {
       const message = error.response?.data?.message || error.message;
-      toast.error("İzin silinemedi: " + message);
+      toast.error("Could not delete time off: " + message);
     },
   });
 
@@ -85,10 +85,10 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
 
   const handleDelete = (breakId: string) => {
     void confirm({
-      title: "Izni sil",
-      description: "Bu izni silmek istediginizden emin misiniz?",
-      confirmText: "Sil",
-      cancelText: "Iptal",
+      title: "Delete time off",
+      description: "Are you sure you want to delete this time off?",
+      confirmText: "Delete",
+      cancelText: "Cancel",
       variant: "destructive",
     }).then((isConfirmed) => {
       if (isConfirmed) {
@@ -103,7 +103,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
   };
 
   const formatDate = (dateStr: string) => {
-    return format(parseISO(dateStr), "d MMMM yyyy", { locale: tr });
+    return format(parseISO(dateStr), "d MMMM yyyy", { locale: enUS });
   };
 
   const formatTimeRange = (breakItem: StaffBreak) => {
@@ -113,7 +113,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
         5,
       )} - ${breakItem.endTime.substring(0, 5)}`;
     }
-    return "Tüm Gün";
+    return "All Day";
   };
 
   if (isLoading) {
@@ -129,7 +129,7 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          İzinler yüklenemedi: {(error as Error).message}
+          Could not load time off: {(error as Error).message}
         </AlertDescription>
       </Alert>
     );
@@ -139,10 +139,10 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h3 className="text-lg font-semibold">İzinler ve Molalar</h3>
+        <h3 className="text-lg font-semibold">Time Off and Breaks</h3>
         <Button size="sm" onClick={() => setIsDialogOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Yeni İzin
+          New Time Off
         </Button>
       </div>
 
@@ -152,11 +152,11 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
           {breaks.map((breakItem) => (
             <Card key={breakItem.id}>
               <CardContent className="pt-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 space-y-2">
+                <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                  <div className="flex-1 space-y-2 w-full">
                     {/* Date Range */}
                     <div className="flex items-center gap-2 text-sm">
-                      <Calendar className="h-4 w-4 text-gray-500" />
+                      <Calendar className="h-4 w-4 text-gray-500 shrink-0" />
                       <span className="font-medium">
                         {formatDate(breakItem.startDate)}
                         {breakItem.startDate !== breakItem.endDate &&
@@ -166,25 +166,18 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
 
                     {/* Time Range */}
                     <div className="flex items-center gap-2 text-sm">
-                      <Clock className="h-4 w-4 text-gray-500" />
+                      <Clock className="h-4 w-4 text-gray-500 shrink-0" />
                       <span>{formatTimeRange(breakItem)}</span>
                       {breakItem.isRecurring && (
                         <Badge variant="secondary" className="ml-2">
-                          Tekrarlayan
+                          Recurring
                         </Badge>
                       )}
                     </div>
-
-                    {/* Reason */}
-                    {breakItem.reason && (
-                      <div className="mt-2 p-2 bg-gray-50 rounded text-sm">
-                        <p className="text-gray-800">{breakItem.reason}</p>
-                      </div>
-                    )}
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-1 ml-4">
+                  <div className="flex gap-1 self-end sm:self-start">
                     <Button
                       size="sm"
                       variant="ghost"
@@ -202,6 +195,15 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
                     </Button>
                   </div>
                 </div>
+
+                {/* Reason - Full Width */}
+                {breakItem.reason && (
+                  <div className="mt-3 p-3 bg-gray-50 border border-gray-100 rounded-md text-sm w-full">
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap wrap-anywhere">
+                      {breakItem.reason}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
@@ -209,10 +211,10 @@ export function TimeOffList({ storeId, staffId, staffName }: TimeOffListProps) {
       ) : (
         <div className="text-center py-8 border rounded-lg bg-gray-50">
           <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600 mb-4">Henüz izin kaydı bulunmuyor</p>
+          <p className="text-gray-600 mb-4">No time off records found</p>
           <Button size="sm" onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            İlk İzni Ekle
+            Add First Time Off
           </Button>
         </div>
       )}

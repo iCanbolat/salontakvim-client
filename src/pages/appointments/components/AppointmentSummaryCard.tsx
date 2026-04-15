@@ -5,6 +5,7 @@
 import { format } from "date-fns";
 import {
   Calendar,
+  CalendarCheck,
   Clock,
   User,
   Briefcase,
@@ -13,13 +14,10 @@ import {
   Star,
 } from "lucide-react";
 import type { Appointment, Feedback } from "@/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { AppointmentStatusBadge } from "./AppointmentStatusBadge";
 import { useCurrentStore } from "@/hooks/useCurrentStore";
-import {
-  formatAppointmentNumber,
-  formatCurrency,
-} from "@/utils/appointment.utils";
+import { formatCurrency } from "@/utils/appointment.utils";
 
 interface AppointmentSummaryCardProps {
   appointment: Appointment;
@@ -31,11 +29,6 @@ export function AppointmentSummaryCard({
   feedback,
 }: AppointmentSummaryCardProps) {
   const { store } = useCurrentStore();
-  const customerDisplayName =
-    appointment.customerName ||
-    (appointment.customerId
-      ? `Customer #${appointment.customerId}`
-      : "Customer");
 
   const appointmentDate = format(
     new Date(appointment.startDateTime),
@@ -87,18 +80,17 @@ export function AppointmentSummaryCard({
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div>
-          <CardTitle className="text-xl">{customerDisplayName}</CardTitle>
-          <p className="text-sm text-muted-foreground mt-1">
-            {formatAppointmentNumber(appointment.publicNumber, store?.country)}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-2 shrink-0">
+      <CardContent className="flex flex-col gap-0 md:max-h-[570px] overflow-y-auto">
+        <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 px-1 rounded-sm transition-colors">
+          <div className="flex items-center gap-3">
+            <CalendarCheck className="h-4 w-4 text-muted-foreground" />
+            <p className="text-xs uppercase tracking-wide text-muted-foreground font-medium">
+              Status
+            </p>
+          </div>
           <AppointmentStatusBadge status={appointment.status} />
         </div>
-      </CardHeader>
-      <CardContent className="grid gap-0 md:h-[540px] overflow-y-auto">
+
         <div className="flex items-center justify-between py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50/50 px-1 rounded-sm transition-colors">
           <div className="flex items-center gap-3">
             <Calendar className="h-4 w-4 text-muted-foreground" />

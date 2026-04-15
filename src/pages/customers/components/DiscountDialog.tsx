@@ -121,7 +121,7 @@ export function DiscountDialog({
         code: form.code.toUpperCase(),
         name:
           form.name ||
-          `${form.value}${form.type === "percentage" ? "%" : "₺"} İndirim`,
+          `${form.value}${form.type === "percentage" ? "%" : "₺"} Discount`,
         description: form.description || undefined,
         type: form.type,
         value: parseFloat(form.value),
@@ -151,13 +151,14 @@ export function DiscountDialog({
     onSuccess: (coupon) => {
       queryClient.invalidateQueries({ queryKey: qk.coupons(storeId) });
       toast.success(
-        `"${coupon.code}" kuponu oluşturuldu ve ${selectedCustomers.length} müşteriye tanımlandı`,
+        `Coupon "${coupon.code}" created and assigned to ${selectedCustomers.length} customers`,
       );
       onClose();
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Kupon oluşturulurken bir hata oluştu",
+        error.response?.data?.message ||
+          "An error occurred while creating coupon",
       );
     },
   });
@@ -165,7 +166,7 @@ export function DiscountDialog({
   // Assign existing coupon mutation
   const assignExistingMutation = useMutation({
     mutationFn: async () => {
-      if (!selectedCouponId) throw new Error("Kupon seçilmedi");
+      if (!selectedCouponId) throw new Error("No coupon selected");
 
       await couponService.assignCouponToCustomers(storeId, selectedCouponId, {
         customerIds: selectedCustomers.map((c) => c.id),
@@ -176,13 +177,14 @@ export function DiscountDialog({
       const coupon = existingCoupons?.find((c) => c.id === selectedCouponId);
       queryClient.invalidateQueries({ queryKey: qk.coupons(storeId) });
       toast.success(
-        `"${coupon?.code}" kuponu ${selectedCustomers.length} müşteriye tanımlandı`,
+        `Coupon "${coupon?.code}" assigned to ${selectedCustomers.length} customers`,
       );
       onClose();
     },
     onError: (error: any) => {
       toast.error(
-        error.response?.data?.message || "Kupon tanımlanırken bir hata oluştu",
+        error.response?.data?.message ||
+          "An error occurred while assigning coupon",
       );
     },
   });
@@ -190,13 +192,13 @@ export function DiscountDialog({
   const handleSubmit = () => {
     if (activeTab === "new") {
       if (!form.code.trim() || !form.value) {
-        toast.error("Kupon kodu ve değeri zorunludur");
+        toast.error("Coupon code and value are required");
         return;
       }
       createAndAssignMutation.mutate();
     } else {
       if (!selectedCouponId) {
-        toast.error("Lütfen bir kupon seçin");
+        toast.error("Please select a coupon");
         return;
       }
       assignExistingMutation.mutate();
@@ -210,16 +212,16 @@ export function DiscountDialog({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[550px]">
         <DialogHeader>
-          <DialogTitle>İndirim Kuponu Tanımla</DialogTitle>
+          <DialogTitle>Assign Discount Coupon</DialogTitle>
           <DialogDescription>
-            {selectedCustomers.length} müşteriye indirim kuponu tanımlayın
+            Assign a discount coupon to {selectedCustomers.length} customers
           </DialogDescription>
         </DialogHeader>
 
         <DialogBody className="space-y-4">
           {/* Selected customers preview */}
           <div className="space-y-2">
-            <Label>Seçili Müşteriler</Label>
+            <Label>Selected Customers</Label>
             <div className="flex flex-wrap gap-2">
               {selectedCustomers.slice(0, 5).map((customer) => (
                 <div
@@ -231,7 +233,7 @@ export function DiscountDialog({
               ))}
               {selectedCustomers.length > 5 && (
                 <div className="inline-flex items-center px-2 py-1 bg-gray-100 text-gray-600 rounded text-xs">
-                  +{selectedCustomers.length - 5} kişi daha
+                  +{selectedCustomers.length - 5} more
                 </div>
               )}
             </div>
@@ -244,11 +246,11 @@ export function DiscountDialog({
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="new">
                 <Plus className="h-4 w-4 mr-1" />
-                Yeni Kupon
+                New Coupon
               </TabsTrigger>
               <TabsTrigger value="existing">
                 <Tag className="h-4 w-4 mr-1" />
-                Mevcut Kupon
+                Existing Coupon
               </TabsTrigger>
             </TabsList>
 
@@ -256,7 +258,7 @@ export function DiscountDialog({
               {/* Coupon Code */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="code">Kupon Kodu</Label>
+                  <Label htmlFor="code">Coupon Code</Label>
                   <div className="flex gap-2">
                     <Input
                       id="code"
@@ -264,7 +266,7 @@ export function DiscountDialog({
                       onChange={(e) =>
                         setForm({ ...form, code: e.target.value.toUpperCase() })
                       }
-                      placeholder="INDIRIM10"
+                      placeholder="DISCOUNT10"
                       className="font-mono uppercase"
                     />
                     <Button
@@ -274,7 +276,7 @@ export function DiscountDialog({
                       onClick={() =>
                         setForm({ ...form, code: generateCouponCode() })
                       }
-                      title="Rastgele kod oluştur"
+                      title="Generate random code"
                     >
                       <Tag className="h-4 w-4" />
                     </Button>
@@ -282,12 +284,12 @@ export function DiscountDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="name">Kupon Adı</Label>
+                  <Label htmlFor="name">Coupon Name</Label>
                   <Input
                     id="name"
                     value={form.name}
                     onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    placeholder="Hoş geldin indirimi"
+                    placeholder="Welcome discount"
                   />
                 </div>
               </div>
@@ -295,27 +297,27 @@ export function DiscountDialog({
               {/* Discount Type and Value */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>İndirim Tipi</Label>
+                  <Label>Discount Type</Label>
                   <Select
                     value={form.type}
                     onValueChange={(v: DiscountType) =>
                       setForm({ ...form, type: v })
                     }
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="percentage">
                         <div className="flex items-center gap-2">
                           <Percent className="h-4 w-4" />
-                          Yüzde (%)
+                          Percentage (%)
                         </div>
                       </SelectItem>
                       <SelectItem value="fixed_amount">
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4" />
-                          Sabit Tutar (₺)
+                          Fixed Amount 
                         </div>
                       </SelectItem>
                     </SelectContent>
@@ -324,7 +326,7 @@ export function DiscountDialog({
 
                 <div className="space-y-2">
                   <Label htmlFor="value">
-                    İndirim Değeri {form.type === "percentage" ? "(%)" : "(₺)"}
+                    Discount Value {form.type === "percentage" ? "(%)" : ""}
                   </Label>
                   <Input
                     id="value"
@@ -343,7 +345,7 @@ export function DiscountDialog({
               {/* Optional fields */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="minPurchase">Min. Sepet Tutarı (₺)</Label>
+                  <Label htmlFor="minPurchase">Min. Purchase Amount </Label>
                   <Input
                     id="minPurchase"
                     type="number"
@@ -352,13 +354,13 @@ export function DiscountDialog({
                     onChange={(e) =>
                       setForm({ ...form, minPurchaseAmount: e.target.value })
                     }
-                    placeholder="Opsiyonel"
+                    placeholder="Optional"
                   />
                 </div>
 
                 {form.type === "percentage" && (
                   <div className="space-y-2">
-                    <Label htmlFor="maxDiscount">Maks. İndirim (₺)</Label>
+                    <Label htmlFor="maxDiscount">Max. Discount </Label>
                     <Input
                       id="maxDiscount"
                       type="number"
@@ -367,7 +369,7 @@ export function DiscountDialog({
                       onChange={(e) =>
                         setForm({ ...form, maxDiscountAmount: e.target.value })
                       }
-                      placeholder="Opsiyonel"
+                      placeholder="Optional"
                     />
                   </div>
                 )}
@@ -376,7 +378,7 @@ export function DiscountDialog({
               {/* Validity and Usage */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="validDays">Geçerlilik Süresi (Gün)</Label>
+                  <Label htmlFor="validDays">Validity Period (Days)</Label>
                   <Input
                     id="validDays"
                     type="number"
@@ -388,7 +390,7 @@ export function DiscountDialog({
                     placeholder="30"
                   />
                   <p className="text-xs text-gray-500">
-                    Bitiş:{" "}
+                    Expires:{" "}
                     {format(
                       addDays(new Date(), parseInt(form.validDays) || 30),
                       "d MMM yyyy",
@@ -397,7 +399,7 @@ export function DiscountDialog({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="usageLimit">Kişi Başı Kullanım</Label>
+                  <Label htmlFor="usageLimit">Usage Limit per Customer</Label>
                   <Input
                     id="usageLimit"
                     type="number"
@@ -416,14 +418,14 @@ export function DiscountDialog({
 
               {/* Description */}
               <div className="space-y-2">
-                <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
+                <Label htmlFor="description">Description (Optional)</Label>
                 <Textarea
                   id="description"
                   value={form.description}
                   onChange={(e) =>
                     setForm({ ...form, description: e.target.value })
                   }
-                  placeholder="Kupon hakkında not..."
+                  placeholder="Notes about the coupon..."
                   rows={2}
                   className="resize-none"
                 />
@@ -432,9 +434,9 @@ export function DiscountDialog({
               {/* Notify customers */}
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <Label>Müşterilere Bildir</Label>
+                  <Label>Notify Customers</Label>
                   <p className="text-xs text-gray-500">
-                    Seçili müşterilere SMS/Email ile bildirim gönder
+                    Send SMS/Email notification to selected customers
                   </p>
                 </div>
                 <Switch
@@ -454,13 +456,13 @@ export function DiscountDialog({
               ) : existingCoupons && existingCoupons.length > 0 ? (
                 <>
                   <div className="space-y-2">
-                    <Label>Kupon Seçin</Label>
+                    <Label>Select Coupon</Label>
                     <Select
                       value={selectedCouponId}
                       onValueChange={setSelectedCouponId}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Kupon seçin..." />
+                        <SelectValue placeholder="Select a coupon..." />
                       </SelectTrigger>
                       <SelectContent>
                         {existingCoupons.map((coupon) => (
@@ -494,7 +496,7 @@ export function DiscountDialog({
                         return (
                           <div className="space-y-1">
                             <div className="flex justify-between">
-                              <span className="text-gray-500">İndirim:</span>
+                              <span className="text-gray-500">Discount:</span>
                               <span className="font-medium">
                                 {coupon.type === "percentage"
                                   ? `%${coupon.value}`
@@ -502,7 +504,7 @@ export function DiscountDialog({
                               </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Geçerlilik:</span>
+                              <span className="text-gray-500">Validity:</span>
                               <span>
                                 {format(
                                   new Date(coupon.validUntil),
@@ -512,10 +514,10 @@ export function DiscountDialog({
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-500">
-                                Kullanım Limiti:
+                                Usage Limit:
                               </span>
                               <span>
-                                {coupon.usageLimitPerCustomer} kez/kişi
+                                {coupon.usageLimitPerCustomer} per customer
                               </span>
                             </div>
                           </div>
@@ -527,9 +529,9 @@ export function DiscountDialog({
                   {/* Notify customers */}
                   <div className="flex items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
-                      <Label>Müşterilere Bildir</Label>
+                      <Label>Notify Customers</Label>
                       <p className="text-xs text-gray-500">
-                        Seçili müşterilere SMS/Email ile bildirim gönder
+                        Send SMS/Email notification to selected customers
                       </p>
                     </div>
                     <Switch
@@ -542,7 +544,7 @@ export function DiscountDialog({
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Henüz aktif kupon bulunmuyor. Yeni kupon oluşturabilirsiniz.
+                    No active coupons found. You can create a new one.
                   </AlertDescription>
                 </Alert>
               )}
@@ -552,7 +554,7 @@ export function DiscountDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
-            İptal
+            Cancel
           </Button>
           <Button
             onClick={handleSubmit}
@@ -565,12 +567,12 @@ export function DiscountDialog({
             {isSubmitting ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Tanımlanıyor...
+                Assigning...
               </>
             ) : (
               <>
                 <Tag className="h-4 w-4 mr-2" />
-                Kupon Tanımla ({selectedCustomers.length})
+                Assign Coupon ({selectedCustomers.length})
               </>
             )}
           </Button>

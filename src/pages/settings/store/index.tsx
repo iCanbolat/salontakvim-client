@@ -9,7 +9,7 @@ import {
   ImagePlus,
   Trash2,
   CreditCard,
-  Link,
+  RefreshCcw,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -62,25 +62,71 @@ export function StoreSettings() {
   const { confirm } = useConfirmDialog();
   const [isUploading, setIsUploading] = useState(false);
   const [billingError, setBillingError] = useState<string | null>(null);
-  const [selectedPlan, setSelectedPlan] = useState<"pro" | "business">("pro");
+  const [selectedPlan, setSelectedPlan] = useState<
+    "starter" | "pro" | "enterprise"
+  >("starter");
+  const [selectedBillingCycle, setSelectedBillingCycle] = useState<
+    "monthly" | "annual"
+  >("monthly");
   const storeId = store?.id;
 
-  const normalizedCountry = (store?.country || "TR").toUpperCase();
-  const isStripeAllowed = normalizedCountry !== "TR";
-  const paymentStatus = store?.paymentStatus || "freemium";
+  const connectStatusQuery = useQuery({
+    queryKey: qk.billingConnectStatus(storeId),
+    queryFn: async () => {
+      if (!storeId) {
+        throw new Error("Store not found");
+      }
+
+      return billingService.getConnectStatus(storeId);
+    },
+    enabled: Boolean(storeId),
+    staleTime: 30_000,
+  });
+
+  const pricingByPlan = {
+    starter: { monthly: "$39/mo", annual: "$29/mo" },
+    pro: { monthly: "$59/mo", annual: "$45/mo" },
+    enterprise: { monthly: "Custom", annual: "Custom" },
+  } as const;
+
+  const renderPlanPrice = (plan: "starter" | "pro" | "enterprise") => {
+    if (plan === "enterprise") {
+      return <p className="font-semibold text-gray-900">Custom</p>;
+    }
+
+    if (selectedBillingCycle === "monthly") {
+      return (
+        <p className="font-semibold text-gray-900">
+          {pricingByPlan[plan].monthly}
+        </p>
+      );
+    }
+
+    return (
+      <div className="flex items-end gap-2">
+        <p className="font-semibold text-gray-900">
+          {pricingByPlan[plan].annual}
+        </p>
+        <p className="text-xs text-gray-500 line-through">
+          {pricingByPlan[plan].monthly}
+        </p>
+      </div>
+    );
+  };
 
   useEffect(() => {
-    if (paymentStatus === "pro") {
-      setSelectedPlan("business");
+    if (store?.paymentStatus) {
+      if (
+        store.paymentStatus === "starter" ||
+        store.paymentStatus === "pro" ||
+        store.paymentStatus === "enterprise"
+      ) {
+        setSelectedPlan(store.paymentStatus);
+      } else {
+        setSelectedPlan("starter");
+      }
     }
-  }, [paymentStatus]);
-
-  const { data: connectStatus, refetch: refetchConnectStatus } = useQuery({
-    queryKey: qk.billingConnectStatus(storeId),
-    queryFn: () => billingService.getConnectStatus(storeId!),
-    enabled: !!storeId && isStripeAllowed,
-    staleTime: 60_000,
-  });
+  }, [store?.paymentStatus]);
 
   const uploadImageMutation = useMutation({
     mutationFn: (file: File) => storeService.uploadStoreImage(store!.id, file),
@@ -98,7 +144,13 @@ export function StoreSettings() {
   });
 
   const startSubscriptionMutation = useMutation({
-    mutationFn: async (plan: "pro" | "business") => {
+    mutationFn: async ({
+      plan,
+      billingCycle,
+    }: {
+      plan: "starter" | "pro" | "enterprise";
+      billingCycle: "monthly" | "annual";
+    }) => {
       if (!storeId) {
         throw new Error("Store not found");
       }
@@ -109,11 +161,12 @@ export function StoreSettings() {
         successUrl: currentUrl,
         cancelUrl: currentUrl,
         plan,
+        billingCycle,
       });
     },
     onSuccess: (result) => {
       if (!result.checkoutUrl) {
-        setBillingError("Failed to get Stripe checkout URL.");
+        setBillingError("Failed to get Creem checkout URL.");
         return;
       }
       window.location.href = result.checkoutUrl;
@@ -127,7 +180,7 @@ export function StoreSettings() {
     },
   });
 
-  const connectStripeMutation = useMutation({
+  const createRecipientOnboardingMutation = useMutation({
     mutationFn: async () => {
       if (!storeId) {
         throw new Error("Store not found");
@@ -141,16 +194,69 @@ export function StoreSettings() {
       });
     },
     onSuccess: (result) => {
+      if (!result.onboardingUrl) {
+        setBillingError("Failed to get Creem onboarding URL.");
+        return;
+      }
+
       window.location.href = result.onboardingUrl;
     },
     onError: (error: any) => {
       setBillingError(
         error?.response?.data?.message ||
           error?.message ||
-          "Could not open Stripe Connect onboarding.",
+          "Could not start Creem recipient onboarding.",
       );
     },
   });
+
+  const markRecipientOnboardingCompleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!storeId) {
+        throw new Error("Store not found");
+      }
+
+      return billingService.updateConnectStatus(storeId, {
+        onboardingComplete: true,
+      });
+    },
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: qk.billingConnectStatus(storeId),
+      });
+      toast.success("Recipient onboarding status updated.");
+    },
+    onError: (error: any) => {
+      setBillingError(
+        error?.response?.data?.message ||
+          error?.message ||
+          "Could not update onboarding status.",
+      );
+    },
+  });
+
+  const refreshBillingData = async () => {
+    setBillingError(null);
+    await queryClient.invalidateQueries({ queryKey: qk.currentStore });
+  };
+
+  const refreshConnectStatus = async () => {
+    setBillingError(null);
+    await queryClient.invalidateQueries({
+      queryKey: qk.billingConnectStatus(storeId),
+    });
+  };
+
+  const connectStatus = connectStatusQuery.data;
+  const connectStatusSource =
+    connectStatus?.statusSource || "creem_dashboard_manual";
+  const connectStatusSourceLabel =
+    connectStatusSource === "creem_api"
+      ? "Synced via Creem API"
+      : "Manual tracking via Creem dashboard";
+  const canConfirmOnboardingManually =
+    connectStatusSource === "creem_dashboard_manual" &&
+    !connectStatus?.onboardingComplete;
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -456,203 +562,317 @@ export function StoreSettings() {
           </CardContent>
         </Card>
 
-        {/* Store Photos Card */}
+        {/* Billing Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Stripe Billing</CardTitle>
+            <CardTitle>Creem Billing</CardTitle>
             <CardDescription>
-              Manage SaaS subscription and Stripe Connect payouts
+              Manage subscription plan and billing cycle
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {!isStripeAllowed ? (
-              <p className="text-sm text-gray-500">
-                Stripe is only available for non-Turkish stores. Current
-                country:{" "}
-                <span className="font-medium">{normalizedCountry}</span>
-              </p>
-            ) : (
-              <>
-                <div className="flex flex-col gap-3 p-4 rounded-lg bg-gray-50 border border-gray-100">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">
-                      Connect Status
-                    </span>
-                    {connectStatus?.onboardingComplete ? (
-                      <Badge variant="secondary">Connected</Badge>
-                    ) : connectStatus?.hasAccount ? (
-                      <Badge
-                        variant="outline"
-                        className="text-amber-600 border-amber-200 bg-amber-50"
-                      >
-                        Setup Required
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-gray-500 bg-gray-50"
-                      >
-                        Not Connected
-                      </Badge>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">
-                      Subscription
-                    </span>
-                    {paymentStatus === "business" ? (
-                      <Badge variant="default">business</Badge>
-                    ) : paymentStatus === "pro" ? (
-                      <Badge variant="default">pro</Badge>
-                    ) : (
-                      <Badge
-                        variant="outline"
-                        className="text-gray-500 bg-gray-50"
-                      >
-                        freemium
-                      </Badge>
-                    )}
-                  </div>
-
-                  {(!connectStatus?.onboardingComplete ||
-                    paymentStatus === "freemium") && (
-                    <div className="mt-2 pt-2 border-t border-gray-100 space-y-4">
-                      <p className="text-xs text-amber-600 flex items-center gap-1">
-                        <AlertCircle className="h-3 w-3" />
-                        Stripe resources will be created when you start an
-                        action below.
-                      </p>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPlan("pro")}
-                          disabled={
-                            paymentStatus === "pro" ||
-                            paymentStatus === "business"
-                          }
-                          className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
-                            selectedPlan === "pro"
-                              ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
-                              : "border-gray-200 bg-white"
-                          } ${paymentStatus === "pro" || paymentStatus === "business" ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <h4 className="text-xs font-bold uppercase text-gray-400">
-                              Pro Plan
-                            </h4>
-                            {selectedPlan === "pro" && (
-                              <div className="h-2 w-2 rounded-full bg-blue-600" />
-                            )}
-                          </div>
-                          <p className="font-semibold text-gray-900">$29/mo</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Standard features for growing salons.
-                          </p>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setSelectedPlan("business")}
-                          disabled={paymentStatus === "business"}
-                          className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
-                            selectedPlan === "business"
-                              ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
-                              : "border-gray-200 bg-white"
-                          } ${paymentStatus === "business" ? "opacity-50 cursor-not-allowed" : ""}`}
-                        >
-                          <div className="flex justify-between items-start mb-1">
-                            <h4 className="text-xs font-bold uppercase text-blue-400">
-                              Business Plan
-                            </h4>
-                            {selectedPlan === "business" && (
-                              <div className="h-2 w-2 rounded-full bg-blue-600" />
-                            )}
-                          </div>
-                          <p className="font-semibold text-gray-900">$79/mo</p>
-                          <p className="text-sm text-gray-600 mt-1">
-                            Advanced analytics and multi-location support.
-                          </p>
-                        </button>
-                      </div>
-                    </div>
-                  )}
+          <CardContent className="space-y-5">
+            <div className="rounded-lg border border-gray-100 bg-gray-50 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Current Plan
+                  </p>
+                  <Badge variant="secondary" className="capitalize">
+                    {store.paymentStatus}
+                  </Badge>
                 </div>
 
-                {billingError && (
-                  <Alert variant="destructive">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertDescription>{billingError}</AlertDescription>
-                  </Alert>
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Subscription Status
+                  </p>
+                  <Badge variant="outline" className="capitalize">
+                    {(store.creemSubscriptionStatus || "not_started").replace(
+                      /_/g,
+                      " ",
+                    )}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Billing Cycle
+              </p>
+              <div className="inline-flex rounded-full border border-gray-200 bg-white p-1">
+                <button
+                  type="button"
+                  onClick={() => setSelectedBillingCycle("monthly")}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                    selectedBillingCycle === "monthly"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedBillingCycle("annual")}
+                  className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+                    selectedBillingCycle === "annual"
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Annual
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Checkout request uses the selected cycle for plan pricing.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                Choose Plan
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("starter")}
+                  className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
+                    selectedPlan === "starter"
+                      ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="mb-1 flex items-start justify-between">
+                    <h4 className="text-xs font-bold uppercase text-gray-400">
+                      Starter
+                    </h4>
+                    {store.paymentStatus === "starter" && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                  {renderPlanPrice("starter")}
+                  <p className="mt-1 text-sm text-gray-600">
+                    Essentials for small teams.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("pro")}
+                  className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
+                    selectedPlan === "pro"
+                      ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="mb-1 flex items-start justify-between">
+                    <h4 className="text-xs font-bold uppercase text-gray-400">
+                      Pro
+                    </h4>
+                    {store.paymentStatus === "pro" && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                  {renderPlanPrice("pro")}
+                  <p className="mt-1 text-sm text-gray-600">
+                    Advanced features for growing teams.
+                  </p>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setSelectedPlan("enterprise")}
+                  className={`p-4 border rounded-lg text-left transition-all hover:border-blue-500 cursor-pointer ${
+                    selectedPlan === "enterprise"
+                      ? "border-blue-600 bg-blue-50/50 ring-1 ring-blue-600"
+                      : "border-gray-200 bg-white"
+                  }`}
+                >
+                  <div className="mb-1 flex items-start justify-between">
+                    <h4 className="text-xs font-bold uppercase text-blue-400">
+                      Enterprise
+                    </h4>
+                    {store.paymentStatus === "enterprise" && (
+                      <Badge variant="outline" className="text-[10px]">
+                        Current
+                      </Badge>
+                    )}
+                  </div>
+                  {renderPlanPrice("enterprise")}
+                  <p className="mt-1 text-sm text-gray-600">
+                    Multi-location and custom workflows.
+                  </p>
+                </button>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Recipient Onboarding (Revenue Split)
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Redirect store owners to Creem onboarding and track
+                    recipient status from this panel.
+                  </p>
+                </div>
+
+                {connectStatusQuery.isFetching && (
+                  <Loader2 className="h-4 w-4 animate-spin text-gray-500" />
                 )}
+              </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {paymentStatus !== "business" && (
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        setBillingError(null);
-                        startSubscriptionMutation.mutate(selectedPlan);
-                      }}
-                      disabled={
-                        startSubscriptionMutation.isPending ||
-                        (paymentStatus === "pro" && selectedPlan === "pro")
-                      }
-                    >
-                      {startSubscriptionMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Redirecting...
-                        </>
-                      ) : (
-                        <>
-                          <CreditCard className="h-4 w-4 mr-2" />
-                          {paymentStatus === "freemium"
-                            ? "Start Subscription"
-                            : "Upgrade Subscription"}
-                        </>
-                      )}
-                    </Button>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Onboarding
+                  </p>
+                  <Badge
+                    variant={
+                      connectStatus?.onboardingComplete ? "default" : "outline"
+                    }
+                    className="capitalize"
+                  >
+                    {connectStatus?.onboardingComplete
+                      ? "completed"
+                      : "pending"}
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Payouts
+                  </p>
+                  <Badge
+                    variant={
+                      connectStatus?.payoutsEnabled ? "default" : "outline"
+                    }
+                    className="capitalize"
+                  >
+                    {connectStatus?.payoutsEnabled ? "enabled" : "not enabled"}
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
+                    Status Source
+                  </p>
+                  <Badge variant="secondary">{connectStatusSourceLabel}</Badge>
+                </div>
+              </div>
+
+              {connectStatusQuery.isError && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>
+                    Could not fetch recipient onboarding status.
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <div className="flex flex-wrap gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setBillingError(null);
+                    createRecipientOnboardingMutation.mutate();
+                  }}
+                  disabled={createRecipientOnboardingMutation.isPending}
+                >
+                  {createRecipientOnboardingMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Redirecting...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Open Creem Onboarding
+                    </>
                   )}
+                </Button>
 
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={refreshConnectStatus}
+                  disabled={connectStatusQuery.isFetching}
+                >
+                  <RefreshCcw className="h-4 w-4 mr-2" />
+                  Refresh Onboarding Status
+                </Button>
+
+                {canConfirmOnboardingManually && (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => {
                       setBillingError(null);
-                      connectStripeMutation.mutate();
+                      markRecipientOnboardingCompleteMutation.mutate();
                     }}
-                    disabled={
-                      connectStripeMutation.isPending ||
-                      paymentStatus === "freemium"
-                    }
+                    disabled={markRecipientOnboardingCompleteMutation.isPending}
                   >
-                    {connectStripeMutation.isPending ? (
+                    {markRecipientOnboardingCompleteMutation.isPending ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Opening...
+                        Updating...
                       </>
                     ) : (
-                      <>
-                        <Link className="h-4 w-4 mr-2" />
-                        {paymentStatus === "freemium"
-                          ? "Connect Stripe (Pro/Business)"
-                          : "Connect Stripe"}
-                      </>
+                      "Mark as Completed"
                     )}
                   </Button>
+                )}
+              </div>
+            </div>
 
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => refetchConnectStatus()}
-                  >
-                    Refresh Status
-                  </Button>
-                </div>
-              </>
+            {billingError && (
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{billingError}</AlertDescription>
+              </Alert>
             )}
+
+            <div className="flex flex-wrap gap-3">
+              <Button
+                type="button"
+                onClick={() => {
+                  setBillingError(null);
+                  startSubscriptionMutation.mutate({
+                    plan: selectedPlan,
+                    billingCycle: selectedBillingCycle,
+                  });
+                }}
+                disabled={startSubscriptionMutation.isPending}
+              >
+                {startSubscriptionMutation.isPending ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Redirecting...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Continue to Creem Checkout
+                  </>
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={refreshBillingData}
+              >
+                <RefreshCcw className="h-4 w-4 mr-2" />
+                Refresh Billing
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

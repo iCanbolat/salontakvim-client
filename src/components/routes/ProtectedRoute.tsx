@@ -4,6 +4,7 @@
 
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts";
+import { authService } from "@/services";
 import type { UserRole } from "@/types";
 
 interface ProtectedRouteProps {
@@ -27,6 +28,13 @@ export function ProtectedRoute({ allowedRoles }: ProtectedRouteProps) {
 
   if (!isAuthenticated || !user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  const isSubscriptionGateActive =
+    user.role === "admin" && authService.requiresSubscription();
+
+  if (isSubscriptionGateActive && location.pathname !== "/subscription") {
+    return <Navigate to="/subscription" replace />;
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
